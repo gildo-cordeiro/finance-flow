@@ -116,10 +116,10 @@ Exemplos:
 
 ### Inicialização do Backend
 1. Navegue para o diretório `/backend` do projeto.
-2. Copie o arquivo de exemplo de ambiente `.env.example` para `.env` e preencha as variáveis (banco, JWT Secret, Redis).
+2. Ajuste as configurações e credenciais do banco diretamente no arquivo [application.properties](src/main/resources/application.properties) (por padrão, ele já vem configurado com os valores de fallback do Docker Compose).
 3. Execute o comando para compilar e iniciar:
    ```bash
-   ./mvnw spring-run
+   ./gradlew bootRun
    ```
 
 ### Inicialização do Frontend
