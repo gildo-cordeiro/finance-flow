@@ -1,6 +1,6 @@
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LogOut, Wallet, Globe2, Calendar, DollarSign } from 'lucide-react';
+import { Settings, LogOut, Wallet, Globe2, Calendar, DollarSign, TrendingUp } from 'lucide-react';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -33,6 +33,13 @@ export function Dashboard() {
             >
               <DollarSign className="w-4 h-4" />
               <span className="hidden sm:inline">Transações</span>
+            </button>
+            <button
+              onClick={() => navigate('/budget')}
+              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Orçamento</span>
             </button>
             <button
               onClick={() => navigate('/profile')}
