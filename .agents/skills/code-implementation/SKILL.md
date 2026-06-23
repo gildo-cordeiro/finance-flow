@@ -27,7 +27,7 @@ A stack tecnológica do projeto é:
 
 ### Frontend (SPA)
 *   **Framework UI:** React 18 + Vite + TypeScript
-*   **Estilização:** Tailwind CSS
+*   **Estilização:** Tailwind CSS v3 (travado em `^3.4.17` — NÃO atualizar para v4)
 *   **Estado & Cache:** React Query (TanStack Query)
 *   **Roteamento:** React Router v6 (com proteção de rotas privadas)
 *   **Gráficos:** Recharts
@@ -175,7 +175,7 @@ com.financeflow.modulo/
 ### 3.2 TypeScript + React + Tailwind
 
 ```tsx
-// ✅ BOM: Props tipadas, componente puro, Tailwind semântico
+// ✅ BOM: Props tipadas, componente puro, Tailwind semântico integrado ao tema Dark Premium
 interface UserCardProps {
   name: string;
   email: string;
@@ -185,17 +185,17 @@ interface UserCardProps {
 
 export function UserCard({ name, email, role, onEdit }: UserCardProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="glassmorphism rounded-2xl p-4 shadow-xl shadow-black/40">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{name}</h3>
-          <p className="text-xs text-gray-500">{email}</p>
+          <h3 className="text-sm font-semibold text-zinc-100">{name}</h3>
+          <p className="text-xs text-zinc-400">{email}</p>
         </div>
         <span className={cn(
-          'rounded-full px-2 py-0.5 text-xs font-medium',
+          'rounded-full px-2.5 py-0.5 text-xs font-medium border',
           role === 'admin'
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-gray-100 text-gray-600'
+            ? 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+            : 'bg-zinc-800 text-zinc-400 border-zinc-700/50'
         )}>
           {role}
         </span>
@@ -203,7 +203,7 @@ export function UserCard({ name, email, role, onEdit }: UserCardProps) {
       {onEdit && (
         <button
           onClick={onEdit}
-          className="mt-3 text-xs text-blue-600 hover:underline"
+          className="mt-3.5 text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
         >
           Editar
         </button>
@@ -219,6 +219,8 @@ function Card(props: any) {
 ```
 
 **Regras essenciais React/TS (detalhes em `references/typescript-react-tailwind.md`):**
+- **Versão do Tailwind CSS:** É obrigatório o uso do Tailwind CSS v3.4.x com os arquivos tradicionais `tailwind.config.js` e `postcss.config.js`. **Não atualizar para o Tailwind v4**, pois ele exige compilação nativa com Rust que causa erros em alguns ambientes Node.
+- **Tema Visual Premium (Dark Mode Obrigatório):** O sistema segue a identidade visual premium escura definida em `index.css`. Todos os novos componentes devem seguir este template (ex: containers com `.glassmorphism` ou `.auth-card`, gradientes com `.gradient-bg`, fundos escuros `bg-zinc-900/60` com bordas sutis `border-zinc-800`, textos em escalas `text-zinc-100` / `text-zinc-400` e destakes na cor violeta `violet-600`).
 - **Nunca use `any`** — prefira `unknown` com type guard quando o tipo não é conhecido
 - Componentes: arquivos `.tsx`, exportação nomeada, props sempre tipadas via `interface`
 - Um componente por arquivo; nome do arquivo = nome do componente (`UserCard.tsx`)
