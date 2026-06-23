@@ -5,6 +5,7 @@ import { Login } from '../features/auth/components/Login';
 import { Register } from '../features/auth/components/Register';
 import { Profile } from '../features/auth/components/Profile';
 import { Accounts } from '../features/accounts/components/Accounts';
+import { Transactions } from '../features/transactions/components/Transactions';
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: '/accounts',
         element: <Accounts />,
+      },
+      {
+        path: '/transactions',
+        element: <Transactions />,
       },
     ],
   },

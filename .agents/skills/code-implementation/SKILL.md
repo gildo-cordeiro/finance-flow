@@ -153,7 +153,8 @@ com.financeflow.modulo/
 ├── controller/         # @RestController e endpoints REST
 ├── dto/                # Records de Request e Response (DTOs)
 ├── service/            # Use cases / serviços com lógica de aplicação
-├── repository/         # Interfaces e implementações JPA de repositório
+├── repository/         # Interfaces do repositório de domínio
+│   └── jpa/            # Implementações JPA de persistência e Spring Data Repositories
 └── model/              # Modelagem de domínio e persistência
     ├── domain/         # Modelo de domínio puro (ex: Java Record imutável)
     ├── entity/         # Entidades de persistência anotadas com @Entity (JPA)

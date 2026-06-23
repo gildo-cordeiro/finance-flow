@@ -1,6 +1,7 @@
-package com.financeflow.account.repository;
+package com.financeflow.account.repository.jpa;
 
 import com.financeflow.account.model.entity.AccountEntity;
+import com.financeflow.account.repository.AccountRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

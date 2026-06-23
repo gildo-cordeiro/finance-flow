@@ -35,8 +35,9 @@ com.financeflow
 ├── transaction         # Módulo de Transações e Lançamentos
 │   ├── controller      # Endpoints REST expostos
 │   ├── service         # Regras de negócio
-│   ├── repository      # Acesso ao PostgreSQL
-│   ├── model           # Modelos e Mapeamento de Persistência
+│   ├── repository      # Interfaces do repositório
+│   │   └── jpa         # Implementações JPA e Spring Data JpaRepositories
+│   ├── model           # Modelagem e Mapeamento de Persistência
 │   │   ├── domain      # Modelos de domínio puros (Java Records)
 │   │   ├── entity      # Entidades de persistência (JPA)
 │   │   └── mapper      # Mappers entre domain e entity

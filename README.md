@@ -53,6 +53,8 @@ com.financeflow
 ```
 
 Dentro de cada módulo, a camada de dados é dividida para evitar código repetitivo e dependência de frameworks:
+*   `repository`: Interfaces puras de domínio que definem os contratos do repositório.
+*   `repository/jpa`: Implementações concretas JPA e Spring Data JpaRepository.
 *   `model/domain`: Representa os modelos de negócio puros mapeados como Java **Records** (imutáveis por padrão, sem Lombok).
 *   `model/entity`: Contém as entidades físicas mapeadas pelo JPA/Hibernate para persistência.
 *   `model/mapper`: Conversores simples que realizam a transição entre os modelos de domínio e persistência.
