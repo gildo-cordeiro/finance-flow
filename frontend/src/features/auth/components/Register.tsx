@@ -63,7 +63,7 @@ export function Register() {
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-    } catch (err: any) {
+    } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao registrar conta. Tente novamente.');
     } finally {

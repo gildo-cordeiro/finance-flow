@@ -62,7 +62,7 @@ export function Profile() {
       });
       setSuccess('Configurações atualizadas com sucesso!');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
+    } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao atualizar configurações.');
     } finally {

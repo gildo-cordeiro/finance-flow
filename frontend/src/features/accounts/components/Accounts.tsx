@@ -6,7 +6,7 @@ import {
   ArrowLeft, Plus, CreditCard, Landmark, PiggyBank, 
   HelpCircle, AlertTriangle, X 
 } from 'lucide-react';
-import type { AccountType } from '../types';
+import type { AccountType, AccountPayload } from '../types';
 
 export function Accounts() {
   const { user } = useAuth();
@@ -53,7 +53,7 @@ export function Accounts() {
       return;
     }
 
-    let payload: any = {
+    const payload: AccountPayload = {
       name,
       type,
       bank,
@@ -86,8 +86,9 @@ export function Accounts() {
     try {
       await createAccount(payload);
       resetForm();
-    } catch (err: any) {
-      setFormError(err.message || 'Erro ao criar conta.');
+    } catch (err) {
+      const error = err as Error;
+      setFormError(error.message || 'Erro ao criar conta.');
     }
   };
 
