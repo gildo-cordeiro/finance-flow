@@ -12,11 +12,10 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Set a long secret key (at least 256 bits for HMAC-SHA256) and a 5-second expiration
-        jwtService = new JwtService(
-            "financeflow-test-secret-key-that-is-very-long-and-secure-for-development",
-            5000 // 5 seconds
-        );
+        com.financeflow.auth.config.JwtProperties properties = new com.financeflow.auth.config.JwtProperties();
+        properties.setSecret("financeflow-test-secret-key-that-is-very-long-and-secure-for-development");
+        properties.setExpirationMs(5000);
+        jwtService = new JwtService(properties);
     }
 
     @Test
@@ -36,11 +35,10 @@ class JwtServiceTest {
 
     @Test
     void shouldReturnFalseForExpiredToken() throws InterruptedException {
-        // Create a service with 1ms expiration
-        JwtService shortLivedService = new JwtService(
-            "financeflow-test-secret-key-that-is-very-long-and-secure-for-development",
-            1
-        );
+        com.financeflow.auth.config.JwtProperties properties = new com.financeflow.auth.config.JwtProperties();
+        properties.setSecret("financeflow-test-secret-key-that-is-very-long-and-secure-for-development");
+        properties.setExpirationMs(1);
+        JwtService shortLivedService = new JwtService(properties);
 
         String userId = UUID.randomUUID().toString();
         String token = shortLivedService.generateAccessToken(userId);

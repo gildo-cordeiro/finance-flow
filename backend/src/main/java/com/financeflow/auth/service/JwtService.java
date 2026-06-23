@@ -7,8 +7,8 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.financeflow.auth.config.JwtProperties;
 
 @Service
 public class JwtService {
@@ -16,12 +16,9 @@ public class JwtService {
     private final SecretKey secretKey;
     private final long expirationMs;
 
-    public JwtService(
-        @Value("${app.jwt.secret:financeflow-default-secret-key-that-is-very-long-and-secure-for-development}") String secret,
-        @Value("${app.jwt.expiration-ms:900000}") long expirationMs // 15 minutes default
-    ) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationMs = expirationMs;
+    public JwtService(JwtProperties jwtProperties) {
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+        this.expirationMs = jwtProperties.getExpirationMs();
     }
 
     public String generateAccessToken(String userId) {
