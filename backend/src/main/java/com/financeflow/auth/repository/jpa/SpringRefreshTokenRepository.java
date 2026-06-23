@@ -1,4 +1,4 @@
-package com.financeflow.auth.repository;
+package com.financeflow.auth.repository.jpa;
 
 import com.financeflow.auth.model.entity.RefreshTokenEntity;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.financeflow.account.repository;
+package com.financeflow.account.repository.jpa;
 
 import com.financeflow.account.model.entity.AccountEntity;
 import java.util.List;
