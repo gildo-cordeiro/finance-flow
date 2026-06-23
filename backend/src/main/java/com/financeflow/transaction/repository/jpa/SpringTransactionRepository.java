@@ -11,10 +11,10 @@ import org.springframework.data.repository.query.Param;
 public interface SpringTransactionRepository extends JpaRepository<TransactionEntity, UUID> {
 
     @Query("SELECT t FROM TransactionEntity t WHERE t.userId = :userId " +
-           "AND (:startDate IS NULL OR t.competenceDate >= :startDate) " +
-           "AND (:endDate IS NULL OR t.competenceDate <= :endDate) " +
-           "AND (:categoryId IS NULL OR t.categoryId = :categoryId) " +
-           "AND (:accountId IS NULL OR t.accountId = :accountId) " +
+           "AND (cast(:startDate as LocalDate) IS NULL OR t.competenceDate >= :startDate) " +
+           "AND (cast(:endDate as LocalDate) IS NULL OR t.competenceDate <= :endDate) " +
+           "AND (cast(:categoryId as uuid) IS NULL OR t.categoryId = :categoryId) " +
+           "AND (cast(:accountId as uuid) IS NULL OR t.accountId = :accountId) " +
            "ORDER BY t.competenceDate DESC, t.createdAt DESC")
     List<TransactionEntity> findAllFiltered(
         @Param("userId") UUID userId,

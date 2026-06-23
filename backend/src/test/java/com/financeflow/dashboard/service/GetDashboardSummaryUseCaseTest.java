@@ -1,4 +1,4 @@
-package com.financeflow.budget.service;
+package com.financeflow.dashboard.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,10 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.financeflow.budget.dto.BudgetItemResponse;
-import com.financeflow.budget.dto.BudgetResponse;
-import com.financeflow.budget.model.entity.BudgetEntity;
-import com.financeflow.budget.repository.BudgetRepository;
+import com.financeflow.dashboard.dto.DashboardSummaryResponse;
 import com.financeflow.shared.exception.ValidationException;
 import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.domain.TransactionType;
@@ -19,6 +16,8 @@ import com.financeflow.transaction.model.entity.CategoryEntity;
 import com.financeflow.transaction.model.entity.TransactionEntity;
 import com.financeflow.transaction.repository.CategoryRepository;
 import com.financeflow.transaction.repository.TransactionRepository;
+import com.financeflow.budget.model.entity.BudgetEntity;
+import com.financeflow.budget.repository.BudgetRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,29 +26,29 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class GetBudgetUseCaseTest {
+class GetDashboardSummaryUseCaseTest {
 
-    private BudgetRepository budgetRepository;
     private CategoryRepository categoryRepository;
     private TransactionRepository transactionRepository;
-    private GetBudgetUseCase getBudgetUseCase;
+    private BudgetRepository budgetRepository;
+    private GetDashboardSummaryUseCase getDashboardSummaryUseCase;
 
     @BeforeEach
     void setUp() {
-        budgetRepository = mock(BudgetRepository.class);
         categoryRepository = mock(CategoryRepository.class);
         transactionRepository = mock(TransactionRepository.class);
-        getBudgetUseCase = new GetBudgetUseCase(budgetRepository, categoryRepository, transactionRepository);
+        budgetRepository = mock(BudgetRepository.class);
+        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(categoryRepository, transactionRepository, budgetRepository);
     }
 
     @Test
-    void shouldGetBudgetSuccessfullyAndCalculateRealizedAmounts() {
+    void shouldGetDashboardSummarySuccessfully() {
         UUID userId = UUID.randomUUID();
         String month = "2026-06";
 
-        UUID incomeCatId = UUID.fromString("a1b1c1d1-0000-0000-0000-000000000001"); // Receitas
-        UUID salaryCatId = UUID.randomUUID(); // Salary (sub of Receitas)
-        UUID foodCatId = UUID.randomUUID(); // Food (expense)
+        UUID incomeCatId = UUID.fromString("a1b1c1d1-0000-0000-0000-000000000001");
+        UUID salaryCatId = UUID.randomUUID();
+        UUID foodCatId = UUID.randomUUID();
 
         CategoryEntity incomeCat = new CategoryEntity(incomeCatId, null, "Receitas", null, Instant.now(), Instant.now());
         CategoryEntity salaryCat = new CategoryEntity(salaryCatId, userId, "Salário", incomeCatId, Instant.now(), Instant.now());
@@ -84,24 +83,19 @@ class GetBudgetUseCaseTest {
             eq(userId), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), any(), any()
         )).thenReturn(List.of(salaryTx, foodTx1, foodRefundTx));
 
-        BudgetResponse response = getBudgetUseCase.execute(userId, month);
+        DashboardSummaryResponse response = getDashboardSummaryUseCase.execute(userId, month);
 
-        assertThat(response.month()).isEqualTo(month);
-        assertThat(response.items()).hasSize(3);
-
-        BudgetItemResponse salaryItem = response.items().stream().filter(i -> i.categoryId().equals(salaryCatId)).findFirst().orElseThrow();
-        assertThat(salaryItem.plannedAmount()).isEqualByComparingTo("5000.00");
-        assertThat(salaryItem.realizedAmount()).isEqualByComparingTo("5200.00"); // 5200.00 income
-
-        BudgetItemResponse foodItem = response.items().stream().filter(i -> i.categoryId().equals(foodCatId)).findFirst().orElseThrow();
-        assertThat(foodItem.plannedAmount()).isEqualByComparingTo("800.00");
-        assertThat(foodItem.realizedAmount()).isEqualByComparingTo("130.00"); // 150.00 expense - 20.00 refund
+        assertThat(response.totalRevenue()).isEqualByComparingTo("5220.00"); // 5200.00 salary + 20.00 refund (income)
+        assertThat(response.totalExpenses()).isEqualByComparingTo("150.00"); // 150.00 food expense
+        assertThat(response.balance()).isEqualByComparingTo("5070.00"); // 5220.00 - 150.00
+        assertThat(response.budgetPlanned()).isEqualByComparingTo("800.00"); // Only food (expense) planned
+        assertThat(response.budgetRealized()).isEqualByComparingTo("130.00"); // 150.00 food expense - 20.00 refund
     }
 
     @Test
     void shouldThrowExceptionWhenMonthFormatIsInvalid() {
         UUID userId = UUID.randomUUID();
-        assertThatThrownBy(() -> getBudgetUseCase.execute(userId, "06-2026"))
+        assertThatThrownBy(() -> getDashboardSummaryUseCase.execute(userId, "06-2026"))
             .isInstanceOf(ValidationException.class)
             .hasMessageContaining("Month must be in YYYY-MM format");
     }
