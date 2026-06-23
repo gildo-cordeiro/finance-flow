@@ -1,7 +1,7 @@
 package com.financeflow.auth.service;
 
 import com.financeflow.auth.dto.TokenResponse;
-import com.financeflow.auth.model.RefreshTokenEntity;
+import com.financeflow.auth.model.entity.RefreshTokenEntity;
 import com.financeflow.auth.repository.RefreshTokenRepository;
 import com.financeflow.shared.exception.UnauthorizedException;
 import java.time.Duration;

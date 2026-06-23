@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.financeflow.auth.dto.TokenResponse;
-import com.financeflow.auth.model.RefreshTokenEntity;
+import com.financeflow.auth.model.entity.RefreshTokenEntity;
 import com.financeflow.auth.repository.RefreshTokenRepository;
 import com.financeflow.shared.exception.UnauthorizedException;
 import java.time.Instant;

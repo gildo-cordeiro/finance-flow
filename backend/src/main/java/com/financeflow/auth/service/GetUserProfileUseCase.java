@@ -1,7 +1,9 @@
 package com.financeflow.auth.service;
 
 import com.financeflow.auth.dto.UserResponse;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.domain.User;
+import com.financeflow.auth.model.entity.UserEntity;
+import com.financeflow.auth.model.mapper.UserMapper;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.NotFoundException;
 import java.util.UUID;
@@ -19,16 +21,18 @@ public class GetUserProfileUseCase {
     }
 
     public UserResponse execute(UUID userId) {
-        UserEntity user = userRepository.findById(userId)
+        UserEntity entity = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User", userId));
 
+        User user = UserMapper.toDomain(entity);
+
         return new UserResponse(
-            user.getId(),
-            user.getEmail(),
-            user.getName(),
-            user.getTimeZone(),
-            user.getCurrency(),
-            user.getBudgetClosingDay()
+            user.id(),
+            user.email(),
+            user.name(),
+            user.timeZone(),
+            user.currency(),
+            user.budgetClosingDay()
         );
     }
 }

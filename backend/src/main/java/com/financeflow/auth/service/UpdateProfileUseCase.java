@@ -2,7 +2,9 @@ package com.financeflow.auth.service;
 
 import com.financeflow.auth.dto.UpdateProfileRequest;
 import com.financeflow.auth.dto.UserResponse;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.domain.User;
+import com.financeflow.auth.model.entity.UserEntity;
+import com.financeflow.auth.model.mapper.UserMapper;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.NotFoundException;
 import java.util.UUID;
@@ -26,26 +28,30 @@ public class UpdateProfileUseCase {
     public UserResponse execute(UUID userId, UpdateProfileRequest request) {
         log.info("Updating profile for user={}", userId);
 
-        UserEntity user = userRepository.findById(userId)
+        UserEntity entity = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User", userId));
 
-        user.updateProfile(
+        User domainUser = UserMapper.toDomain(entity);
+        User updatedUser = domainUser.updateProfile(
             request.name(),
             request.timeZone(),
             request.currency(),
             request.budgetClosingDay()
         );
 
-        UserEntity updated = userRepository.save(user);
+        UserEntity updatedEntity = UserMapper.toEntity(updatedUser);
+        UserEntity saved = userRepository.save(updatedEntity);
         log.info("Profile updated successfully for user={}", userId);
 
+        User finalDomain = UserMapper.toDomain(saved);
+
         return new UserResponse(
-            updated.getId(),
-            updated.getEmail(),
-            updated.getName(),
-            updated.getTimeZone(),
-            updated.getCurrency(),
-            updated.getBudgetClosingDay()
+            finalDomain.id(),
+            finalDomain.email(),
+            finalDomain.name(),
+            finalDomain.timeZone(),
+            finalDomain.currency(),
+            finalDomain.budgetClosingDay()
         );
     }
 }

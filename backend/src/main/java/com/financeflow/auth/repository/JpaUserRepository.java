@@ -1,6 +1,6 @@
 package com.financeflow.auth.repository;
 
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.entity.UserEntity;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;

@@ -10,11 +10,12 @@ import static org.mockito.Mockito.when;
 
 import com.financeflow.auth.dto.LoginRequest;
 import com.financeflow.auth.dto.TokenResponse;
-import com.financeflow.auth.model.RefreshTokenEntity;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.entity.RefreshTokenEntity;
+import com.financeflow.auth.model.entity.UserEntity;
 import com.financeflow.auth.repository.RefreshTokenRepository;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.UnauthorizedException;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,15 +42,17 @@ class LoginUseCaseTest {
     @Test
     void shouldAuthenticateUserSuccessfullyWhenCredentialsAreValid() {
         LoginRequest request = new LoginRequest("test@test.com", "password123");
-        UserEntity user = UserEntity.builder()
-            .id(UUID.randomUUID())
-            .email("test@test.com")
-            .password("encoded-password")
-            .name("John")
-            .timeZone("TZ")
-            .currency("BRL")
-            .budgetClosingDay(5)
-            .build();
+        UserEntity user = new UserEntity(
+            UUID.randomUUID(),
+            "test@test.com",
+            "encoded-password",
+            "John",
+            "TZ",
+            "BRL",
+            5,
+            Instant.now(),
+            Instant.now()
+        );
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPassword())).thenReturn(true);
@@ -76,15 +79,17 @@ class LoginUseCaseTest {
     @Test
     void shouldThrowUnauthorizedExceptionWhenLoginPasswordIsIncorrect() {
         LoginRequest request = new LoginRequest("test@test.com", "wrongpassword");
-        UserEntity user = UserEntity.builder()
-            .id(UUID.randomUUID())
-            .email("test@test.com")
-            .password("encoded-password")
-            .name("John")
-            .timeZone("TZ")
-            .currency("BRL")
-            .budgetClosingDay(5)
-            .build();
+        UserEntity user = new UserEntity(
+            UUID.randomUUID(),
+            "test@test.com",
+            "encoded-password",
+            "John",
+            "TZ",
+            "BRL",
+            5,
+            Instant.now(),
+            Instant.now()
+        );
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPassword())).thenReturn(false);

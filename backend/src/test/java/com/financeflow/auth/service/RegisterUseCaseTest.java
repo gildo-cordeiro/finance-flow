@@ -10,9 +10,10 @@ import static org.mockito.Mockito.when;
 
 import com.financeflow.auth.dto.RegisterRequest;
 import com.financeflow.auth.dto.UserResponse;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.entity.UserEntity;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.ValidationException;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,15 +57,17 @@ class RegisterUseCaseTest {
         RegisterRequest request = new RegisterRequest(
             "test@test.com", "password123", "John Doe", "America/Sao_Paulo", "BRL", 5
         );
-        UserEntity existing = UserEntity.builder()
-            .id(UUID.randomUUID())
-            .email("test@test.com")
-            .password("pwd")
-            .name("Name")
-            .timeZone("TZ")
-            .currency("BRL")
-            .budgetClosingDay(5)
-            .build();
+        UserEntity existing = new UserEntity(
+            UUID.randomUUID(),
+            "test@test.com",
+            "pwd",
+            "Name",
+            "TZ",
+            "BRL",
+            5,
+            Instant.now(),
+            Instant.now()
+        );
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(existing));
 

@@ -2,7 +2,9 @@ package com.financeflow.auth.service;
 
 import com.financeflow.auth.dto.RegisterRequest;
 import com.financeflow.auth.dto.UserResponse;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.domain.User;
+import com.financeflow.auth.model.entity.UserEntity;
+import com.financeflow.auth.model.mapper.UserMapper;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.ValidationException;
 import java.util.UUID;
@@ -35,26 +37,31 @@ public class RegisterUseCase {
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        UserEntity user = UserEntity.builder()
-            .id(UUID.randomUUID())
-            .email(request.email())
-            .password(encodedPassword)
-            .name(request.name())
-            .timeZone(request.timeZone())
-            .currency(request.currency())
-            .budgetClosingDay(request.budgetClosingDay())
-            .build();
+        User domainUser = new User(
+            UUID.randomUUID(),
+            request.email(),
+            encodedPassword,
+            request.name(),
+            request.timeZone(),
+            request.currency(),
+            request.budgetClosingDay(),
+            null,
+            null
+        );
 
-        UserEntity saved = userRepository.save(user);
+        UserEntity userEntity = UserMapper.toEntity(domainUser);
+        UserEntity saved = userRepository.save(userEntity);
         log.info("User registered successfully with id={}", saved.getId());
 
+        User savedDomain = UserMapper.toDomain(saved);
+
         return new UserResponse(
-            saved.getId(),
-            saved.getEmail(),
-            saved.getName(),
-            saved.getTimeZone(),
-            saved.getCurrency(),
-            saved.getBudgetClosingDay()
+            savedDomain.id(),
+            savedDomain.email(),
+            savedDomain.name(),
+            savedDomain.timeZone(),
+            savedDomain.currency(),
+            savedDomain.budgetClosingDay()
         );
     }
 }

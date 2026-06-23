@@ -2,8 +2,10 @@ package com.financeflow.auth.service;
 
 import com.financeflow.auth.dto.LoginRequest;
 import com.financeflow.auth.dto.TokenResponse;
-import com.financeflow.auth.model.RefreshTokenEntity;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.domain.User;
+import com.financeflow.auth.model.entity.RefreshTokenEntity;
+import com.financeflow.auth.model.entity.UserEntity;
+import com.financeflow.auth.model.mapper.UserMapper;
 import com.financeflow.auth.repository.RefreshTokenRepository;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.UnauthorizedException;
@@ -42,21 +44,23 @@ public class LoginUseCase {
     public TokenResponse execute(LoginRequest request) {
         log.info("User login attempt with email={}", request.email());
 
-        UserEntity user = userRepository.findByEmail(request.email())
+        UserEntity entity = userRepository.findByEmail(request.email())
             .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        User user = UserMapper.toDomain(entity);
+
+        if (!passwordEncoder.matches(request.password(), user.password())) {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        log.info("User authenticated. Generating tokens for id={}", user.getId());
+        log.info("User authenticated. Generating tokens for id={}", user.id());
 
-        String accessToken = jwtService.generateAccessToken(user.getId().toString());
+        String accessToken = jwtService.generateAccessToken(user.id().toString());
         String refreshTokenString = UUID.randomUUID().toString();
 
         RefreshTokenEntity refreshToken = new RefreshTokenEntity(
             refreshTokenString,
-            user.getId(),
+            user.id(),
             Instant.now().plus(Duration.ofDays(30))
         );
 

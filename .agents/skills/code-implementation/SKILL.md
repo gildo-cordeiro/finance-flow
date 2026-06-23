@@ -147,23 +147,23 @@ public class Order {
 // @Data, @Builder, @Getter, @Setter, @NoArgsConstructor, @AllArgsConstructor — NUNCA
 ```
 
-**Estrutura de pacotes Spring:**
+**Estrutura de pacotes por Feature (Spring Boot):**
 ```
-com.empresa.projeto/
-├── domain/
-│   ├── model/          # Entidades de domínio
-│   ├── repository/     # Interfaces de repositório
-│   └── exception/      # Exceções de domínio
-├── application/
-│   └── usecase/        # Use cases / serviços de aplicação
-├── infrastructure/
-│   ├── persistence/    # Implementações JPA dos repositórios
-│   └── config/         # Beans de configuração
-└── web/
-    ├── controller/     # @RestController
-    ├── dto/            # Request/Response records
-    └── handler/        # @ControllerAdvice
+com.financeflow.modulo/
+├── controller/         # @RestController e endpoints REST
+├── dto/                # Records de Request e Response (DTOs)
+├── service/            # Use cases / serviços com lógica de aplicação
+├── repository/         # Interfaces e implementações JPA de repositório
+└── model/              # Modelagem de domínio e persistência
+    ├── domain/         # Modelo de domínio puro (ex: Java Record imutável)
+    ├── entity/         # Entidades de persistência anotadas com @Entity (JPA)
+    └── mapper/         # Mappers estáticos de conversão entre Domain e Entity
 ```
+
+**Separação entre Domínio e Entidade (Redução de Boilerplate):**
+*   Prefira usar **Java Records** no pacote `domain/` para representar modelos de negócio imutáveis, eliminando getters, builders manuais e Lombok.
+*   Deixe classes mutáveis mapeadas pelo JPA apenas no pacote `entity/`.
+*   Converta entre as duas camadas usando métodos estáticos na classe `mapper/UserMapper`.
 
 **Regras essenciais Spring (detalhes em `references/java-spring.md`):**
 - `@Service`, `@Repository`, `@RestController` — injeção sempre por **construtor**, nunca `@Autowired` em campo

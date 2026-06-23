@@ -8,9 +8,10 @@ import static org.mockito.Mockito.when;
 
 import com.financeflow.auth.dto.UpdateProfileRequest;
 import com.financeflow.auth.dto.UserResponse;
-import com.financeflow.auth.model.UserEntity;
+import com.financeflow.auth.model.entity.UserEntity;
 import com.financeflow.auth.repository.UserRepository;
 import com.financeflow.shared.exception.NotFoundException;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,15 +31,17 @@ class UpdateProfileUseCaseTest {
     @Test
     void shouldUpdateProfileSuccessfullyWhenUserExists() {
         UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder()
-            .id(userId)
-            .email("test@test.com")
-            .password("pwd")
-            .name("John Doe")
-            .timeZone("TZ")
-            .currency("BRL")
-            .budgetClosingDay(5)
-            .build();
+        UserEntity user = new UserEntity(
+            userId,
+            "test@test.com",
+            "pwd",
+            "John Doe",
+            "TZ",
+            "BRL",
+            5,
+            Instant.now(),
+            Instant.now()
+        );
 
         UpdateProfileRequest request = new UpdateProfileRequest(
             "Jane Doe", "UTC", "USD", 10

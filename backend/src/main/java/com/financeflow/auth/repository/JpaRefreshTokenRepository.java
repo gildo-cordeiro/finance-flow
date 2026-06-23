@@ -1,6 +1,6 @@
 package com.financeflow.auth.repository;
 
-import com.financeflow.auth.model.RefreshTokenEntity;
+import com.financeflow.auth.model.entity.RefreshTokenEntity;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
