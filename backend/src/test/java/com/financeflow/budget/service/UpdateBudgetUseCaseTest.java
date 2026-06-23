@@ -74,14 +74,13 @@ class UpdateBudgetUseCaseTest {
 
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(budgetRepository.findByUserIdAndCategoryIdAndMonth(userId, categoryId, month)).thenReturn(Optional.of(existingBudget));
-        when(budgetRepository.save(existingBudget)).thenReturn(existingBudget);
+        when(budgetRepository.save(any(BudgetEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         BudgetItemResponse response = updateBudgetUseCase.execute(userId, month, categoryId, request);
 
         assertThat(response.categoryId()).isEqualTo(categoryId);
         assertThat(response.plannedAmount()).isEqualTo(newAmount);
-        assertThat(existingBudget.getPlannedAmount()).isEqualTo(newAmount);
-        verify(budgetRepository).save(existingBudget);
+        verify(budgetRepository).save(any(BudgetEntity.class));
     }
 
     @Test

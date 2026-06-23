@@ -1,10 +1,6 @@
-package com.financeflow.budget.service;
+package com.financeflow.dashboard.service;
 
-import com.financeflow.budget.dto.BudgetItemResponse;
-import com.financeflow.budget.dto.BudgetResponse;
-import com.financeflow.budget.model.domain.Budget;
-import com.financeflow.budget.model.mapper.BudgetMapper;
-import com.financeflow.budget.repository.BudgetRepository;
+import com.financeflow.dashboard.dto.DashboardSummaryResponse;
 import com.financeflow.shared.exception.ValidationException;
 import com.financeflow.transaction.model.domain.Category;
 import com.financeflow.transaction.model.domain.Transaction;
@@ -13,13 +9,17 @@ import com.financeflow.transaction.model.mapper.CategoryMapper;
 import com.financeflow.transaction.model.mapper.TransactionMapper;
 import com.financeflow.transaction.repository.CategoryRepository;
 import com.financeflow.transaction.repository.TransactionRepository;
+import com.financeflow.budget.model.domain.Budget;
+import com.financeflow.budget.model.mapper.BudgetMapper;
+import com.financeflow.budget.repository.BudgetRepository;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,32 +27,36 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class GetBudgetUseCase {
+public class GetDashboardSummaryUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(GetBudgetUseCase.class);
+    private static final Logger log = LoggerFactory.getLogger(GetDashboardSummaryUseCase.class);
 
-    private final BudgetRepository budgetRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final BudgetRepository budgetRepository;
 
-    public GetBudgetUseCase(
-        BudgetRepository budgetRepository,
+    public GetDashboardSummaryUseCase(
         CategoryRepository categoryRepository,
-        TransactionRepository transactionRepository
+        TransactionRepository transactionRepository,
+        BudgetRepository budgetRepository
     ) {
-        this.budgetRepository = budgetRepository;
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.budgetRepository = budgetRepository;
     }
 
-    public BudgetResponse execute(UUID userId, String month) {
-        log.info("Getting budget for user={}, month={}", userId, month);
+    public DashboardSummaryResponse execute(UUID userId, String month) {
+        log.info("Getting dashboard summary for user={}, month={}", userId, month);
 
-        if (month == null || !month.matches("^\\d{4}-\\d{2}$")) {
+        if (month == null || month.isBlank()) {
+            month = LocalDate.now().toString().substring(0, 7);
+        }
+
+        if (!month.matches("^\\d{4}-\\d{2}$")) {
             throw new ValidationException("month", "Month must be in YYYY-MM format");
         }
 
-        // 1. Fetch all categories and map to Domain
+        // 1. Fetch categories and map to Domain
         List<Category> categories = categoryRepository.findAllByUserId(userId).stream()
             .map(c -> CategoryMapper.toDomain(c))
             .toList();
@@ -62,7 +66,7 @@ public class GetBudgetUseCase {
             .map(b -> BudgetMapper.toDomain(b))
             .toList();
         Map<UUID, BigDecimal> plannedAmounts = budgets.stream()
-            .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount()));
+            .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount(), (a, b) -> a));
 
         // 3. Fetch transactions for the month based on competenceDate and map to Domain
         String[] parts = month.split("-");
@@ -77,38 +81,50 @@ public class GetBudgetUseCase {
             .map(t -> TransactionMapper.toDomain(t))
             .toList();
 
-        // 4. Calculate realized amounts per category
-        List<BudgetItemResponse> items = new ArrayList<>();
+        // 4. Calculate total revenue and total expenses
+        BigDecimal totalRevenue = transactions.stream()
+            .filter(t -> t.type() == TransactionType.INCOME)
+            .map(t -> t.amount())
+            .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+
+        BigDecimal totalExpenses = transactions.stream()
+            .filter(t -> t.type() == TransactionType.EXPENSE)
+            .map(t -> t.amount())
+            .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+
+        BigDecimal balance = totalRevenue.subtract(totalExpenses);
+
+        // 5. Calculate budget progress for expense categories
+        BigDecimal budgetPlanned = BigDecimal.ZERO;
+        BigDecimal budgetRealized = BigDecimal.ZERO;
+
         for (Category category : categories) {
-            BigDecimal planned = plannedAmounts.getOrDefault(category.id(), BigDecimal.ZERO);
-
             boolean isIncome = isIncomeCategory(category, categories);
-            BigDecimal realized = transactions.stream()
-                .filter(t -> t.categoryId().equals(category.id()))
-                .map(t -> {
-                    if (isIncome) {
-                        return t.type() == TransactionType.INCOME ? t.amount() : t.amount().negate();
-                    } else {
-                        return t.type() == TransactionType.EXPENSE ? t.amount() : t.amount().negate();
-                    }
-                })
-                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+            if (!isIncome) {
+                // Sum planned
+                BigDecimal planned = plannedAmounts.getOrDefault(category.id(), BigDecimal.ZERO);
+                budgetPlanned = budgetPlanned.add(planned);
 
-            // Cap realized at 0 if net is negative (e.g. refund exceeds expenses)
-            if (realized.compareTo(BigDecimal.ZERO) < 0) {
-                realized = BigDecimal.ZERO;
+                // Sum realized
+                BigDecimal realized = transactions.stream()
+                    .filter(t -> t.categoryId().equals(category.id()))
+                    .map(t -> t.type() == TransactionType.EXPENSE ? t.amount() : t.amount().negate())
+                    .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+
+                if (realized.compareTo(BigDecimal.ZERO) < 0) {
+                    realized = BigDecimal.ZERO;
+                }
+                budgetRealized = budgetRealized.add(realized);
             }
-
-            items.add(new BudgetItemResponse(
-                category.id(),
-                category.name(),
-                category.parentId(),
-                planned,
-                realized
-            ));
         }
 
-        return new BudgetResponse(month, items);
+        return new DashboardSummaryResponse(
+            totalRevenue,
+            totalExpenses,
+            balance,
+            budgetPlanned,
+            budgetRealized
+        );
     }
 
     private boolean isIncomeCategory(Category category, List<Category> allCategories) {

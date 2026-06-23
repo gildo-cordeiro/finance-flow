@@ -1,7 +1,9 @@
 package com.financeflow.budget.service;
 
 import com.financeflow.budget.dto.BudgetResponse;
+import com.financeflow.budget.model.domain.Budget;
 import com.financeflow.budget.model.entity.BudgetEntity;
+import com.financeflow.budget.model.mapper.BudgetMapper;
 import com.financeflow.budget.repository.BudgetRepository;
 import com.financeflow.shared.exception.ValidationException;
 import java.time.Instant;
@@ -47,8 +49,11 @@ public class CopyBudgetUseCase {
         LocalDate previousDate = targetDate.minusMonths(1);
         String previousMonth = String.format("%04d-%02d", previousDate.getYear(), previousDate.getMonthValue());
 
-        // Fetch budgets from previous month
-        List<BudgetEntity> previousBudgets = budgetRepository.findAllByUserIdAndMonth(userId, previousMonth);
+        // Fetch budgets from previous month and map to Domain
+        List<Budget> previousBudgets = budgetRepository.findAllByUserIdAndMonth(userId, previousMonth).stream()
+            .map(BudgetMapper::toDomain)
+            .toList();
+
         if (previousBudgets.isEmpty()) {
             log.info("No budgets found in previous month={} to copy for user={}", previousMonth, userId);
             // Return current month's budget as is
@@ -56,27 +61,34 @@ public class CopyBudgetUseCase {
         }
 
         List<BudgetEntity> budgetsToSave = new ArrayList<>();
-        for (BudgetEntity prevBudget : previousBudgets) {
+        for (Budget prevBudget : previousBudgets) {
             Optional<BudgetEntity> targetBudgetOpt = budgetRepository.findByUserIdAndCategoryIdAndMonth(
-                userId, prevBudget.getCategoryId(), targetMonth
+                userId, prevBudget.categoryId(), targetMonth
             );
 
             if (targetBudgetOpt.isPresent()) {
-                BudgetEntity targetBudget = targetBudgetOpt.get();
-                targetBudget.setPlannedAmount(prevBudget.getPlannedAmount());
-                targetBudget.setUpdatedAt(Instant.now());
-                budgetsToSave.add(targetBudget);
+                Budget targetBudgetDomain = BudgetMapper.toDomain(targetBudgetOpt.get());
+                Budget updatedTarget = new Budget(
+                    targetBudgetDomain.id(),
+                    targetBudgetDomain.userId(),
+                    targetBudgetDomain.categoryId(),
+                    targetBudgetDomain.month(),
+                    prevBudget.plannedAmount(),
+                    targetBudgetDomain.createdAt(),
+                    Instant.now()
+                );
+                budgetsToSave.add(BudgetMapper.toEntity(updatedTarget));
             } else {
-                BudgetEntity newBudget = new BudgetEntity(
+                Budget newBudget = new Budget(
                     UUID.randomUUID(),
                     userId,
-                    prevBudget.getCategoryId(),
+                    prevBudget.categoryId(),
                     targetMonth,
-                    prevBudget.getPlannedAmount(),
+                    prevBudget.plannedAmount(),
                     Instant.now(),
                     Instant.now()
                 );
-                budgetsToSave.add(newBudget);
+                budgetsToSave.add(BudgetMapper.toEntity(newBudget));
             }
         }
 
