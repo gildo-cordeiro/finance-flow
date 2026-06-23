@@ -36,13 +36,22 @@ com.financeflow
 │   ├── controller      # Endpoints REST expostos
 │   ├── service         # Regras de negócio
 │   ├── repository      # Acesso ao PostgreSQL
-│   ├── model           # Entidade (Transaction) e Enums
+│   ├── model           # Modelos e Mapeamento de Persistência
+│   │   ├── domain      # Modelos de domínio puros (Java Records)
+│   │   ├── entity      # Entidades de persistência (JPA)
+│   │   └── mapper      # Mappers entre domain e entity
 │   └── dto             # Objetos de transferência de dados (Request/Response)
 ├── budget              # Módulo de Planejamento e Orçamentos
 ├── cashflow            # Módulo de Fluxo de Caixa e Projeções
 ├── couple              # Módulo de Gestão de Casal
 └── shared              # Utilitários globais, tratamento de erro comum
 ```
+
+### 3. Modelo de Domínio vs Entidades JPA
+Para eliminar o código repetitivo (*boilerplate*) sem violar a regra de não usar Lombok, adotamos a separação de responsabilidades no pacote `model`:
+*   **Domain (`model/domain`):** Representa o modelo de negócio puro usando Java **Records** (nativamente imutáveis, geram getters, constructors e equals/hashCode em uma linha). As validações e regras de negócio (*fail-fast*) residem aqui.
+*   **Entity (`model/entity`):** Classes anotadas com `@Entity` destinadas unicamente ao mapeamento físico do banco de dados (JPA/Hibernate).
+*   **Mapper (`model/mapper`):** Conversores estáticos simples que traduzem objetos de domínio em entidades e vice-versa.
 
 ### Frontend Directory Layout
 Organize a interface baseando-se em features sob `src/`:

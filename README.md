@@ -52,6 +52,11 @@ com.financeflow
 └── shared              # Utilitários compartilhados, exceções e configurações globais
 ```
 
+Dentro de cada módulo, a camada de dados é dividida para evitar código repetitivo e dependência de frameworks:
+*   `model/domain`: Representa os modelos de negócio puros mapeados como Java **Records** (imutáveis por padrão, sem Lombok).
+*   `model/entity`: Contém as entidades físicas mapeadas pelo JPA/Hibernate para persistência.
+*   `model/mapper`: Conversores simples que realizam a transição entre os modelos de domínio e persistência.
+
 ### Estrutura do Frontend (`/frontend`)
 ```text
 src/
