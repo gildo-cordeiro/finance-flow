@@ -1,0 +1,10 @@
+package com.financeflow.account.repository;
+
+import com.financeflow.account.model.entity.AccountEntity;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface SpringAccountRepository extends JpaRepository<AccountEntity, UUID> {
+    List<AccountEntity> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
+}
