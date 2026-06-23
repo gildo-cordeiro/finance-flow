@@ -6,6 +6,7 @@ import { Register } from '../features/auth/components/Register';
 import { Profile } from '../features/auth/components/Profile';
 import { Accounts } from '../features/accounts/components/Accounts';
 import { Transactions } from '../features/transactions/components/Transactions';
+import { Budget } from '../features/budget/components/Budget';
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
         path: '/transactions',
         element: <Transactions />,
       },
+      {
+        path: '/budget',
+        element: <Budget />,
+      },
     ],
   },
 ]);
@@ -42,3 +47,4 @@ const router = createBrowserRouter([
 export function AppRoutes() {
   return <RouterProvider router={router} />;
 }
+
