@@ -117,8 +117,9 @@ export function Transactions() {
     try {
       await createTransaction(payload);
       setIsTransModalOpen(false);
-    } catch (err: any) {
-      setTransFormError(err.message || 'Erro ao criar transação.');
+    } catch (err) {
+      const error = err as Error;
+      setTransFormError(error.message || 'Erro ao criar transação.');
     }
   };
 
@@ -159,8 +160,9 @@ export function Transactions() {
         await createCategory(payload);
       }
       setIsCatModalOpen(false);
-    } catch (err: any) {
-      setCatFormError(err.message || 'Erro ao salvar categoria.');
+    } catch (err) {
+      const error = err as Error;
+      setCatFormError(error.message || 'Erro ao salvar categoria.');
     }
   };
 
@@ -168,8 +170,9 @@ export function Transactions() {
     if (window.confirm('Tem certeza que deseja excluir esta categoria? As subcategorias e transações vinculadas serão afetadas.')) {
       try {
         await deleteCategory(id);
-      } catch (err: any) {
-        alert(err.message || 'Erro ao excluir categoria.');
+      } catch (err) {
+        const error = err as Error;
+        alert(error.message || 'Erro ao excluir categoria.');
       }
     }
   };

@@ -28,7 +28,7 @@ export function Login() {
     try {
       await login({ email, password });
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao realizar login. Verifique suas credenciais.');
     } finally {
