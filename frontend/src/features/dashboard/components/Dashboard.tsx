@@ -21,6 +21,13 @@ export function Dashboard() {
 
           <div className="flex items-center gap-4">
             <button
+              onClick={() => navigate('/accounts')}
+              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <Wallet className="w-4 h-4" />
+              <span className="hidden sm:inline">Minhas Contas</span>
+            </button>
+            <button
               onClick={() => navigate('/profile')}
               className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
             >
