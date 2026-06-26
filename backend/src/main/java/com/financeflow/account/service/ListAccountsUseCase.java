@@ -31,7 +31,8 @@ public class ListAccountsUseCase {
                 domain.balance(),
                 domain.creditLimit(),
                 domain.closingDay(),
-                domain.dueDay()
+                domain.dueDay(),
+                domain.associatedAccountId()
             ))
             .toList();
     }

@@ -31,7 +31,7 @@ class CreateAccountUseCaseTest {
     void shouldCreateCheckingAccountSuccessfully() {
         UUID userId = UUID.randomUUID();
         AccountRequest request = new AccountRequest(
-            "My Checking", AccountType.CHECKING, "Bank A", new BigDecimal("100.50"), null, null, null
+            "My Checking", AccountType.CHECKING, "Bank A", new BigDecimal("100.50"), null, null, null, null
         );
 
         when(accountRepository.save(any(AccountEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -50,7 +50,7 @@ class CreateAccountUseCaseTest {
     void shouldCreateCreditCardAccountSuccessfully() {
         UUID userId = UUID.randomUUID();
         AccountRequest request = new AccountRequest(
-            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20
+            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20, null
         );
 
         when(accountRepository.save(any(AccountEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -69,7 +69,7 @@ class CreateAccountUseCaseTest {
     void shouldThrowExceptionWhenCreditCardFieldsAreMissing() {
         UUID userId = UUID.randomUUID();
         AccountRequest request = new AccountRequest(
-            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"), null, null, null
+            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"), null, null, null, null
         );
 
         assertThatThrownBy(() -> createAccountUseCase.execute(userId, request))
@@ -81,11 +81,80 @@ class CreateAccountUseCaseTest {
     void shouldThrowExceptionWhenCheckingAccountHasCreditCardFields() {
         UUID userId = UUID.randomUUID();
         AccountRequest request = new AccountRequest(
-            "My Checking", AccountType.CHECKING, "Bank A", new BigDecimal("100.00"), new BigDecimal("500.00"), null, null
+            "My Checking", AccountType.CHECKING, "Bank A", new BigDecimal("100.00"), new BigDecimal("500.00"), null, null, null
         );
 
         assertThatThrownBy(() -> createAccountUseCase.execute(userId, request))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Credit card fields must be null");
+    }
+
+    @Test
+    void shouldCreateCreditCardWithAssociatedAccountSuccessfully() {
+        UUID userId = UUID.randomUUID();
+        UUID associatedAccountId = UUID.randomUUID();
+
+        AccountEntity checkingAccount = new AccountEntity(
+            associatedAccountId, userId, "Checking", AccountType.CHECKING, "Bank A",
+            new BigDecimal("1000.00"), null, null, null, null, null, null
+        );
+
+        when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(checkingAccount));
+        when(accountRepository.save(any(AccountEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AccountRequest request = new AccountRequest(
+            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"),
+            new BigDecimal("5000.00"), 10, 20, associatedAccountId
+        );
+
+        AccountResponse response = createAccountUseCase.execute(userId, request);
+
+        assertThat(response.id()).isNotNull();
+        assertThat(response.associatedAccountId()).isEqualTo(associatedAccountId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAssociatedAccountDoesNotBelongToUser() {
+        UUID userId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID associatedAccountId = UUID.randomUUID();
+
+        AccountEntity checkingAccount = new AccountEntity(
+            associatedAccountId, otherUserId, "Checking", AccountType.CHECKING, "Bank A",
+            new BigDecimal("1000.00"), null, null, null, null, null, null
+        );
+
+        when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(checkingAccount));
+
+        AccountRequest request = new AccountRequest(
+            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"),
+            new BigDecimal("5000.00"), 10, 20, associatedAccountId
+        );
+
+        assertThatThrownBy(() -> createAccountUseCase.execute(userId, request))
+            .isInstanceOf(com.financeflow.shared.exception.DomainException.class)
+            .hasMessageContaining("Associated account does not belong to the user");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAssociatedAccountIsCreditCard() {
+        UUID userId = UUID.randomUUID();
+        UUID associatedAccountId = UUID.randomUUID();
+
+        AccountEntity otherCard = new AccountEntity(
+            associatedAccountId, userId, "Other Card", AccountType.CREDIT_CARD, "Bank A",
+            new BigDecimal("0.00"), new BigDecimal("1000.00"), 10, 20, null, null, null
+        );
+
+        when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(otherCard));
+
+        AccountRequest request = new AccountRequest(
+            "My Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"),
+            new BigDecimal("5000.00"), 10, 20, associatedAccountId
+        );
+
+        assertThatThrownBy(() -> createAccountUseCase.execute(userId, request))
+            .isInstanceOf(com.financeflow.shared.exception.DomainException.class)
+            .hasMessageContaining("A credit card cannot be associated with another credit card");
     }
 }

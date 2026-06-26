@@ -52,7 +52,7 @@ class AccountControllerTest {
         UUID userId = UUID.randomUUID();
         AccountResponse response1 = new AccountResponse(
             UUID.randomUUID(), userId, "My Account", AccountType.CHECKING, "Bank A",
-            new BigDecimal("150.00"), null, null, null
+            new BigDecimal("150.00"), null, null, null, null
         );
 
         when(listAccountsUseCase.execute(userId)).thenReturn(List.of(response1));
@@ -72,11 +72,11 @@ class AccountControllerTest {
         UUID userId = UUID.randomUUID();
         AccountRequest request = new AccountRequest(
             "My New Card", AccountType.CREDIT_CARD, "Bank B", new BigDecimal("0.00"),
-            new BigDecimal("2000.00"), 10, 20
+            new BigDecimal("2000.00"), 10, 20, null
         );
         AccountResponse response = new AccountResponse(
             UUID.randomUUID(), userId, "My New Card", AccountType.CREDIT_CARD, "Bank B",
-            new BigDecimal("0.00"), new BigDecimal("2000.00"), 10, 20
+            new BigDecimal("0.00"), new BigDecimal("2000.00"), 10, 20, null
         );
 
         when(createAccountUseCase.execute(eq(userId), any(AccountRequest.class))).thenReturn(response);

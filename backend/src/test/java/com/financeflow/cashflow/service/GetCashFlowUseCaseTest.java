@@ -48,7 +48,7 @@ class GetCashFlowUseCaseTest {
         // Account with current balance = 100.00
         AccountEntity account = new AccountEntity(
             accountId1, userId, "Checking", AccountType.CHECKING, "Bank X",
-            new BigDecimal("100.00"), null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("100.00"), null, null, null, null, Instant.now(), Instant.now()
         );
 
         // Transactions:

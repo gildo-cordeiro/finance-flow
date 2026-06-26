@@ -13,5 +13,6 @@ public record AccountResponse(
     BigDecimal balance,
     BigDecimal creditLimit,
     Integer closingDay,
-    Integer dueDay
+    Integer dueDay,
+    UUID associatedAccountId
 ) {}

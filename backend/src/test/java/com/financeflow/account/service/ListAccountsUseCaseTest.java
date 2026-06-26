@@ -41,11 +41,11 @@ class ListAccountsUseCaseTest {
         UUID userId = UUID.randomUUID();
         AccountEntity account1 = new AccountEntity(
             UUID.randomUUID(), userId, "Checking Account", AccountType.CHECKING, "Bank A",
-            new BigDecimal("100.00"), null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("100.00"), null, null, null, null, Instant.now(), Instant.now()
         );
         AccountEntity account2 = new AccountEntity(
             UUID.randomUUID(), userId, "Credit Card", AccountType.CREDIT_CARD, "Bank B",
-            new BigDecimal("-50.00"), new BigDecimal("1000.00"), 5, 10, Instant.now(), Instant.now()
+            new BigDecimal("-50.00"), new BigDecimal("1000.00"), 5, 10, null, Instant.now(), Instant.now()
         );
 
         when(accountRepository.findAllByUserId(userId)).thenReturn(List.of(account1, account2));

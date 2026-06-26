@@ -43,6 +43,9 @@ public class AccountEntity {
     @Column(name = "due_day")
     private Integer dueDay;
 
+    @Column(name = "associated_account_id")
+    private UUID associatedAccountId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -53,7 +56,7 @@ public class AccountEntity {
         // JPA requirement
     }
 
-    public AccountEntity(UUID id, UUID userId, String name, AccountType type, String bank, BigDecimal balance, BigDecimal creditLimit, Integer closingDay, Integer dueDay, Instant createdAt, Instant updatedAt) {
+    public AccountEntity(UUID id, UUID userId, String name, AccountType type, String bank, BigDecimal balance, BigDecimal creditLimit, Integer closingDay, Integer dueDay, UUID associatedAccountId, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.userId = userId;
         this.name = name;
@@ -63,6 +66,7 @@ public class AccountEntity {
         this.creditLimit = creditLimit;
         this.closingDay = closingDay;
         this.dueDay = dueDay;
+        this.associatedAccountId = associatedAccountId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -153,5 +157,13 @@ public class AccountEntity {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UUID getAssociatedAccountId() {
+        return associatedAccountId;
+    }
+
+    public void setAssociatedAccountId(UUID associatedAccountId) {
+        this.associatedAccountId = associatedAccountId;
     }
 }
