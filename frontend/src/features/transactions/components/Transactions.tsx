@@ -9,7 +9,43 @@ import {
   Trash2, Edit3, X, Info, FolderPlus, 
   DollarSign, Eye, EyeOff, Tag
 } from 'lucide-react';
-import type { TransactionType, TransactionStatus, TransactionVisibility, Category } from '../types';
+import type { TransactionStatus, Category } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
+
+const transactionSchema = z.object({
+  type: z.enum(['EXPENSE', 'INCOME']),
+  amount: z.coerce.number().positive('O valor deve ser maior que zero'),
+  description: z.string().min(1, 'A descrição é obrigatória'),
+  accountId: z.string().min(1, 'A conta é obrigatória'),
+  categoryId: z.string().min(1, 'A categoria é obrigatória'),
+  dueDate: z.string().min(1, 'A data de vencimento é obrigatória'),
+  competenceDate: z.string().optional().or(z.literal('')),
+  paymentDate: z.string().optional().or(z.literal('')),
+  status: z.enum(['PLANNED', 'PENDING', 'PAID', 'OVERDUE']),
+  visibility: z.enum(['PERSONAL', 'SHARED']),
+}).refine((data) => {
+  if (data.status === 'PAID') {
+    return !!data.paymentDate;
+  }
+  return true;
+}, {
+  message: 'A data de pagamento é obrigatória quando o status é PAGO',
+  path: ['paymentDate'],
+});
+
+type TransactionFormData = z.infer<typeof transactionSchema>;
+
+const categorySchema = z.object({
+  name: z.string().min(1, 'O nome da categoria é obrigatório'),
+  parentId: z.string().optional().nullable().or(z.literal('')),
+});
+
+type CategoryFormData = z.infer<typeof categorySchema>;
 
 export function Transactions() {
   const { user } = useAuth();
@@ -35,29 +71,12 @@ export function Transactions() {
 
   // Modal State for Transaction
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<TransactionType>('EXPENSE');
-  const [accountId, setAccountId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [competenceDate, setCompetenceDate] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [paymentDate, setPaymentDate] = useState('');
-  const [status, setStatus] = useState<TransactionStatus>('PENDING');
-  const [visibility, setVisibility] = useState<TransactionVisibility>('PERSONAL');
   const [transFormError, setTransFormError] = useState<string | null>(null);
 
   // Modal State for Category
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
-  const [catName, setCatName] = useState('');
-  const [catParentId, setCatParentId] = useState('');
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [catFormError, setCatFormError] = useState<string | null>(null);
-
-  if (!user) return null;
-
-  // Selected account detail to help with card info
-  const selectedAccount = accounts.find(a => a.id === accountId);
 
   const getTodayStr = () => {
     const d = new Date();
@@ -66,52 +85,84 @@ export function Transactions() {
     return `${d.getFullYear()}-${month}-${day}`;
   };
 
+  // Transaction form configuration
+  const {
+    register: registerTrans,
+    handleSubmit: handleTransSubmit,
+    watch: watchTrans,
+    setValue: setValueTrans,
+    reset: resetTrans,
+    formState: { errors: errorsTrans },
+  } = useForm<TransactionFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(transactionSchema) as any,
+    defaultValues: {
+      type: 'EXPENSE',
+      amount: 0,
+      description: '',
+      accountId: '',
+      categoryId: '',
+      competenceDate: '',
+      dueDate: getTodayStr(),
+      paymentDate: '',
+      status: 'PENDING',
+      visibility: 'PERSONAL',
+    }
+  });
+
+  const watchedAccountId = watchTrans('accountId');
+  const watchedType = watchTrans('type');
+  const watchedStatus = watchTrans('status');
+
+  const selectedAccount = accounts.find(a => a.id === watchedAccountId);
+
+  // Category form configuration
+  const {
+    register: registerCat,
+    handleSubmit: handleCatSubmitForm,
+    reset: resetCat,
+    formState: { errors: errorsCat },
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: '',
+      parentId: '',
+    }
+  });
+
+  if (!user) return null;
+
   const handleOpenNewTrans = () => {
-    setDescription('');
-    setAmount('');
-    setType('EXPENSE');
-    setAccountId(accounts[0]?.id || '');
-    setCategoryId('');
-    setCompetenceDate('');
-    setDueDate(getTodayStr());
-    setPaymentDate('');
-    setStatus('PENDING');
-    setVisibility('PERSONAL');
+    resetTrans({
+      type: 'EXPENSE',
+      amount: 0,
+      description: '',
+      accountId: accounts[0]?.id || '',
+      categoryId: '',
+      competenceDate: '',
+      dueDate: getTodayStr(),
+      paymentDate: '',
+      status: 'PENDING',
+      visibility: 'PERSONAL',
+    });
     setTransFormError(null);
     setIsTransModalOpen(true);
   };
 
-  const handleTransSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTransFormSubmit = async (data: TransactionFormData) => {
     setTransFormError(null);
 
-    if (!description.trim() || !amount || !accountId || !categoryId || !dueDate) {
-      setTransFormError('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setTransFormError('O valor deve ser maior que zero.');
-      return;
-    }
-
-    if (status === 'PAID' && !paymentDate) {
-      setTransFormError('A data de pagamento é obrigatória quando o status é PAGO.');
-      return;
-    }
-
     const payload = {
-      accountId,
-      categoryId,
-      description,
-      amount: numAmount,
-      type,
-      competenceDate: competenceDate || null,
-      dueDate,
-      paymentDate: status === 'PAID' ? paymentDate : null,
-      status,
-      visibility
+      accountId: data.accountId,
+      categoryId: data.categoryId,
+      description: data.description,
+      amount: data.amount,
+      type: data.type,
+      competenceDate: data.competenceDate || null,
+      dueDate: data.dueDate,
+      paymentDate: data.status === 'PAID' ? data.paymentDate || null : null,
+      status: data.status,
+      visibility: data.visibility
     };
 
     try {
@@ -125,33 +176,31 @@ export function Transactions() {
 
   const handleOpenNewCat = (parentId: string = '') => {
     setEditingCategory(null);
-    setCatName('');
-    setCatParentId(parentId);
+    resetCat({
+      name: '',
+      parentId: parentId,
+    });
     setCatFormError(null);
     setIsCatModalOpen(true);
   };
 
   const handleOpenEditCat = (cat: Category) => {
     setEditingCategory(cat);
-    setCatName(cat.name);
-    setCatParentId(cat.parentId || '');
+    resetCat({
+      name: cat.name,
+      parentId: cat.parentId || '',
+    });
     setCatFormError(null);
     setIsCatModalOpen(true);
   };
 
-  const handleCatSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCatFormSubmit = async (data: CategoryFormData) => {
     setCatFormError(null);
-
-    if (!catName.trim()) {
-      setCatFormError('O nome da categoria é obrigatório.');
-      return;
-    }
 
     try {
       const payload = {
-        name: catName,
-        parentId: catParentId || null
+        name: data.name,
+        parentId: data.parentId || null
       };
 
       if (editingCategory) {
@@ -244,7 +293,7 @@ export function Transactions() {
 
           <button
             onClick={handleOpenNewTrans}
-            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all flex items-center gap-2"
+            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Lançamento</span>
@@ -333,7 +382,7 @@ export function Transactions() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
-                    <thead>
+                     <thead>
                       <tr className="border-b border-zinc-800 text-zinc-400 text-xs font-semibold uppercase tracking-wider">
                         <th className="p-4">Descrição</th>
                         <th className="p-4">Conta</th>
@@ -525,7 +574,7 @@ export function Transactions() {
               </button>
             </div>
 
-            <form onSubmit={handleTransSubmit} className="space-y-4">
+            <form onSubmit={handleTransSubmit(handleTransFormSubmit)} className="space-y-4">
               {transFormError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -539,78 +588,66 @@ export function Transactions() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => setType('EXPENSE')}
-                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${type === 'EXPENSE' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
+                      onClick={() => setValueTrans('type', 'EXPENSE')}
+                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${watchedType === 'EXPENSE' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
                     >
                       Despesa
                     </button>
                     <button
                       type="button"
-                      onClick={() => setType('INCOME')}
-                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
+                      onClick={() => setValueTrans('type', 'INCOME')}
+                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${watchedType === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
                     >
                       Receita
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Valor</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Descrição</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Supermercado do mês"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
+                <Input
+                  type="number"
+                  step="0.01"
+                  label="Valor"
+                  placeholder="0,00"
+                  error={errorsTrans.amount?.message}
+                  {...registerTrans('amount')}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Conta Origem</label>
-                  <select
-                    value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="">Selecione...</option>
-                    {accounts.map(a => (
-                      <option key={a.id} value={a.id}>{a.name} ({a.bank})</option>
-                    ))}
-                  </select>
-                </div>
+              <Input
+                type="text"
+                label="Descrição"
+                placeholder="Ex: Supermercado do mês"
+                error={errorsTrans.description?.message}
+                {...registerTrans('description')}
+              />
 
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Categoria</label>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="">Selecione...</option>
-                    {rootCategories.map(parent => (
-                      <React.Fragment key={parent.id}>
-                        <option value={parent.id} className="font-bold text-violet-400" disabled>{parent.name}</option>
-                        {getSubcategories(parent.id).map(sub => (
-                          <option key={sub.id} value={sub.id}>&nbsp;&nbsp;&nbsp;&nbsp;{sub.name}</option>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </select>
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  label="Conta Origem"
+                  error={errorsTrans.accountId?.message}
+                  {...registerTrans('accountId')}
+                >
+                  <option value="">Selecione...</option>
+                  {accounts.map(a => (
+                    <option key={a.id} value={a.id}>{a.name} ({a.bank})</option>
+                  ))}
+                </Select>
+
+                <Select
+                  label="Categoria"
+                  error={errorsTrans.categoryId?.message}
+                  {...registerTrans('categoryId')}
+                >
+                  <option value="">Selecione...</option>
+                  {rootCategories.map(parent => (
+                    <React.Fragment key={parent.id}>
+                      <option value={parent.id} className="font-bold text-violet-400" disabled>{parent.name}</option>
+                      {getSubcategories(parent.id).map(sub => (
+                        <option key={sub.id} value={sub.id}>&nbsp;&nbsp;&nbsp;&nbsp;{sub.name}</option>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </Select>
               </div>
 
               {selectedAccount?.type === 'CREDIT_CARD' && (
@@ -624,75 +661,58 @@ export function Transactions() {
               )}
 
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Vencimento</label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  />
-                </div>
+                <Input
+                  type="date"
+                  label="Vencimento"
+                  error={errorsTrans.dueDate?.message}
+                  {...registerTrans('dueDate')}
+                />
 
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
-                    Competência
-                    <span title="Mês do orçamento deste gasto" className="cursor-help text-zinc-500 font-normal">?</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={competenceDate}
-                    onChange={(e) => setCompetenceDate(e.target.value)}
-                    placeholder="Sugerido automático"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  />
-                </div>
+                <Input
+                  type="date"
+                  label="Competência"
+                  error={errorsTrans.competenceDate?.message}
+                  {...registerTrans('competenceDate')}
+                />
 
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Data Pagamento</label>
-                  <input
-                    type="date"
-                    value={paymentDate}
-                    onChange={(e) => setPaymentDate(e.target.value)}
-                    disabled={status !== 'PAID'}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  />
-                </div>
+                <Input
+                  type="date"
+                  label="Data Pagamento"
+                  error={errorsTrans.paymentDate?.message}
+                  disabled={watchedStatus !== 'PAID'}
+                  {...registerTrans('paymentDate')}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Status</label>
-                  <select
-                    value={status}
-                    onChange={(e) => {
-                      setStatus(e.target.value as TransactionStatus);
-                      if (e.target.value !== 'PAID') {
-                        setPaymentDate('');
-                      } else {
-                        setPaymentDate(getTodayStr());
-                      }
-                    }}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="PLANNED">Planejado</option>
-                    <option value="PENDING">Pendente</option>
-                    <option value="PAID">Pago</option>
-                    <option value="OVERDUE">Atrasado</option>
-                  </select>
-                </div>
+                <Select
+                  label="Status"
+                  error={errorsTrans.status?.message}
+                  value={watchedStatus}
+                  onChange={(e) => {
+                    const newStatus = e.target.value as TransactionStatus;
+                    setValueTrans('status', newStatus);
+                    if (newStatus !== 'PAID') {
+                      setValueTrans('paymentDate', '');
+                    } else {
+                      setValueTrans('paymentDate', getTodayStr());
+                    }
+                  }}
+                >
+                  <option value="PLANNED">Planejado</option>
+                  <option value="PENDING">Pendente</option>
+                  <option value="PAID">Pago</option>
+                  <option value="OVERDUE">Atrasado</option>
+                </Select>
 
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Visibilidade</label>
-                  <select
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as TransactionVisibility)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="PERSONAL">Pessoal (Privado)</option>
-                    <option value="SHARED">Compartilhado (Casal)</option>
-                  </select>
-                </div>
+                <Select
+                  label="Visibilidade"
+                  error={errorsTrans.visibility?.message}
+                  {...registerTrans('visibility')}
+                >
+                  <option value="PERSONAL">Pessoal (Privado)</option>
+                  <option value="SHARED">Compartilhado (Casal)</option>
+                </Select>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4 mt-6">
@@ -703,13 +723,12 @@ export function Transactions() {
                 >
                   Cancelar
                 </button>
-                <button
+                <Button
                   type="submit"
-                  disabled={isTransCreating}
-                  className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold text-sm rounded-xl px-5 py-2 transition-all disabled:opacity-50"
+                  loading={isTransCreating}
                 >
-                  {isTransCreating ? 'Salvando...' : 'Salvar Lançamento'}
-                </button>
+                  Salvar Lançamento
+                </Button>
               </div>
             </form>
           </div>
@@ -730,7 +749,7 @@ export function Transactions() {
               </button>
             </div>
 
-            <form onSubmit={handleCatSubmit} className="space-y-4">
+            <form onSubmit={handleCatSubmitForm(handleCatFormSubmit)} className="space-y-4">
               {catFormError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -738,31 +757,25 @@ export function Transactions() {
                 </div>
               )}
 
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Nome da Categoria</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Uber, Feira, Energia..."
-                  value={catName}
-                  onChange={(e) => setCatName(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                />
-              </div>
+              <Input
+                type="text"
+                label="Nome da Categoria"
+                placeholder="Ex: Uber, Feira, Energia..."
+                error={errorsCat.name?.message}
+                {...registerCat('name')}
+              />
 
               {!editingCategory && (
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Categoria Pai (Opcional)</label>
-                  <select
-                    value={catParentId}
-                    onChange={(e) => setCatParentId(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="">Nenhuma (Categoria Principal)</option>
-                    {rootCategories.map(parent => (
-                      <option key={parent.id} value={parent.id}>{parent.name}</option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Categoria Pai (Opcional)"
+                  error={errorsCat.parentId?.message}
+                  {...registerCat('parentId')}
+                >
+                  <option value="">Nenhuma (Categoria Principal)</option>
+                  {rootCategories.map(parent => (
+                    <option key={parent.id} value={parent.id}>{parent.name}</option>
+                  ))}
+                </Select>
               )}
 
               <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4 mt-6">
@@ -773,12 +786,11 @@ export function Transactions() {
                 >
                   Cancelar
                 </button>
-                <button
+                <Button
                   type="submit"
-                  className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold text-sm rounded-xl px-5 py-2 transition-all"
                 >
                   Salvar
-                </button>
+                </Button>
               </div>
             </form>
           </div>

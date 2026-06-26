@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { User, Lock, Mail, Globe, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 import type { ApiError } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 
 const TIMEZONES = [
   { value: 'America/Sao_Paulo', label: 'Brasília (GMT-3)' },
@@ -20,45 +26,45 @@ const CURRENCIES = [
   { value: 'GBP', label: 'Pound (£)' }
 ];
 
+const registerSchema = z.object({
+  name: z.string().min(1, 'O nome completo é obrigatório'),
+  email: z.string().min(1, 'O e-mail é obrigatório').email('E-mail inválido'),
+  password: z.string().min(6, 'A senha deve conter no mínimo 6 caracteres'),
+  currency: z.string().min(1, 'A moeda é obrigatória'),
+  timeZone: z.string().min(1, 'O fuso horário é obrigatório'),
+  budgetClosingDay: z.coerce.number().min(1, 'Dia de fechamento inválido (mínimo 1)').max(31, 'Dia de fechamento inválido (máximo 31)'),
+});
+
+type RegisterFormData = z.infer<typeof registerSchema>;
+
 export function Register() {
-  const { register } = useAuth();
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [timeZone, setTimeZone] = useState('America/Sao_Paulo');
-  const [currency, setCurrency] = useState('BRL');
-  const [budgetClosingDay, setBudgetClosingDay] = useState(1);
-
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !password || !timeZone || !currency || !budgetClosingDay) {
-      setError('Por favor, preencha todos os campos.');
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(registerSchema) as any,
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      currency: 'BRL',
+      timeZone: 'America/Sao_Paulo',
+      budgetClosingDay: 1,
+    },
+  });
 
-    if (password.length < 6) {
-      setError('A senha deve conter no mínimo 6 caracteres.');
-      return;
-    }
-
-    setIsLoading(true);
+  const onSubmit = async (data: RegisterFormData) => {
     setError(null);
-
     try {
-      await register({
-        name,
-        email,
-        password,
-        timeZone,
-        currency,
-        budgetClosingDay: Number(budgetClosingDay)
-      });
+      await registerUser(data);
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');
@@ -66,8 +72,6 @@ export function Register() {
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao registrar conta. Tente novamente.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -96,124 +100,86 @@ export function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Nome Completo</label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <input
-                      type="text"
-                      required
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                      placeholder="Gildo Duarte"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+                <Input
+                  type="text"
+                  label="Nome Completo"
+                  placeholder="Gildo Duarte"
+                  error={errors.name?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<User className="w-5 h-5" />}
+                  {...register('name')}
+                />
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">E-mail</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <input
-                      type="email"
-                      required
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                      placeholder="seu-email@dominio.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+                <Input
+                  type="email"
+                  label="E-mail"
+                  placeholder="seu-email@dominio.com"
+                  error={errors.email?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<Mail className="w-5 h-5" />}
+                  {...register('email')}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Senha</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <input
-                      type="password"
-                      required
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                      placeholder="Mínimo 6 caracteres"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+                <Input
+                  type="password"
+                  label="Senha"
+                  placeholder="Mínimo 6 caracteres"
+                  error={errors.password?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<Lock className="w-5 h-5" />}
+                  {...register('password')}
+                />
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Moeda</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <select
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all appearance-none cursor-pointer"
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      disabled={isLoading}
-                    >
-                      {CURRENCIES.map(c => (
-                        <option key={c.value} value={c.value} className="bg-zinc-900">{c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                <Select
+                  label="Moeda"
+                  error={errors.currency?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<DollarSign className="w-5 h-5" />}
+                  {...register('currency')}
+                >
+                  {CURRENCIES.map(c => (
+                    <option key={c.value} value={c.value} className="bg-zinc-900">{c.label}</option>
+                  ))}
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Fuso Horário</label>
-                  <div className="relative">
-                    <Globe className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <select
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all appearance-none cursor-pointer"
-                      value={timeZone}
-                      onChange={(e) => setTimeZone(e.target.value)}
-                      disabled={isLoading}
-                    >
-                      {TIMEZONES.map(t => (
-                        <option key={t.value} value={t.value} className="bg-zinc-900">{t.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                <Select
+                  label="Fuso Horário"
+                  error={errors.timeZone?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<Globe className="w-5 h-5" />}
+                  {...register('timeZone')}
+                >
+                  {TIMEZONES.map(t => (
+                    <option key={t.value} value={t.value} className="bg-zinc-900">{t.label}</option>
+                  ))}
+                </Select>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Dia de Fechamento do Orçamento</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      max="31"
-                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="Ex: 1"
-                      value={budgetClosingDay}
-                      onChange={(e) => setBudgetClosingDay(Number(e.target.value))}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+                <Input
+                  type="number"
+                  label="Fechamento do Orçamento (Dia)"
+                  placeholder="Ex: 1"
+                  min="1"
+                  max="31"
+                  error={errors.budgetClosingDay?.message}
+                  disabled={isSubmitting}
+                  leftIcon={<Calendar className="w-5 h-5" />}
+                  {...register('budgetClosingDay')}
+                />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium rounded-xl py-2.5 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={isSubmitting}
+                className="w-full mt-2"
               >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  'Registrar Conta'
-                )}
-              </button>
+                Registrar Conta
+              </Button>
             </form>
 
             <div className="mt-8 text-center text-sm text-zinc-500">

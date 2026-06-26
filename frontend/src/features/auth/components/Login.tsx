@@ -1,38 +1,47 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Lock, Mail, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import type { ApiError } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '../../../components/ui/Input';
+import { Button } from '../../../components/ui/Button';
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'O e-mail é obrigatório').email('E-mail inválido'),
+  password: z.string().min(1, 'A senha é obrigatória'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Por favor, preencha todos os campos.');
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-    setIsLoading(true);
+  const onSubmit = async (data: LoginFormData) => {
     setError(null);
-
     try {
-      await login({ email, password });
+      await login(data);
       navigate('/');
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao realizar login. Verifique suas credenciais.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -54,60 +63,44 @@ export function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">E-mail</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-              <input
-                type="email"
-                required
-                className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                placeholder="seu-email@dominio.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <Input
+            type="email"
+            label="E-mail"
+            placeholder="seu-email@dominio.com"
+            error={errors.email?.message}
+            disabled={isSubmitting}
+            leftIcon={<Mail className="w-5 h-5" />}
+            {...register('email')}
+          />
 
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Senha</label>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-3 w-5 h-5 text-zinc-500" />
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 pl-11 pr-11 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            label="Senha"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            disabled={isSubmitting}
+            leftIcon={<Lock className="w-5 h-5" />}
+            rightIcon={
               <button
                 type="button"
-                className="absolute right-3 top-3 text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="text-zinc-500 hover:text-zinc-300 transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
-            </div>
-          </div>
+            }
+            {...register('password')}
+          />
 
-          <button
+          <Button
             type="submit"
-            disabled={isLoading}
-            className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium rounded-xl py-2.5 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={isSubmitting}
+            className="w-full mt-2"
           >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              'Entrar'
-            )}
-          </button>
+            Entrar
+          </Button>
         </form>
 
         <div className="mt-8 text-center text-sm text-zinc-500">

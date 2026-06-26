@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../hooks/useAccounts';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,48 @@ import {
   HelpCircle, AlertTriangle, X 
 } from 'lucide-react';
 import type { AccountType, AccountPayload } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
+
+const accountSchema = z.object({
+  name: z.string().min(1, 'Nome da conta é obrigatório'),
+  bank: z.string().min(1, 'Banco/Instituição é obrigatório'),
+  type: z.enum(['CHECKING', 'SAVINGS', 'CREDIT_CARD']),
+  balance: z.coerce.number({ message: 'Saldo inválido' }),
+  creditLimit: z.coerce.number().optional(),
+  closingDay: z.coerce.number().optional(),
+  dueDay: z.coerce.number().optional(),
+}).refine((data) => {
+  if (data.type === 'CREDIT_CARD') {
+    return data.creditLimit !== undefined && data.creditLimit >= 0;
+  }
+  return true;
+}, {
+  message: 'Limite de crédito inválido',
+  path: ['creditLimit'],
+}).refine((data) => {
+  if (data.type === 'CREDIT_CARD') {
+    return data.closingDay !== undefined && data.closingDay >= 1 && data.closingDay <= 31;
+  }
+  return true;
+}, {
+  message: 'Dia de fechamento deve ser entre 1 e 31',
+  path: ['closingDay'],
+}).refine((data) => {
+  if (data.type === 'CREDIT_CARD') {
+    return data.dueDay !== undefined && data.dueDay >= 1 && data.dueDay <= 31;
+  }
+  return true;
+}, {
+  message: 'Dia de vencimento deve ser entre 1 e 31',
+  path: ['dueDay'],
+});
+
+type AccountFormData = z.infer<typeof accountSchema>;
 
 export function Accounts() {
   const { user } = useAuth();
@@ -14,73 +56,52 @@ export function Accounts() {
   const navigate = useNavigate();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [bank, setBank] = useState('');
-  const [type, setType] = useState<AccountType>('CHECKING');
-  const [balance, setBalance] = useState('');
-  const [creditLimit, setCreditLimit] = useState('');
-  const [closingDay, setClosingDay] = useState('');
-  const [dueDay, setDueDay] = useState('');
-  
   const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<AccountFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(accountSchema) as any,
+    defaultValues: {
+      name: '',
+      bank: '',
+      type: 'CHECKING',
+      balance: 0,
+      creditLimit: undefined,
+      closingDay: undefined,
+      dueDay: undefined,
+    },
+  });
+
+  const watchedType = watch('type');
 
   if (!user) return null;
 
   const resetForm = () => {
-    setName('');
-    setBank('');
-    setType('CHECKING');
-    setBalance('');
-    setCreditLimit('');
-    setClosingDay('');
-    setDueDay('');
+    reset();
     setFormError(null);
     setIsFormOpen(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: AccountFormData) => {
     setFormError(null);
 
-    if (!name.trim() || !bank.trim() || !balance) {
-      setFormError('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    const numBalance = parseFloat(balance);
-    if (isNaN(numBalance)) {
-      setFormError('Saldo inválido.');
-      return;
-    }
-
     const payload: AccountPayload = {
-      name,
-      type,
-      bank,
-      balance: numBalance,
+      name: data.name,
+      type: data.type,
+      bank: data.bank,
+      balance: data.balance,
     };
 
-    if (type === 'CREDIT_CARD') {
-      const numLimit = parseFloat(creditLimit);
-      const intClosing = parseInt(closingDay);
-      const intDue = parseInt(dueDay);
-
-      if (isNaN(numLimit) || numLimit < 0) {
-        setFormError('Limite de crédito inválido.');
-        return;
-      }
-      if (isNaN(intClosing) || intClosing < 1 || intClosing > 31) {
-        setFormError('Dia do fechamento deve ser entre 1 e 31.');
-        return;
-      }
-      if (isNaN(intDue) || intDue < 1 || intDue > 31) {
-        setFormError('Dia do vencimento deve ser entre 1 e 31.');
-        return;
-      }
-
-      payload.creditLimit = numLimit;
-      payload.closingDay = intClosing;
-      payload.dueDay = intDue;
+    if (data.type === 'CREDIT_CARD') {
+      payload.creditLimit = data.creditLimit;
+      payload.closingDay = data.closingDay;
+      payload.dueDay = data.dueDay;
     }
 
     try {
@@ -131,7 +152,7 @@ export function Accounts() {
 
           <button
             onClick={() => setIsFormOpen(true)}
-            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all flex items-center gap-2"
+            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Conta</span>
@@ -265,121 +286,94 @@ export function Accounts() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Nome */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Nome da Conta *</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                    placeholder="Ex: Minha Conta Corrente"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={isCreating}
-                  />
-                </div>
+                <Input
+                  type="text"
+                  label="Nome da Conta *"
+                  placeholder="Ex: Minha Conta Corrente"
+                  error={errors.name?.message}
+                  disabled={isCreating}
+                  {...register('name')}
+                />
 
                 {/* Instituição Financeira */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Banco / Instituição *</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                    placeholder="Ex: Nubank, Itaú..."
-                    value={bank}
-                    onChange={(e) => setBank(e.target.value)}
-                    disabled={isCreating}
-                  />
-                </div>
+                <Input
+                  type="text"
+                  label="Banco / Instituição *"
+                  placeholder="Ex: Nubank, Itaú..."
+                  error={errors.bank?.message}
+                  disabled={isCreating}
+                  {...register('bank')}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Tipo de Conta */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Tipo *</label>
-                  <select
-                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all"
-                    value={type}
-                    onChange={(e) => setType(e.target.value as AccountType)}
-                    disabled={isCreating}
-                  >
-                    <option value="CHECKING">Conta Corrente</option>
-                    <option value="SAVINGS">Poupança</option>
-                    <option value="CREDIT_CARD">Cartão de Crédito</option>
-                  </select>
-                </div>
+                <Select
+                  label="Tipo *"
+                  error={errors.type?.message}
+                  disabled={isCreating}
+                  {...register('type')}
+                >
+                  <option value="CHECKING" className="bg-zinc-900">Conta Corrente</option>
+                  <option value="SAVINGS" className="bg-zinc-900">Poupança</option>
+                  <option value="CREDIT_CARD" className="bg-zinc-900">Cartão de Crédito</option>
+                </Select>
 
                 {/* Saldo Inicial */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Saldo Inicial ({user.currency}) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                    placeholder="0.00"
-                    value={balance}
-                    onChange={(e) => setBalance(e.target.value)}
-                    disabled={isCreating}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  label={`Saldo Inicial (${user.currency}) *`}
+                  placeholder="0.00"
+                  error={errors.balance?.message}
+                  disabled={isCreating}
+                  {...register('balance')}
+                />
               </div>
 
               {/* Credit Card Specific Fields */}
-              {type === 'CREDIT_CARD' && (
+              {watchedType === 'CREDIT_CARD' && (
                 <div className="border-t border-zinc-800/80 pt-4 mt-2 space-y-4 animate-in slide-in-from-top-2 duration-200">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-violet-400">Parâmetros do Cartão de Crédito</h4>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Limite de Crédito */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Limite ({user.currency}) *</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        required
-                        className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                        placeholder="1000.00"
-                        value={creditLimit}
-                        onChange={(e) => setCreditLimit(e.target.value)}
-                        disabled={isCreating}
-                      />
-                    </div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      label={`Limite (${user.currency}) *`}
+                      placeholder="1000.00"
+                      error={errors.creditLimit?.message}
+                      disabled={isCreating}
+                      {...register('creditLimit')}
+                    />
 
                     {/* Dia Fechamento */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Fechamento (Dia) *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="31"
-                        required
-                        className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                        placeholder="Ex: 5"
-                        value={closingDay}
-                        onChange={(e) => setClosingDay(e.target.value)}
-                        disabled={isCreating}
-                      />
-                    </div>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      label="Fechamento (Dia) *"
+                      placeholder="Ex: 5"
+                      error={errors.closingDay?.message}
+                      disabled={isCreating}
+                      {...register('closingDay')}
+                    />
 
                     {/* Dia Vencimento */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Vencimento (Dia) *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="31"
-                        required
-                        className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition-all placeholder:text-zinc-600"
-                        placeholder="Ex: 15"
-                        value={dueDay}
-                        onChange={(e) => setDueDay(e.target.value)}
-                        disabled={isCreating}
-                      />
-                    </div>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      label="Vencimento (Dia) *"
+                      placeholder="Ex: 15"
+                      error={errors.dueDay?.message}
+                      disabled={isCreating}
+                      {...register('dueDay')}
+                    />
                   </div>
                 </div>
               )}
@@ -394,17 +388,13 @@ export function Accounts() {
                 >
                   Cancelar
                 </button>
-                <button
+                <Button
                   type="submit"
-                  disabled={isCreating}
-                  className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium rounded-xl py-2.5 px-6 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all flex items-center justify-center disabled:opacity-50 text-sm"
+                  loading={isCreating}
+                  className="px-6"
                 >
-                  {isCreating ? (
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    'Salvar Conta'
-                  )}
-                </button>
+                  Salvar Conta
+                </Button>
               </div>
             </form>
           </div>
