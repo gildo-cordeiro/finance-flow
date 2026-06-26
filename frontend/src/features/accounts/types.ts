@@ -10,6 +10,7 @@ export interface Account {
   creditLimit?: number | null;
   closingDay?: number | null;
   dueDay?: number | null;
+  associatedAccountId?: string | null;
 }
 
 export interface AccountPayload {
@@ -20,4 +21,5 @@ export interface AccountPayload {
   creditLimit?: number | null;
   closingDay?: number | null;
   dueDay?: number | null;
+  associatedAccountId?: string | null;
 }

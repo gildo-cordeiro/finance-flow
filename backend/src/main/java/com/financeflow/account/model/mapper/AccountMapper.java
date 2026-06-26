@@ -23,6 +23,7 @@ public final class AccountMapper {
             entity.getCreditLimit(),
             entity.getClosingDay(),
             entity.getDueDay(),
+            entity.getAssociatedAccountId(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -42,6 +43,7 @@ public final class AccountMapper {
             domain.creditLimit(),
             domain.closingDay(),
             domain.dueDay(),
+            domain.associatedAccountId(),
             domain.createdAt(),
             domain.updatedAt()
         );

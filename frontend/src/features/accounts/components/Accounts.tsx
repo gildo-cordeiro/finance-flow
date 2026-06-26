@@ -22,6 +22,7 @@ const accountSchema = z.object({
   creditLimit: z.coerce.number().optional(),
   closingDay: z.coerce.number().optional(),
   dueDay: z.coerce.number().optional(),
+  associatedAccountId: z.string().optional().nullable(),
 }).refine((data) => {
   if (data.type === 'CREDIT_CARD') {
     return data.creditLimit !== undefined && data.creditLimit >= 0;
@@ -75,12 +76,16 @@ export function Accounts() {
       creditLimit: undefined,
       closingDay: undefined,
       dueDay: undefined,
+      associatedAccountId: '',
     },
   });
 
   const watchedType = watch('type');
 
   if (!user) return null;
+
+  const bankAccounts = accounts.filter((acc) => acc.type === 'CHECKING' || acc.type === 'SAVINGS');
+  const creditCards = accounts.filter((acc) => acc.type === 'CREDIT_CARD');
 
   const resetForm = () => {
     reset();
@@ -102,6 +107,7 @@ export function Accounts() {
       payload.creditLimit = data.creditLimit;
       payload.closingDay = data.closingDay;
       payload.dueDay = data.dueDay;
+      payload.associatedAccountId = data.associatedAccountId || null;
     }
 
     try {
@@ -193,70 +199,146 @@ export function Accounts() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {accounts.map((account) => (
-                  <div key={account.id} className="auth-card p-6 flex flex-col justify-between hover:border-violet-500/30 transition-all group">
-                    <div className="space-y-4">
-                      {/* Top Header Card */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 group-hover:border-zinc-700 transition-all">
-                            {getAccountIcon(account.type)}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-white tracking-tight">{account.name}</h4>
-                            <p className="text-xs text-zinc-400 mt-0.5">{account.bank}</p>
-                          </div>
-                        </div>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400 capitalize">
-                          {account.type === 'CREDIT_CARD' ? 'Cartão' : account.type === 'SAVINGS' ? 'Poupança' : 'Corrente'}
-                        </span>
-                      </div>
+              <div className="space-y-12">
+                {/* Contas Bancárias */}
+                {bankAccounts.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-zinc-350 tracking-tight flex items-center gap-2">
+                      <Landmark className="w-5 h-5 text-violet-400" />
+                      <span>Contas Bancárias</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {bankAccounts.map((account) => {
+                        const associatedCardsSum = creditCards
+                          .filter((card) => card.associatedAccountId === account.id)
+                          .reduce((sum, card) => sum + (card.balance || 0), 0);
+                        const projectedBalance = account.balance + associatedCardsSum;
 
-                      {/* Main Balance */}
-                      <div className="pt-2">
-                        <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Saldo Atual</span>
-                        <p className={`text-2xl font-bold tracking-tight mt-0.5 ${account.balance < 0 ? 'text-red-400' : 'text-zinc-100'}`}>
-                          {formatCurrency(account.balance)}
-                        </p>
-                      </div>
+                        return (
+                          <div key={account.id} className="auth-card p-6 flex flex-col justify-between hover:border-violet-500/30 transition-all group">
+                            <div className="space-y-4">
+                              {/* Top Header Card */}
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 group-hover:border-zinc-700 transition-all">
+                                    {getAccountIcon(account.type)}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-white tracking-tight">{account.name}</h4>
+                                    <p className="text-xs text-zinc-400 mt-0.5">{account.bank}</p>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400 capitalize">
+                                  {account.type === 'SAVINGS' ? 'Poupança' : 'Corrente'}
+                                </span>
+                              </div>
+
+                              {/* Main Balance */}
+                              <div className="pt-2 space-y-3">
+                                <div>
+                                  <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Saldo Atual</span>
+                                  <p className={`text-2xl font-bold tracking-tight mt-0.5 ${account.balance < 0 ? 'text-red-400' : 'text-zinc-100'}`}>
+                                    {formatCurrency(account.balance)}
+                                  </p>
+                                </div>
+
+                                {associatedCardsSum < 0 && (
+                                  <div className="pt-3 border-t border-zinc-805 flex flex-col gap-1">
+                                    <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Saldo Projetado (Livre)</span>
+                                    <p className={`text-lg font-bold tracking-tight ${projectedBalance < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                      {formatCurrency(projectedBalance)}
+                                    </p>
+                                    <span className="text-[10px] text-zinc-500">
+                                      Deduzindo {formatCurrency(Math.abs(associatedCardsSum))} em faturas vinculadas
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-
-                    {/* Credit Card Details */}
-                    {account.type === 'CREDIT_CARD' && (
-                      <div className="border-t border-zinc-800/80 pt-4 mt-6 space-y-3 text-xs text-zinc-400">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Total:</span>
-                            <span className="font-semibold text-zinc-300">{formatCurrency(account.creditLimit || 0)}</span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Ciclo de Fatura:</span>
-                            <span className="font-semibold text-zinc-300">Dia {account.closingDay} ao {account.dueDay}</span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800/30">
-                          <div>
-                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Utilizado:</span>
-                            <span className="font-semibold text-red-400">{formatCurrency(Math.abs(account.balance))}</span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Disponível:</span>
-                            <span className="font-semibold text-emerald-400">{formatCurrency((account.creditLimit || 0) + account.balance)}</span>
-                          </div>
-                        </div>
-                        <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2 overflow-hidden">
-                          <div 
-                            className="bg-violet-600 h-1.5 rounded-full transition-all" 
-                            style={{ 
-                              width: `${Math.min(100, Math.max(0, (Math.abs(account.balance) / (account.creditLimit || 1)) * 100))}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                ))}
+                )}
+
+                {/* Cartões de Crédito */}
+                {creditCards.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-zinc-350 tracking-tight flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-blue-400" />
+                      <span>Cartões de Crédito</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {creditCards.map((card) => {
+                        const payingAccount = bankAccounts.find((acc) => acc.id === card.associatedAccountId);
+                        return (
+                          <div key={card.id} className="relative bg-gradient-to-br from-zinc-900 to-indigo-950/20 p-6 rounded-2xl border border-zinc-800 hover:border-violet-500/30 transition-all flex flex-col justify-between group">
+                            <div className="space-y-4">
+                              {/* Top Header Card */}
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 group-hover:border-zinc-700 transition-all">
+                                    {getAccountIcon(card.type)}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-white tracking-tight">{card.name}</h4>
+                                    <p className="text-xs text-zinc-400 mt-0.5">{card.bank}</p>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400">
+                                  Cartão
+                                </span>
+                              </div>
+
+                              {/* Main Balance */}
+                              <div className="pt-2">
+                                <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Fatura Atual</span>
+                                <p className={`text-2xl font-bold tracking-tight mt-0.5 ${card.balance < 0 ? 'text-red-400' : 'text-zinc-100'}`}>
+                                  {formatCurrency(Math.abs(card.balance))}
+                                </p>
+                              </div>
+
+                              {/* Credit Card Details */}
+                              <div className="border-t border-zinc-800/80 pt-4 space-y-3 text-xs text-zinc-400">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Total:</span>
+                                    <span className="font-semibold text-zinc-300">{formatCurrency(card.creditLimit || 0)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Ciclo de Fatura:</span>
+                                    <span className="font-semibold text-zinc-300">Dia {card.closingDay} ao {card.dueDay}</span>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800/30">
+                                  <div>
+                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Disponível:</span>
+                                    <span className="font-semibold text-emerald-400">{formatCurrency((card.creditLimit || 0) + card.balance)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Conta de Pagamento:</span>
+                                    <span className="font-semibold text-violet-400 truncate block">
+                                      {payingAccount ? payingAccount.name : 'Avulso'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                                  <div 
+                                    className="bg-violet-600 h-1.5 rounded-full transition-all" 
+                                    style={{ 
+                                      width: `${Math.min(100, Math.max(0, (Math.abs(card.balance) / (card.creditLimit || 1)) * 100))}%` 
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -375,6 +457,20 @@ export function Accounts() {
                       {...register('dueDay')}
                     />
                   </div>
+
+                  <Select
+                    label="Conta de Pagamento Associada (opcional)"
+                    error={errors.associatedAccountId?.message}
+                    disabled={isCreating}
+                    {...register('associatedAccountId')}
+                  >
+                    <option value="" className="bg-zinc-900">Nenhuma (Cartão Avulso)</option>
+                    {bankAccounts.map((acc) => (
+                      <option key={acc.id} value={acc.id} className="bg-zinc-900">
+                        {acc.name} ({acc.bank}) - Saldo: {formatCurrency(acc.balance)}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               )}
 

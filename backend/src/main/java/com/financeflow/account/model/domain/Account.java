@@ -15,6 +15,7 @@ public record Account(
     BigDecimal creditLimit,
     Integer closingDay,
     Integer dueDay,
+    UUID associatedAccountId,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -48,6 +49,9 @@ public record Account(
         } else {
             if (creditLimit != null || closingDay != null || dueDay != null) {
                 throw new IllegalArgumentException("Credit card fields must be null for non-credit card accounts");
+            }
+            if (associatedAccountId != null) {
+                throw new IllegalArgumentException("Non-credit card accounts cannot have an associated account");
             }
         }
 

@@ -27,6 +27,17 @@ public class CreateAccountUseCase {
     public AccountResponse execute(UUID userId, AccountRequest request) {
         log.info("Creating new account for user={} with type={}", userId, request.type());
 
+        if (request.associatedAccountId() != null) {
+            AccountEntity associatedAccount = accountRepository.findById(request.associatedAccountId())
+                .orElseThrow(() -> new com.financeflow.shared.exception.NotFoundException("Account", request.associatedAccountId()));
+            if (!associatedAccount.getUserId().equals(userId)) {
+                throw new com.financeflow.shared.exception.DomainException("INVALID_ASSOCIATION", "Associated account does not belong to the user");
+            }
+            if (associatedAccount.getType() == com.financeflow.account.model.domain.AccountType.CREDIT_CARD) {
+                throw new com.financeflow.shared.exception.DomainException("INVALID_ASSOCIATION", "A credit card cannot be associated with another credit card");
+            }
+        }
+
         Account domainAccount = new Account(
             UUID.randomUUID(),
             userId,
@@ -37,6 +48,7 @@ public class CreateAccountUseCase {
             request.creditLimit(),
             request.closingDay(),
             request.dueDay(),
+            request.associatedAccountId(),
             null,
             null
         );
@@ -56,7 +68,8 @@ public class CreateAccountUseCase {
             savedDomain.balance(),
             savedDomain.creditLimit(),
             savedDomain.closingDay(),
-            savedDomain.dueDay()
+            savedDomain.dueDay(),
+            savedDomain.associatedAccountId()
         );
     }
 }
