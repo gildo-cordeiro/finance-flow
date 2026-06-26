@@ -2,16 +2,13 @@ package com.financeflow.dashboard.service;
 
 import com.financeflow.dashboard.dto.DashboardSummaryResponse;
 import com.financeflow.shared.exception.ValidationException;
-import com.financeflow.transaction.model.domain.Category;
-import com.financeflow.transaction.model.domain.Transaction;
+import com.financeflow.transaction.dto.CategoryResponse;
+import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.TransactionType;
-import com.financeflow.transaction.model.mapper.CategoryMapper;
-import com.financeflow.transaction.model.mapper.TransactionMapper;
-import com.financeflow.transaction.repository.CategoryRepository;
-import com.financeflow.transaction.repository.TransactionRepository;
-import com.financeflow.budget.model.domain.Budget;
-import com.financeflow.budget.model.mapper.BudgetMapper;
-import com.financeflow.budget.repository.BudgetRepository;
+import com.financeflow.transaction.service.ListCategoriesUseCase;
+import com.financeflow.transaction.service.ListTransactionsUseCase;
+import com.financeflow.budget.dto.BudgetResponse;
+import com.financeflow.budget.service.GetBudgetUseCase;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,18 +28,18 @@ public class GetDashboardSummaryUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(GetDashboardSummaryUseCase.class);
 
-    private final CategoryRepository categoryRepository;
-    private final TransactionRepository transactionRepository;
-    private final BudgetRepository budgetRepository;
+    private final ListCategoriesUseCase listCategoriesUseCase;
+    private final ListTransactionsUseCase listTransactionsUseCase;
+    private final GetBudgetUseCase getBudgetUseCase;
 
     public GetDashboardSummaryUseCase(
-        CategoryRepository categoryRepository,
-        TransactionRepository transactionRepository,
-        BudgetRepository budgetRepository
+        ListCategoriesUseCase listCategoriesUseCase,
+        ListTransactionsUseCase listTransactionsUseCase,
+        GetBudgetUseCase getBudgetUseCase
     ) {
-        this.categoryRepository = categoryRepository;
-        this.transactionRepository = transactionRepository;
-        this.budgetRepository = budgetRepository;
+        this.listCategoriesUseCase = listCategoriesUseCase;
+        this.listTransactionsUseCase = listTransactionsUseCase;
+        this.getBudgetUseCase = getBudgetUseCase;
     }
 
     public DashboardSummaryResponse execute(UUID userId, String month) {
@@ -56,30 +53,24 @@ public class GetDashboardSummaryUseCase {
             throw new ValidationException("month", "Month must be in YYYY-MM format");
         }
 
-        // 1. Fetch categories and map to Domain
-        List<Category> categories = categoryRepository.findAllByUserId(userId).stream()
-            .map(c -> CategoryMapper.toDomain(c))
-            .toList();
+        // 1. Fetch categories
+        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId);
 
-        // 2. Fetch budgets for the month and map to Domain
-        List<Budget> budgets = budgetRepository.findAllByUserIdAndMonth(userId, month).stream()
-            .map(b -> BudgetMapper.toDomain(b))
-            .toList();
-        Map<UUID, BigDecimal> plannedAmounts = budgets.stream()
+        // 2. Fetch budgets for the month
+        BudgetResponse budgetResponse = getBudgetUseCase.execute(userId, month);
+        Map<UUID, BigDecimal> plannedAmounts = budgetResponse.items().stream()
             .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount(), (a, b) -> a));
 
-        // 3. Fetch transactions for the month based on competenceDate and map to Domain
+        // 3. Fetch transactions for the month based on competenceDate
         String[] parts = month.split("-");
         int year = Integer.parseInt(parts[0]);
         int monthVal = Integer.parseInt(parts[1]);
         LocalDate startDate = LocalDate.of(year, monthVal, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        List<Transaction> transactions = transactionRepository.findAllFiltered(
+        List<TransactionResponse> transactions = listTransactionsUseCase.execute(
             userId, startDate, endDate, null, null
-        ).stream()
-            .map(t -> TransactionMapper.toDomain(t))
-            .toList();
+        );
 
         // 4. Calculate total revenue and total expenses
         BigDecimal totalRevenue = transactions.stream()
@@ -98,7 +89,7 @@ public class GetDashboardSummaryUseCase {
         BigDecimal budgetPlanned = BigDecimal.ZERO;
         BigDecimal budgetRealized = BigDecimal.ZERO;
 
-        for (Category category : categories) {
+        for (CategoryResponse category : categories) {
             boolean isIncome = isIncomeCategory(category, categories);
             if (!isIncome) {
                 // Sum planned
@@ -127,7 +118,7 @@ public class GetDashboardSummaryUseCase {
         );
     }
 
-    private boolean isIncomeCategory(Category category, List<Category> allCategories) {
+    private boolean isIncomeCategory(CategoryResponse category, List<CategoryResponse> allCategories) {
         if (category.id().toString().equals("a1b1c1d1-0000-0000-0000-000000000001")
             || "Receitas".equalsIgnoreCase(category.name())) {
             return true;

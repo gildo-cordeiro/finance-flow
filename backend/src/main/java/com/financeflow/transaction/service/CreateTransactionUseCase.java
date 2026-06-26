@@ -64,12 +64,21 @@ public class CreateTransactionUseCase {
         // Calculate competence date
         LocalDate competenceDate = calculateCompetenceDate(account, request);
 
+        // Calculate due date (recalculated for credit cards)
+        LocalDate dueDate = calculateDueDate(account, request, competenceDate);
+
         // Status validation: payment date is required if status is PAID
         if (request.status() == TransactionStatus.PAID && request.paymentDate() == null) {
             throw new ValidationException("paymentDate", "Payment date is required when transaction status is PAID");
         }
         if (request.status() != TransactionStatus.PAID && request.paymentDate() != null) {
             throw new ValidationException("paymentDate", "Payment date must be null when transaction status is not PAID");
+        }
+
+        // For credit cards, the payment date (if PAID) must also be the invoice due date
+        LocalDate paymentDate = request.paymentDate();
+        if (account.getType() == AccountType.CREDIT_CARD && request.status() == TransactionStatus.PAID) {
+            paymentDate = dueDate;
         }
 
         // Build transaction domain object
@@ -82,8 +91,8 @@ public class CreateTransactionUseCase {
             request.amount(),
             request.type(),
             competenceDate,
-            request.dueDate(),
-            request.paymentDate(),
+            dueDate,
+            paymentDate,
             request.status(),
             request.visibility(),
             null,
@@ -125,9 +134,9 @@ public class CreateTransactionUseCase {
     }
 
     private LocalDate calculateCompetenceDate(AccountEntity account, TransactionRequest request) {
-        // If the user specified a competence date, use it
+        // If the user specified a competence date, use it (normalized to the first day of the month)
         if (request.competenceDate() != null) {
-            return request.competenceDate();
+            return request.competenceDate().withDayOfMonth(1);
         }
 
         // Otherwise, use the purchase date (which we default to the dueDate of the transaction, or current date if dueDate is missing)
@@ -138,12 +147,36 @@ public class CreateTransactionUseCase {
             int dayOfPurchase = purchaseDate.getDayOfMonth();
 
             if (dayOfPurchase <= closingDay) {
-                return purchaseDate;
+                return purchaseDate.withDayOfMonth(1);
             } else {
-                return purchaseDate.plusMonths(1);
+                return purchaseDate.plusMonths(1).withDayOfMonth(1);
             }
         }
 
-        return purchaseDate;
+        return purchaseDate.withDayOfMonth(1);
+    }
+
+    private LocalDate calculateDueDate(AccountEntity account, TransactionRequest request, LocalDate competenceDate) {
+        if (account.getType() != AccountType.CREDIT_CARD || account.getDueDay() == null || account.getClosingDay() == null) {
+            return request.dueDate();
+        }
+
+        int closingDay = account.getClosingDay();
+        int dueDay = account.getDueDay();
+        int gap = dueDay - closingDay;
+
+        if (gap < 0 || gap < 7) {
+            LocalDate nextMonth = competenceDate.plusMonths(1);
+            return safeDateOf(nextMonth.getYear(), nextMonth.getMonthValue(), dueDay);
+        } else {
+            return safeDateOf(competenceDate.getYear(), competenceDate.getMonthValue(), dueDay);
+        }
+    }
+
+    private LocalDate safeDateOf(int year, int month, int targetDay) {
+        LocalDate temp = LocalDate.of(year, month, 1);
+        int length = temp.lengthOfMonth();
+        int day = Math.min(targetDay, length);
+        return LocalDate.of(year, month, day);
     }
 }

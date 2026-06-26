@@ -617,8 +617,8 @@ export function Transactions() {
                 <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs rounded-xl flex items-start gap-2">
                   <Info className="w-4 h-4 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold block mb-0.5">Sugeridor de Competência Ativo (Cartão)</span>
-                    A data de competência será calculada automaticamente com base no fechamento do cartão (dia {selectedAccount.closingDay}). Se lançado após o fechamento, o gasto pertencerá ao ciclo do próximo mês.
+                    <span className="font-semibold block mb-0.5">Gestão Inteligente de Fatura Ativa</span>
+                    O sistema calculará a competência baseando-se no fechamento (dia {selectedAccount.closingDay}). O vencimento e o pagamento deste lançamento serão definidos automaticamente para o dia de vencimento da fatura correspondente (dia {selectedAccount.dueDay}), garantindo a precisão do seu Fluxo de Caixa.
                   </div>
                 </div>
               )}

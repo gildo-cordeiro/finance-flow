@@ -12,13 +12,13 @@ import com.financeflow.budget.dto.BudgetResponse;
 import com.financeflow.budget.model.entity.BudgetEntity;
 import com.financeflow.budget.repository.BudgetRepository;
 import com.financeflow.shared.exception.ValidationException;
+import com.financeflow.transaction.dto.CategoryResponse;
+import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.domain.TransactionType;
 import com.financeflow.transaction.model.domain.TransactionVisibility;
-import com.financeflow.transaction.model.entity.CategoryEntity;
-import com.financeflow.transaction.model.entity.TransactionEntity;
-import com.financeflow.transaction.repository.CategoryRepository;
-import com.financeflow.transaction.repository.TransactionRepository;
+import com.financeflow.transaction.service.ListCategoriesUseCase;
+import com.financeflow.transaction.service.ListTransactionsUseCase;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,16 +30,16 @@ import org.junit.jupiter.api.Test;
 class GetBudgetUseCaseTest {
 
     private BudgetRepository budgetRepository;
-    private CategoryRepository categoryRepository;
-    private TransactionRepository transactionRepository;
+    private ListCategoriesUseCase listCategoriesUseCase;
+    private ListTransactionsUseCase listTransactionsUseCase;
     private GetBudgetUseCase getBudgetUseCase;
 
     @BeforeEach
     void setUp() {
         budgetRepository = mock(BudgetRepository.class);
-        categoryRepository = mock(CategoryRepository.class);
-        transactionRepository = mock(TransactionRepository.class);
-        getBudgetUseCase = new GetBudgetUseCase(budgetRepository, categoryRepository, transactionRepository);
+        listCategoriesUseCase = mock(ListCategoriesUseCase.class);
+        listTransactionsUseCase = mock(ListTransactionsUseCase.class);
+        getBudgetUseCase = new GetBudgetUseCase(budgetRepository, listCategoriesUseCase, listTransactionsUseCase);
     }
 
     @Test
@@ -51,36 +51,36 @@ class GetBudgetUseCaseTest {
         UUID salaryCatId = UUID.randomUUID(); // Salary (sub of Receitas)
         UUID foodCatId = UUID.randomUUID(); // Food (expense)
 
-        CategoryEntity incomeCat = new CategoryEntity(incomeCatId, null, "Receitas", null, Instant.now(), Instant.now());
-        CategoryEntity salaryCat = new CategoryEntity(salaryCatId, userId, "Salário", incomeCatId, Instant.now(), Instant.now());
-        CategoryEntity foodCat = new CategoryEntity(foodCatId, userId, "Alimentação", null, Instant.now(), Instant.now());
+        CategoryResponse incomeCat = new CategoryResponse(incomeCatId, null, "Receitas", null);
+        CategoryResponse salaryCat = new CategoryResponse(salaryCatId, userId, "Salário", incomeCatId);
+        CategoryResponse foodCat = new CategoryResponse(foodCatId, userId, "Alimentação", null);
 
-        when(categoryRepository.findAllByUserId(userId)).thenReturn(List.of(incomeCat, salaryCat, foodCat));
+        when(listCategoriesUseCase.execute(userId)).thenReturn(List.of(incomeCat, salaryCat, foodCat));
 
         BudgetEntity salaryBudget = new BudgetEntity(UUID.randomUUID(), userId, salaryCatId, month, new BigDecimal("5000.00"), Instant.now(), Instant.now());
         BudgetEntity foodBudget = new BudgetEntity(UUID.randomUUID(), userId, foodCatId, month, new BigDecimal("800.00"), Instant.now(), Instant.now());
 
         when(budgetRepository.findAllByUserIdAndMonth(userId, month)).thenReturn(List.of(salaryBudget, foodBudget));
 
-        TransactionEntity salaryTx = new TransactionEntity(
+        TransactionResponse salaryTx = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), salaryCatId, "Monthly Salary", new BigDecimal("5200.00"),
             TransactionType.INCOME, LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 5),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        TransactionEntity foodTx1 = new TransactionEntity(
+        TransactionResponse foodTx1 = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), foodCatId, "Supermarket", new BigDecimal("150.00"),
             TransactionType.EXPENSE, LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 10),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        TransactionEntity foodRefundTx = new TransactionEntity(
+        TransactionResponse foodRefundTx = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), foodCatId, "Refund", new BigDecimal("20.00"),
             TransactionType.INCOME, LocalDate.of(2026, 6, 12), LocalDate.of(2026, 6, 12), LocalDate.of(2026, 6, 12),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        when(transactionRepository.findAllFiltered(
+        when(listTransactionsUseCase.execute(
             eq(userId), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), any(), any()
         )).thenReturn(List.of(salaryTx, foodTx1, foodRefundTx));
 

@@ -6,13 +6,11 @@ import com.financeflow.budget.model.domain.Budget;
 import com.financeflow.budget.model.mapper.BudgetMapper;
 import com.financeflow.budget.repository.BudgetRepository;
 import com.financeflow.shared.exception.ValidationException;
-import com.financeflow.transaction.model.domain.Category;
-import com.financeflow.transaction.model.domain.Transaction;
+import com.financeflow.transaction.dto.CategoryResponse;
+import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.TransactionType;
-import com.financeflow.transaction.model.mapper.CategoryMapper;
-import com.financeflow.transaction.model.mapper.TransactionMapper;
-import com.financeflow.transaction.repository.CategoryRepository;
-import com.financeflow.transaction.repository.TransactionRepository;
+import com.financeflow.transaction.service.ListCategoriesUseCase;
+import com.financeflow.transaction.service.ListTransactionsUseCase;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -32,17 +30,17 @@ public class GetBudgetUseCase {
     private static final Logger log = LoggerFactory.getLogger(GetBudgetUseCase.class);
 
     private final BudgetRepository budgetRepository;
-    private final CategoryRepository categoryRepository;
-    private final TransactionRepository transactionRepository;
+    private final ListCategoriesUseCase listCategoriesUseCase;
+    private final ListTransactionsUseCase listTransactionsUseCase;
 
     public GetBudgetUseCase(
         BudgetRepository budgetRepository,
-        CategoryRepository categoryRepository,
-        TransactionRepository transactionRepository
+        ListCategoriesUseCase listCategoriesUseCase,
+        ListTransactionsUseCase listTransactionsUseCase
     ) {
         this.budgetRepository = budgetRepository;
-        this.categoryRepository = categoryRepository;
-        this.transactionRepository = transactionRepository;
+        this.listCategoriesUseCase = listCategoriesUseCase;
+        this.listTransactionsUseCase = listTransactionsUseCase;
     }
 
     public BudgetResponse execute(UUID userId, String month) {
@@ -52,10 +50,8 @@ public class GetBudgetUseCase {
             throw new ValidationException("month", "Month must be in YYYY-MM format");
         }
 
-        // 1. Fetch all categories and map to Domain
-        List<Category> categories = categoryRepository.findAllByUserId(userId).stream()
-            .map(c -> CategoryMapper.toDomain(c))
-            .toList();
+        // 1. Fetch all categories
+        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId);
 
         // 2. Fetch budgets for the month and map to Domain
         List<Budget> budgets = budgetRepository.findAllByUserIdAndMonth(userId, month).stream()
@@ -64,22 +60,20 @@ public class GetBudgetUseCase {
         Map<UUID, BigDecimal> plannedAmounts = budgets.stream()
             .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount()));
 
-        // 3. Fetch transactions for the month based on competenceDate and map to Domain
+        // 3. Fetch transactions for the month based on competenceDate
         String[] parts = month.split("-");
         int year = Integer.parseInt(parts[0]);
         int monthVal = Integer.parseInt(parts[1]);
         LocalDate startDate = LocalDate.of(year, monthVal, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        List<Transaction> transactions = transactionRepository.findAllFiltered(
+        List<TransactionResponse> transactions = listTransactionsUseCase.execute(
             userId, startDate, endDate, null, null
-        ).stream()
-            .map(t -> TransactionMapper.toDomain(t))
-            .toList();
+        );
 
         // 4. Calculate realized amounts per category
         List<BudgetItemResponse> items = new ArrayList<>();
-        for (Category category : categories) {
+        for (CategoryResponse category : categories) {
             BigDecimal planned = plannedAmounts.getOrDefault(category.id(), BigDecimal.ZERO);
 
             boolean isIncome = isIncomeCategory(category, categories);
@@ -111,7 +105,7 @@ public class GetBudgetUseCase {
         return new BudgetResponse(month, items);
     }
 
-    private boolean isIncomeCategory(Category category, List<Category> allCategories) {
+    private boolean isIncomeCategory(CategoryResponse category, List<CategoryResponse> allCategories) {
         if (category.id().toString().equals("a1b1c1d1-0000-0000-0000-000000000001")
             || "Receitas".equalsIgnoreCase(category.name())) {
             return true;

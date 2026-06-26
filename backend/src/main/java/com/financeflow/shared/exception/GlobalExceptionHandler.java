@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleDomainValidation(ValidationException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
             .body(new ErrorResponse(ex.getCode(), ex.getMessage()));
     }
 
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
             .stream()
             .map(e -> new ErrorResponse.FieldError(e.getField(), e.getDefaultMessage()))
             .toList();
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
             .body(new ErrorResponse("VALIDATION_ERROR", "Validation failed", errors));
     }
 
