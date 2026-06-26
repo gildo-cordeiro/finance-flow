@@ -14,6 +14,11 @@ public interface TransactionRepository {
         UUID categoryId,
         UUID accountId
     );
+    List<TransactionEntity> findAllForCashFlow(
+        UUID userId,
+        LocalDate fromDate,
+        LocalDate toDate
+    );
     Optional<TransactionEntity> findById(UUID id);
     TransactionEntity save(TransactionEntity transaction);
     void delete(TransactionEntity transaction);

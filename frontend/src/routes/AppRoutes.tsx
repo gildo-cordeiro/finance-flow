@@ -7,6 +7,7 @@ import { Profile } from '../features/auth/components/Profile';
 import { Accounts } from '../features/accounts/components/Accounts';
 import { Transactions } from '../features/transactions/components/Transactions';
 import { Budget } from '../features/budget/components/Budget';
+import { CashFlow } from '../features/cashflow/components/CashFlow';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: '/budget',
         element: <Budget />,
+      },
+      {
+        path: '/cashflow',
+        element: <CashFlow />,
       },
     ],
   },
