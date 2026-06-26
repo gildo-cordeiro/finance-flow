@@ -53,3 +53,12 @@ Ao sugerir ou criar a descrição de um Pull Request para revisão, o assistente
 ## Screenshots / Demonstrações (opcional)
 [Imagens ou representações textuais do comportamento da interface ou das respostas de API]
 ```
+
+## 4. Automação de Pull Requests com MCP
+
+Sempre que o servidor MCP do GitHub estiver configurado e ativo:
+1. **Criação Automática:** O assistente deve criar o Pull Request de forma autônoma utilizando a ferramenta do MCP (ex: `github/create_pull_request` ou equivalente).
+2. **Preenchimento do Template:** O parâmetro correspondente ao corpo da descrição (`body`) deve ser integralmente preenchido seguindo o template de Pull Request definido na seção 3.
+3. **Fallback:** Caso as ferramentas do MCP do GitHub não estejam disponíveis no contexto ou falhem, o assistente deve recuar para as opções alternativas:
+   - Exibir a URL de criação rápida informada pelo terminal durante o `git push`.
+   - Oferecer o comando `gh pr create` para que o usuário execute localmente.
