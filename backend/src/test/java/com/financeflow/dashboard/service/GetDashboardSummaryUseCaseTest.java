@@ -9,17 +9,17 @@ import static org.mockito.Mockito.when;
 
 import com.financeflow.dashboard.dto.DashboardSummaryResponse;
 import com.financeflow.shared.exception.ValidationException;
+import com.financeflow.transaction.dto.CategoryResponse;
+import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.domain.TransactionType;
 import com.financeflow.transaction.model.domain.TransactionVisibility;
-import com.financeflow.transaction.model.entity.CategoryEntity;
-import com.financeflow.transaction.model.entity.TransactionEntity;
-import com.financeflow.transaction.repository.CategoryRepository;
-import com.financeflow.transaction.repository.TransactionRepository;
-import com.financeflow.budget.model.entity.BudgetEntity;
-import com.financeflow.budget.repository.BudgetRepository;
+import com.financeflow.transaction.service.ListCategoriesUseCase;
+import com.financeflow.transaction.service.ListTransactionsUseCase;
+import com.financeflow.budget.dto.BudgetItemResponse;
+import com.financeflow.budget.dto.BudgetResponse;
+import com.financeflow.budget.service.GetBudgetUseCase;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -28,17 +28,17 @@ import org.junit.jupiter.api.Test;
 
 class GetDashboardSummaryUseCaseTest {
 
-    private CategoryRepository categoryRepository;
-    private TransactionRepository transactionRepository;
-    private BudgetRepository budgetRepository;
+    private ListCategoriesUseCase listCategoriesUseCase;
+    private ListTransactionsUseCase listTransactionsUseCase;
+    private GetBudgetUseCase getBudgetUseCase;
     private GetDashboardSummaryUseCase getDashboardSummaryUseCase;
 
     @BeforeEach
     void setUp() {
-        categoryRepository = mock(CategoryRepository.class);
-        transactionRepository = mock(TransactionRepository.class);
-        budgetRepository = mock(BudgetRepository.class);
-        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(categoryRepository, transactionRepository, budgetRepository);
+        listCategoriesUseCase = mock(ListCategoriesUseCase.class);
+        listTransactionsUseCase = mock(ListTransactionsUseCase.class);
+        getBudgetUseCase = mock(GetBudgetUseCase.class);
+        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(listCategoriesUseCase, listTransactionsUseCase, getBudgetUseCase);
     }
 
     @Test
@@ -50,36 +50,37 @@ class GetDashboardSummaryUseCaseTest {
         UUID salaryCatId = UUID.randomUUID();
         UUID foodCatId = UUID.randomUUID();
 
-        CategoryEntity incomeCat = new CategoryEntity(incomeCatId, null, "Receitas", null, Instant.now(), Instant.now());
-        CategoryEntity salaryCat = new CategoryEntity(salaryCatId, userId, "Salário", incomeCatId, Instant.now(), Instant.now());
-        CategoryEntity foodCat = new CategoryEntity(foodCatId, userId, "Alimentação", null, Instant.now(), Instant.now());
+        CategoryResponse incomeCat = new CategoryResponse(incomeCatId, null, "Receitas", null);
+        CategoryResponse salaryCat = new CategoryResponse(salaryCatId, userId, "Salário", incomeCatId);
+        CategoryResponse foodCat = new CategoryResponse(foodCatId, userId, "Alimentação", null);
 
-        when(categoryRepository.findAllByUserId(userId)).thenReturn(List.of(incomeCat, salaryCat, foodCat));
+        when(listCategoriesUseCase.execute(userId)).thenReturn(List.of(incomeCat, salaryCat, foodCat));
 
-        BudgetEntity salaryBudget = new BudgetEntity(UUID.randomUUID(), userId, salaryCatId, month, new BigDecimal("5000.00"), Instant.now(), Instant.now());
-        BudgetEntity foodBudget = new BudgetEntity(UUID.randomUUID(), userId, foodCatId, month, new BigDecimal("800.00"), Instant.now(), Instant.now());
+        BudgetItemResponse salaryBudgetItem = new BudgetItemResponse(salaryCatId, "Salário", incomeCatId, new BigDecimal("5000.00"), new BigDecimal("5200.00"));
+        BudgetItemResponse foodBudgetItem = new BudgetItemResponse(foodCatId, "Alimentação", null, new BigDecimal("800.00"), new BigDecimal("130.00"));
+        BudgetItemResponse incomeBudgetItem = new BudgetItemResponse(incomeCatId, "Receitas", null, BigDecimal.ZERO, BigDecimal.ZERO);
 
-        when(budgetRepository.findAllByUserIdAndMonth(userId, month)).thenReturn(List.of(salaryBudget, foodBudget));
+        when(getBudgetUseCase.execute(userId, month)).thenReturn(new BudgetResponse(month, List.of(salaryBudgetItem, foodBudgetItem, incomeBudgetItem)));
 
-        TransactionEntity salaryTx = new TransactionEntity(
+        TransactionResponse salaryTx = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), salaryCatId, "Monthly Salary", new BigDecimal("5200.00"),
             TransactionType.INCOME, LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 5),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        TransactionEntity foodTx1 = new TransactionEntity(
+        TransactionResponse foodTx1 = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), foodCatId, "Supermarket", new BigDecimal("150.00"),
             TransactionType.EXPENSE, LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 10),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        TransactionEntity foodRefundTx = new TransactionEntity(
+        TransactionResponse foodRefundTx = new TransactionResponse(
             UUID.randomUUID(), userId, UUID.randomUUID(), foodCatId, "Refund", new BigDecimal("20.00"),
             TransactionType.INCOME, LocalDate.of(2026, 6, 12), LocalDate.of(2026, 6, 12), LocalDate.of(2026, 6, 12),
-            TransactionStatus.PAID, TransactionVisibility.PERSONAL, Instant.now(), Instant.now()
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
         );
 
-        when(transactionRepository.findAllFiltered(
+        when(listTransactionsUseCase.execute(
             eq(userId), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), any(), any()
         )).thenReturn(List.of(salaryTx, foodTx1, foodRefundTx));
 

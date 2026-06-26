@@ -74,7 +74,7 @@ class CreateTransactionUseCaseTest {
 
         assertThat(response.id()).isNotNull();
         assertThat(response.amount()).isEqualTo(new BigDecimal("500.00"));
-        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 6, 20));
+        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 6, 1));
         assertThat(response.status()).isEqualTo(TransactionStatus.PAID);
         assertThat(checkingAccount.getBalance()).isEqualTo(new BigDecimal("1500.00"));
         verify(accountRepository).save(checkingAccount);
@@ -140,7 +140,8 @@ class CreateTransactionUseCaseTest {
 
         TransactionResponse response = createTransactionUseCase.execute(userId, request);
 
-        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 6, 8));
+        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 6, 20));
     }
 
     @Test
@@ -170,7 +171,42 @@ class CreateTransactionUseCaseTest {
 
         TransactionResponse response = createTransactionUseCase.execute(userId, request);
 
-        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 7, 12));
+        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 7, 20));
+    }
+
+    @Test
+    void shouldCalculateInvoiceDueDateAndPaymentDateForPaidCreditCardTransaction() {
+        UUID userId = UUID.randomUUID();
+        UUID accountId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+
+        AccountEntity cardAccount = new AccountEntity(
+            accountId, userId, "My Card", AccountType.CREDIT_CARD, "Bank A",
+            new BigDecimal("0.00"), new BigDecimal("5000.00"), 28, 5, Instant.now(), Instant.now()
+        );
+
+        CategoryEntity category = new CategoryEntity(
+            categoryId, userId, "Food", null, Instant.now(), Instant.now()
+        );
+
+        TransactionRequest request = new TransactionRequest(
+            accountId, categoryId, "Dinner", new BigDecimal("100.00"),
+            TransactionType.EXPENSE, null, LocalDate.of(2026, 6, 25), LocalDate.of(2026, 6, 25),
+            TransactionStatus.PAID, TransactionVisibility.PERSONAL
+        );
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(cardAccount));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TransactionResponse response = createTransactionUseCase.execute(userId, request);
+
+        assertThat(response.competenceDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 7, 5));
+        assertThat(response.paymentDate()).isEqualTo(LocalDate.of(2026, 7, 5));
+        assertThat(cardAccount.getBalance()).isEqualTo(new BigDecimal("-100.00"));
+        verify(accountRepository).save(cardAccount);
     }
 
     @Test

@@ -203,14 +203,34 @@ export function Accounts() {
 
                     {/* Credit Card Details */}
                     {account.type === 'CREDIT_CARD' && (
-                      <div className="border-t border-zinc-800/80 pt-4 mt-6 grid grid-cols-2 gap-y-3 gap-x-2 text-xs text-zinc-400">
-                        <div>
-                          <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite:</span>
-                          <span className="font-semibold text-zinc-300">{formatCurrency(account.creditLimit || 0)}</span>
+                      <div className="border-t border-zinc-800/80 pt-4 mt-6 space-y-3 text-xs text-zinc-400">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Total:</span>
+                            <span className="font-semibold text-zinc-300">{formatCurrency(account.creditLimit || 0)}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Ciclo de Fatura:</span>
+                            <span className="font-semibold text-zinc-300">Dia {account.closingDay} ao {account.dueDay}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-zinc-500 block uppercase font-medium tracking-wider">Ciclo:</span>
-                          <span className="font-semibold text-zinc-300">Dia {account.closingDay} ao {account.dueDay}</span>
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800/30">
+                          <div>
+                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Utilizado:</span>
+                            <span className="font-semibold text-red-400">{formatCurrency(Math.abs(account.balance))}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Disponível:</span>
+                            <span className="font-semibold text-emerald-400">{formatCurrency((account.creditLimit || 0) + account.balance)}</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                          <div 
+                            className="bg-violet-600 h-1.5 rounded-full transition-all" 
+                            style={{ 
+                              width: `${Math.min(100, Math.max(0, (Math.abs(account.balance) / (account.creditLimit || 1)) * 100))}%` 
+                            }}
+                          ></div>
                         </div>
                       </div>
                     )}

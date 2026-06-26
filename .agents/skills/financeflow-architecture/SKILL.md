@@ -1,125 +1,261 @@
 ---
 name: financeflow-architecture
-description: Stack tecnológica, arquitetura de monólito modular, boas práticas de codificação (Clean Code, exceções, testes) e segurança no FinanceFlow.
+description: >
+  Stack tecnológica, arquitetura de monólito modular, estrutura de pacotes canônica, boas práticas de codificação
+  (Clean Code, exceções, testes) e segurança no FinanceFlow.
+  Use esta skill SEMPRE que o código envolver decisões de arquitetura, estrutura de pacotes, configuração de segurança,
+  Flyway, Redis, JWT, ou quando houver dúvida sobre "onde esse código deve viver?" ou "como organizar esse módulo?".
+  Acione também para perguntas sobre o monólito modular, desacoplamento entre módulos, eventos de domínio ou padrões
+  de comunicação interna.
 ---
 
 # Arquitetura e Boas Práticas (FinanceFlow Architecture & Standards)
 
-Esta skill especifica os padrões de engenharia de software, a stack tecnológica, requisitos de segurança e as diretrizes de codificação limpa do ecossistema do FinanceFlow.
+Esta skill especifica a stack tecnológica, a estrutura de pacotes canônica, requisitos de segurança e diretrizes de
+codificação do FinanceFlow.
 
 ## 1. Stack Tecnológica
 
 ### Backend (Java 21 + Spring Boot 3)
-- **Segurança**: Spring Security + Autenticação Stateless via JWT.
-- **Persistência**: Spring Data JPA + Hibernate integrados com banco PostgreSQL.
-- **Migrations**: Flyway para gerenciar alterações de schema do banco.
-- **Cache**: Redis para sessões e otimização de dashboards lentos.
+
+| Camada | Tecnologia | Notas |
+|---|---|---|
+| Linguagem | Java 21 | Records, sealed classes, pattern matching |
+| Framework | Spring Boot 3 | **Sem Lombok** — zero exceções |
+| Segurança | Spring Security 6 + JWT | Stateless, refresh token rotation (RTR) |
+| Persistência | Spring Data JPA + Hibernate | PostgreSQL via Supabase |
+| Migrations | Flyway | Imutáveis após deploy |
+| Cache | Redis | Upstash (serverless Redis) |
 
 ### Frontend (React 18 + Vite + TypeScript)
-- **Estilização**: Tailwind CSS.
-- **Estado de Servidor**: React Query (TanStack Query) para cache e atualizações otimistas.
-- **Roteamento**: React Router v6 para SPA com rotas privadas/protegidas.
-- **Datas**: Biblioteca `date-fns` (tree-shakeable) para formatação e lógica de competência.
-- **Gráficos**: Recharts para visualização de fluxo de caixa e orçamentos.
 
-## 2. Estruturação do Monólito Modular
+| Camada | Tecnologia | Notas |
+|---|---|---|
+| Framework | React 18 + Vite | SPA, TypeScript strict |
+| Estilização | **Tailwind CSS v3.4.x** | **Travado em `^3.4.17` — NÃO atualizar para v4** |
+| Estado de servidor | TanStack Query (React Query) | Cache, otimistic updates |
+| Roteamento | React Router v6 | Rotas privadas/protegidas |
+| Gráficos | Recharts | Fluxo de caixa e orçamentos |
+| Datas | date-fns | Tree-shakeable, lógica de ciclos/competências |
 
-Para manter alta modularidade e permitir uma futura migração fácil para microsserviços:
+## 2. Estrutura de Pacotes Canônica (Package by Feature)
 
-### Backend Package Layout (Package by Feature)
-Adote pacotes baseados em domínios de negócio sob `com.financeflow`:
-```text
-com.financeflow
-├── auth                # Módulo de Autenticação e Perfis (JWT)
-├── account             # Módulo de Contas Bancárias e Cartões
-├── transaction         # Módulo de Transações e Lançamentos
-│   ├── controller      # Endpoints REST expostos
-│   ├── service         # Regras de negócio
-│   ├── repository      # Interfaces do repositório
-│   │   └── jpa         # Implementações JPA e Spring Data JpaRepositories
-│   ├── model           # Modelagem e Mapeamento de Persistência
-│   │   ├── domain      # Modelos de domínio puros (Java Records)
-│   │   ├── entity      # Entidades de persistência (JPA)
-│   │   └── mapper      # Mappers entre domain e entity
-│   └── dto             # Objetos de transferência de dados (Request/Response)
-├── budget              # Módulo de Planejamento e Orçamentos
-├── cashflow            # Módulo de Fluxo de Caixa e Projeções
-├── couple              # Módulo de Gestão de Casal
-└── shared              # Utilitários globais, tratamento de erro comum
+Esta é a **única** estrutura de pacotes autorizada. Toda nova feature deve seguir este layout.
+
+### Backend — `com.financeflow.<modulo>/`
+
+```
+com.financeflow/
+├── auth/
+│   ├── controller/         # @RestController — só orquestra HTTP
+│   ├── dto/                # Records de Request e Response
+│   ├── service/            # Lógica de negócio e use cases
+│   ├── repository/         # Interface de domínio (sem anotações de framework)
+│   │   └── jpa/            # Implementação JPA + Spring Data interface
+│   └── model/
+│       ├── domain/         # Java Records imutáveis — modelo de negócio puro
+│       ├── entity/         # Classes @Entity — mapeamento JPA
+│       └── mapper/         # Métodos estáticos de conversão domain ↔ entity
+│
+├── account/                # Contas bancárias e cartões de crédito
+├── transaction/            # Transações e lançamentos
+├── budget/                 # Planejamento e orçamentos
+├── cashflow/               # Fluxo de caixa e projeções
+├── couple/                 # Gestão de casal
+├── goals/                  # Metas financeiras
+├── travel/                 # Planejamento de viagens
+└── shared/                 # Utilitários globais, exception handler, configs
+    ├── exception/          # DomainException, NotFoundException, BusinessException
+    ├── handler/            # GlobalExceptionHandler (@RestControllerAdvice)
+    └── security/           # JWT filter, SecurityConfig
 ```
 
-### 3. Modelo de Domínio vs Entidades JPA
-Para eliminar o código repetitivo (*boilerplate*) sem violar a regra de não usar Lombok, adotamos a separação de responsabilidades no pacote `model`:
-*   **Domain (`model/domain`):** Representa o modelo de negócio puro usando Java **Records** (nativamente imutáveis, geram getters, constructors e equals/hashCode em uma linha). As validações e regras de negócio (*fail-fast*) residem aqui.
-*   **Entity (`model/entity`):** Classes anotadas com `@Entity` destinadas unicamente ao mapeamento físico do banco de dados (JPA/Hibernate).
-*   **Mapper (`model/mapper`):** Conversores estáticos simples que traduzem objetos de domínio em entidades e vice-versa.
+### Frontend — `src/`
 
-### Frontend Directory Layout
-Organize a interface baseando-se em features sob `src/`:
-```text
+```
 src/
-├── components/         # Componentes globais (botão, input, etc)
-├── features/           # Módulos de domínio
+├── components/             # Componentes globais reutilizáveis (Button, Input, Modal)
+├── features/               # Módulos por domínio
 │   ├── auth/
 │   ├── transactions/
+│   │   ├── components/     # Componentes exclusivos da feature
+│   │   ├── hooks/          # Hooks do React Query (useTransactions, useCreateTransaction)
+│   │   └── api/            # Funções de chamada HTTP exclusivas
 │   ├── budget/
+│   ├── cashflow/
 │   └── couple/
-│       ├── components/ # Componentes exclusivos da feature
-│       ├── hooks/      # Hooks do React Query
-│       └── api/        # Requisições exclusivas
-├── routes/             # Definição e proteção de rotas
-└── utils/              # Funções utilitárias (helpers date-fns)
+├── routes/                 # Definição e proteção de rotas
+├── lib/                    # Helpers: cn.ts (clsx + tailwind-merge)
+└── utils/                  # Funções puras utilitárias (date-fns helpers)
 ```
 
-## 3. Comunicação entre Módulos (Desacoplamento)
+## 3. Separação domain / entity / mapper
 
-Para evitar acoplamentos rígidos entre domínios no Monólito Modular:
-- **Sem acesso cruzado a bancos de dados:** Um módulo nunca deve ler ou escrever no banco de dados gerenciado por outro módulo diretamente.
-- **Interfaces Públicas:** Módulos que precisam chamar lógica síncrona de outros devem usar uma interface pública de `Service` exposta no pacote alvo.
-- **Comunicação Assíncrona (Eventos):** Prefira publicar eventos de domínio usando o `ApplicationEventPublisher` do Spring para reações a ações de negócio (ex: publicar um `TransactionCreatedEvent` para que o módulo de orçamentos recalcule a competência correspondente sem acoplar as classes diretamente).
+**Regra central para eliminar boilerplate sem Lombok:**
 
-## 4. Padrões de Código e Limpeza (Clean Code)
+```java
+// model/domain/Transaction.java — Java Record: imutável, sem boilerplate
+public record Transaction(
+    UUID id,
+    UUID userId,
+    BigDecimal amount,
+    LocalDate competenceDate,
+    LocalDate dueDate,
+    LocalDate paymentDate,
+    TransactionStatus status,
+    Visibility visibility
+) {}
 
-- **Nomenclatura**: Nomes de variáveis, métodos e classes devem ser descritivos e autoexplicativos. Evite abreviações obscuras.
-- **Foco único**: Métodos devem ser curtos e focados em apenas uma responsabilidade (Single Responsibility Principle).
+// model/entity/TransactionEntity.java — @Entity: mapeamento JPA
+@Entity
+@Table(name = "transactions")
+public class TransactionEntity {
+    @Id private UUID id;
+    @Column(name = "user_id") private UUID userId;
+    private BigDecimal amount;
+    @Column(name = "competence_date") private LocalDate competenceDate;
+    // ... demais campos com getters manuais + builder
+}
 
-## 5. Tratamento de Erros e Exceções
+// model/mapper/TransactionMapper.java — conversão estática
+public final class TransactionMapper {
+    private TransactionMapper() {}
 
-- **Backend (Spring Boot)**:
-  - Não retorne stack traces brutos para o cliente. Use um `@ControllerAdvice` global para capturar exceções e retornar um objeto JSON padronizado de erro (contendo timestamp, status code, mensagem amigável e detalhes se for validação de campos).
-  - Use exceções de domínio customizadas (ex: `ResourceNotFoundException`, `BusinessException`).
-- **Frontend (React)**:
-  - Implemente `Error Boundaries` para capturar falhas na renderização e evitar que a aplicação trave inteiramente.
-  - Utilize tratamentos globais no React Query para renderizar toasts amigáveis de erro para falhas de rede ou validação.
+    public static Transaction toDomain(TransactionEntity e) {
+        return new Transaction(e.getId(), e.getUserId(), e.getAmount(),
+            e.getCompetenceDate(), e.getDueDate(), e.getPaymentDate(),
+            e.getStatus(), e.getVisibility());
+    }
 
-## 6. Segurança, Criptografia e Logs
+    public static TransactionEntity toEntity(Transaction d) {
+        return TransactionEntity.builder()
+            .id(d.id()).userId(d.userId()).amount(d.amount())
+            .competenceDate(d.competenceDate()).dueDate(d.dueDate())
+            .paymentDate(d.paymentDate()).status(d.status())
+            .visibility(d.visibility()).build();
+    }
+}
+```
 
-- **Autenticação**:
-  - `Access Token` JWT de expiração curta (15 minutos).
-  - `Refresh Token` de expiração longa (30 dias) rotacionado a cada uso, persistido no banco com suporte a revogação.
-  - BCrypt com fator de custo `12` para hash de senhas de usuários.
-- **Criptografia em Repouso**:
-  - Dados bancários e tokens do Open Finance DEVEM ser criptografados em repouso no banco de dados nas colunas correspondentes usando **AES-256**.
-- **Logs**:
-  - Utilize logs (SLF4J) em pontos críticos. Use níveis apropriados (`INFO`, `WARN`, `ERROR`) e **nunca** inclua dados sensíveis em logs.
+## 4. Comunicação entre Módulos (Desacoplamento)
 
-## 7. Padrões de Testes
+**Nunca** acesse diretamente o repositório de outro módulo. Use uma dessas estratégias:
 
-- Todo novo serviço de domínio ou lógica de negócio deve vir acompanhado de testes unitários ou de integração.
-- No Backend, utilize `MockMvc` para testar os Controllers e `@Mock` para isolar dependências em testes unitários.
-- A meta de cobertura para qualquer alteração de código ou funcionalidade é de no mínimo **70% de cobertura no backend**.
+| Cenário | Estratégia |
+|---|---|
+| Lógica síncrona necessária de outro módulo | Interface pública de `Service` exposta pelo módulo alvo |
+| Reação a ação de negócio (recalcular orçamento após nova transação) | `ApplicationEventPublisher` → evento de domínio |
+| Integração com sistema externo (Open Finance) | Adapter na camada `shared/` ou no próprio módulo |
 
-## 8. Endpoints da API REST (Padrão `/api/v1`)
+```java
+// Exemplo: TransactionService publica evento após criar transação
+@Service
+@Transactional
+public class TransactionService {
 
-- Todos os endpoints devem exigir Authorization Header com Bearer Token (JWT).
-- Mapeamento principal de rotas:
-  - `POST /api/v1/auth/register` (Cadastro)
-  - `POST /api/v1/auth/login` (Login)
-  - `GET /api/v1/accounts` (Contas e Cartões)
-  - `GET /api/v1/transactions` (Listagem de transações)
-  - `POST /api/v1/transactions` (Criar transação)
-  - `GET /api/v1/budget/:month` (Orçamento mensal)
-  - `GET /api/v1/cashflow` (Fluxo de caixa parametrizado)
-  - `POST /api/v1/couple/invite` (Convidar parceiro)
-  - `GET /api/v1/goals` (Listar metas/objetivos)
-  - `GET /api/v1/travels` (Listar viagens)
+    private final ApplicationEventPublisher eventPublisher;
+
+    public TransactionResponse create(UUID userId, CreateTransactionRequest request) {
+        // ... persiste transação
+        eventPublisher.publishEvent(new TransactionCreatedEvent(saved.id(), saved.competenceDate()));
+        return toResponse(saved);
+    }
+}
+
+// BudgetModule ouve o evento sem acoplamento direto
+@Component
+public class BudgetCompetenceListener {
+
+    @EventListener
+    public void onTransactionCreated(TransactionCreatedEvent event) {
+        budgetService.recalculate(event.userId(), event.competenceMonth());
+    }
+}
+```
+
+## 5. Segurança
+
+### JWT + Refresh Token Rotation
+
+- **Access Token**: JWT, expiração 15 min, contém `userId` e roles.
+- **Refresh Token**: UUID opaco, 30 dias, persistido no banco com suporte a revogação.
+- **Rotação (RTR)**: a cada refresh, o token antigo é revogado e um novo par é emitido.
+- **Detecção de reuso**: se token já revogado for usado, revogar TODOS os tokens ativos do usuário (indício de roubo).
+
+### Outras Regras de Segurança
+
+- BCrypt com fator de custo `12` para hash de senhas.
+- Dados bancários e tokens Open Finance: criptografados em repouso com **AES-256** via `@Convert` do JPA.
+- Logs: NUNCA inclua CPF, e-mail, senha ou tokens em logs (`log.info("user={}", userId)` — só o ID).
+- SQL: sempre Prepared Statements / JPA — nunca concatenação de String em queries.
+- Properties secretas: apenas via variáveis de ambiente ou secrets manager — nunca hardcoded.
+
+## 6. Migrations Flyway
+
+```
+src/main/resources/db/migration/
+├── V1__init_auth_schema.sql
+├── V2__create_transactions_table.sql
+├── V3__create_budget_table.sql
+└── V4__create_couples_table.sql
+```
+
+**Regras:**
+1. Arquivos são **imutáveis** após deploy — nunca edite um arquivo existente.
+2. Correções devem ser novos arquivos (`V5__fix_transactions_index.sql`).
+3. Use `IF NOT EXISTS` para tornar scripts robustos.
+4. Views e procedures reutilizáveis: prefixo `R__` (repetível).
+
+## 7. Cache Redis (Upstash)
+
+```java
+// Habilitar no config
+@EnableCaching
+@Configuration
+public class CacheConfig { ... }
+
+// Usar na camada de serviço — NUNCA no controller ou repository
+@Cacheable(value = "cashflow", key = "#userId + '-' + #month")
+public CashFlowResponse getMonthlyCashFlow(UUID userId, String month) { ... }
+
+@CacheEvict(value = "cashflow", key = "#userId + '-' + #month")
+public void invalidateAfterTransaction(UUID userId, String month) { ... }
+```
+
+**Regras:**
+- TTL explícito sempre — nunca cache sem expiração definida.
+- Invalide proativamente no `@EventListener` de criação/atualização de transação.
+- Cache apenas de dados que mudam pouco (orçamento de mês anterior, perfil de usuário).
+
+## 8. Endpoints da API REST
+
+Base: `/api/v1` — todos exigem `Authorization: Bearer <access_token>`, exceto auth.
+
+| Método | Path | Descrição |
+|---|---|---|
+| `POST` | `/api/v1/auth/register` | Cadastro |
+| `POST` | `/api/v1/auth/login` | Login (retorna access + refresh token) |
+| `POST` | `/api/v1/auth/refresh` | Troca refresh token por novo par |
+| `GET` | `/api/v1/accounts` | Contas bancárias e cartões |
+| `GET` | `/api/v1/transactions` | Listagem paginada de transações |
+| `POST` | `/api/v1/transactions` | Criar transação |
+| `PATCH` | `/api/v1/transactions/{id}` | Atualizar transação |
+| `GET` | `/api/v1/budget/{year}/{month}` | Orçamento mensal |
+| `GET` | `/api/v1/cashflow` | Fluxo de caixa parametrizado |
+| `POST` | `/api/v1/couple/invite` | Convidar parceiro |
+| `POST` | `/api/v1/couple/accept/{coupleId}` | Aceitar convite |
+| `GET` | `/api/v1/goals` | Listar metas |
+| `GET` | `/api/v1/travels` | Listar viagens |
+
+## 9. Padrões Proibidos (Anti-patterns)
+
+| ❌ Proibido | ✅ Correto |
+|---|---|
+| Qualquer anotação Lombok | Records para DTOs, builder manual para entidades |
+| `@Autowired` em campo | Injeção por construtor sempre |
+| `@Transactional` no Controller | `@Transactional` apenas no Service |
+| Lógica de negócio no Controller | Controller só orquestra HTTP e delega ao Service |
+| Acesso direto ao repositório de outro módulo | Interface de Service pública ou ApplicationEvent |
+| Tailwind v4 | Travado em `^3.4.17` — problemas de compilação com Node |
+| `any` no TypeScript | `unknown` com type guard, ou tipo explícito |
+| Secrets no código | Variáveis de ambiente / secrets manager |
