@@ -16,7 +16,8 @@ import {
   Coins,
   Percent,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  LineChart
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -122,6 +123,13 @@ export function Dashboard() {
             >
               <TrendingUp className="w-4 h-4" />
               <span className="hidden sm:inline">Orçamento</span>
+            </button>
+            <button
+              onClick={() => navigate('/cashflow')}
+              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <LineChart className="w-4 h-4" />
+              <span className="hidden sm:inline">Fluxo de Caixa</span>
             </button>
             <button
               onClick={() => navigate('/profile')}

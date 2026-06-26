@@ -42,4 +42,13 @@ public class JpaTransactionRepository implements TransactionRepository {
     public void delete(TransactionEntity transaction) {
         springRepo.delete(transaction);
     }
+
+    @Override
+    public List<TransactionEntity> findAllForCashFlow(
+        UUID userId,
+        LocalDate fromDate,
+        LocalDate toDate
+    ) {
+        return springRepo.findAllForCashFlow(userId, fromDate, toDate);
+    }
 }

@@ -23,4 +23,13 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionEn
         @Param("categoryId") UUID categoryId,
         @Param("accountId") UUID accountId
     );
+
+    @Query("SELECT t FROM TransactionEntity t WHERE t.userId = :userId " +
+           "AND ((t.status = com.financeflow.transaction.model.domain.TransactionStatus.PAID AND t.paymentDate >= :fromDate) " +
+           "OR (t.status <> com.financeflow.transaction.model.domain.TransactionStatus.PAID AND t.dueDate <= :toDate))")
+    List<TransactionEntity> findAllForCashFlow(
+        @Param("userId") UUID userId,
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
 }
