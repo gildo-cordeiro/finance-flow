@@ -45,7 +45,8 @@ class DashboardControllerTest {
             new BigDecimal("1500.00"),
             new BigDecimal("3500.00"),
             new BigDecimal("2000.00"),
-            new BigDecimal("1400.00")
+            new BigDecimal("1400.00"),
+            null
         );
 
         when(getDashboardSummaryUseCase.execute(eq(userId), any(), eq(month))).thenReturn(response);
@@ -71,7 +72,8 @@ class DashboardControllerTest {
             new BigDecimal("1500.00"),
             new BigDecimal("3500.00"),
             new BigDecimal("2000.00"),
-            new BigDecimal("1400.00")
+            new BigDecimal("1400.00"),
+            null
         );
 
         when(getDashboardSummaryUseCase.execute(eq(userId), any(), any())).thenReturn(response);

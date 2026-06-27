@@ -43,19 +43,23 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> listCategories(Authentication authentication) {
+    public ResponseEntity<List<CategoryResponse>> listCategories(
+        Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext
+    ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        List<CategoryResponse> response = listCategoriesUseCase.execute(userId);
+        List<CategoryResponse> response = listCategoriesUseCase.execute(userId, viewContext);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(
         Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext,
         @RequestBody @Validated CategoryRequest request
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        CategoryResponse response = createCategoryUseCase.execute(userId, request);
+        CategoryResponse response = createCategoryUseCase.execute(userId, viewContext, request);
         URI location = URI.create("/api/v1/categories/" + response.id());
         return ResponseEntity.created(location).body(response);
     }

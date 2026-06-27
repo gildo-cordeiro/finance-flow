@@ -18,12 +18,14 @@ import org.junit.jupiter.api.Test;
 class ListAccountsUseCaseTest {
 
     private AccountRepository accountRepository;
+    private com.financeflow.couple.repository.CoupleRepository coupleRepository;
     private ListAccountsUseCase listAccountsUseCase;
 
     @BeforeEach
     void setUp() {
         accountRepository = mock(AccountRepository.class);
-        listAccountsUseCase = new ListAccountsUseCase(accountRepository);
+        coupleRepository = mock(com.financeflow.couple.repository.CoupleRepository.class);
+        listAccountsUseCase = new ListAccountsUseCase(accountRepository, coupleRepository);
     }
 
     @Test

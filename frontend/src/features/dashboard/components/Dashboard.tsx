@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../hooks/useDashboard';
 import { cn } from '../../../lib/cn';
 import { CoupleToggle } from '../../couple/components/CoupleToggle';
+import { useView } from '../../../context/ViewContext';
+import { useCouple } from '../../couple/hooks/useCouple';
 import {
   Settings,
   LogOut,
@@ -29,12 +31,15 @@ import {
   Tooltip,
   Cell,
   PieChart,
-  Pie
+  Pie,
+  Legend
 } from 'recharts';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { viewContext } = useView();
+  const { coupleStatus } = useCouple();
   const [currentMonth, setCurrentMonth] = useState(() => {
     return new Date().toISOString().substring(0, 7); // YYYY-MM
   });
@@ -42,6 +47,9 @@ export function Dashboard() {
   const { summary, isLoading, error, refetch } = useDashboard(currentMonth);
 
   if (!user) return null;
+
+  const isCouple = viewContext === 'COUPLE';
+  const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
   const handlePrevMonth = () => {
     const [year, month] = currentMonth.split('-').map(Number);
@@ -90,6 +98,9 @@ export function Dashboard() {
     { name: 'Gasto', valor: budgetRealized, color: isOverBudget ? '#f43f5e' : '#8b5cf6' },
     { name: 'Disponível', valor: budgetRemaining, color: '#27272a' }
   ];
+
+  // Per-member breakdown helper
+  const breakdown = summary?.memberBreakdown;
 
   return (
     <div className="gradient-bg min-h-screen text-white pb-16">
@@ -151,12 +162,26 @@ export function Dashboard() {
         </div>
       </nav>
 
+      {/* Couple context banner — visible only in COUPLE mode */}
+      {isCouple && (
+        <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center">
+          <span className="text-violet-300 text-xs font-medium">
+            🫂 Você está vendo as finanças do casal
+          </span>
+        </div>
+      )}
+
       {/* Main dashboard content */}
       <main className="max-w-6xl mx-auto px-4 mt-10 space-y-8">
         {/* Header and month selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight">Olá, {user.name}!</h1>
+            <h1 className="text-4xl font-bold tracking-tight">
+              {isCouple
+                ? `Finanças de ${user.name} & ${partnerName}`
+                : `Olá, ${user.name}!`
+              }
+            </h1>
             <p className="text-zinc-400 text-sm">Acompanhe a sua saúde financeira atual.</p>
           </div>
 
@@ -234,6 +259,11 @@ export function Dashboard() {
                   <div className="space-y-1">
                     <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Receitas do Mês</span>
                     <h2 className="text-2xl font-bold tracking-tight text-emerald-400">{formatCurrency(summary.totalRevenue)}</h2>
+                    {isCouple && breakdown && (
+                      <p className="text-xs text-zinc-500 mt-1">
+                        Você: {formatCurrency(breakdown.userRevenue)} · {partnerName}: {formatCurrency(breakdown.partnerRevenue)}
+                      </p>
+                    )}
                   </div>
                   <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl">
                     <ArrowUpRight className="w-5 h-5" />
@@ -248,6 +278,11 @@ export function Dashboard() {
                   <div className="space-y-1">
                     <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Despesas do Mês</span>
                     <h2 className="text-2xl font-bold tracking-tight text-rose-400">{formatCurrency(summary.totalExpenses)}</h2>
+                    {isCouple && breakdown && (
+                      <p className="text-xs text-zinc-500 mt-1">
+                        Você: {formatCurrency(breakdown.userExpenses)} · {partnerName}: {formatCurrency(breakdown.partnerExpenses)}
+                      </p>
+                    )}
                   </div>
                   <div className="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl">
                     <ArrowDownRight className="w-5 h-5" />
@@ -267,6 +302,11 @@ export function Dashboard() {
                     )}>
                       {formatCurrency(summary.balance)}
                     </h2>
+                    {isCouple && breakdown && (
+                      <p className="text-xs text-zinc-500 mt-1">
+                        Você: {formatCurrency(breakdown.userRevenue - breakdown.userExpenses)} · {partnerName}: {formatCurrency(breakdown.partnerRevenue - breakdown.partnerExpenses)}
+                      </p>
+                    )}
                   </div>
                   <div className={cn(
                     "p-2.5 rounded-xl",
@@ -283,10 +323,16 @@ export function Dashboard() {
                 <div className="flex justify-between items-start">
                   <div className="space-y-1 w-[70%]">
                     <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Orçamento Utilizado</span>
-                    <h2 className="text-2xl font-bold tracking-tight text-zinc-100 truncate">
-                      {formatCurrency(summary.budgetRealized)}
-                    </h2>
-                    <p className="text-xs text-zinc-400 truncate">limite de {formatCurrency(summary.budgetPlanned)}</p>
+                    {budgetPlanned > 0 ? (
+                      <>
+                        <h2 className="text-2xl font-bold tracking-tight text-zinc-100 truncate">
+                          {formatCurrency(summary.budgetRealized)}
+                        </h2>
+                        <p className="text-xs text-zinc-400 truncate">limite de {formatCurrency(summary.budgetPlanned)}</p>
+                      </>
+                    ) : (
+                      <h2 className="text-lg text-zinc-500 mt-1">Não configurado</h2>
+                    )}
                   </div>
                   <div className={cn(
                     "p-2.5 rounded-xl",
@@ -345,6 +391,11 @@ export function Dashboard() {
                             }
                             return null;
                           }}
+                        />
+                        <Legend
+                          iconType="circle"
+                          iconSize={8}
+                          wrapperStyle={{ fontSize: '12px', paddingTop: '8px', color: '#a1a1aa' }}
                         />
                         <Bar dataKey="valor" radius={[8, 8, 0, 0]}>
                           {cashflowData.map((entry, index) => (

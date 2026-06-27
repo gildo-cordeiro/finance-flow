@@ -1,6 +1,9 @@
 package com.financeflow.dashboard.service;
 
+
+import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.dashboard.dto.DashboardSummaryResponse;
+import com.financeflow.dashboard.dto.MemberBreakdown;
 import com.financeflow.shared.exception.ValidationException;
 import com.financeflow.transaction.dto.CategoryResponse;
 import com.financeflow.transaction.dto.TransactionResponse;
@@ -31,15 +34,18 @@ public class GetDashboardSummaryUseCase {
     private final ListCategoriesUseCase listCategoriesUseCase;
     private final ListTransactionsUseCase listTransactionsUseCase;
     private final GetBudgetUseCase getBudgetUseCase;
+    private final CoupleRepository coupleRepository;
 
     public GetDashboardSummaryUseCase(
         ListCategoriesUseCase listCategoriesUseCase,
         ListTransactionsUseCase listTransactionsUseCase,
-        GetBudgetUseCase getBudgetUseCase
+        GetBudgetUseCase getBudgetUseCase,
+        CoupleRepository coupleRepository
     ) {
         this.listCategoriesUseCase = listCategoriesUseCase;
         this.listTransactionsUseCase = listTransactionsUseCase;
         this.getBudgetUseCase = getBudgetUseCase;
+        this.coupleRepository = coupleRepository;
     }
 
     public DashboardSummaryResponse execute(UUID userId, String month) {
@@ -58,7 +64,7 @@ public class GetDashboardSummaryUseCase {
         }
 
         // 1. Fetch categories
-        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId);
+        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId, viewContext);
 
         // 2. Fetch budgets for the month
         BudgetResponse budgetResponse = getBudgetUseCase.execute(userId, month);
@@ -113,12 +119,32 @@ public class GetDashboardSummaryUseCase {
             }
         }
 
+        // 6. Compute per-member breakdown for COUPLE context
+        MemberBreakdown memberBreakdown = null;
+        if ("COUPLE".equalsIgnoreCase(viewContext)) {
+            BigDecimal userRevenue = transactions.stream()
+                .filter(t -> t.type() == TransactionType.INCOME && t.userId().equals(userId))
+                .map(TransactionResponse::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal userExpenses = transactions.stream()
+                .filter(t -> t.type() == TransactionType.EXPENSE && t.userId().equals(userId))
+                .map(TransactionResponse::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal partnerRevenue = totalRevenue.subtract(userRevenue);
+            BigDecimal partnerExpenses = totalExpenses.subtract(userExpenses);
+
+            memberBreakdown = new MemberBreakdown(userRevenue, userExpenses, partnerRevenue, partnerExpenses);
+        }
+
         return new DashboardSummaryResponse(
             totalRevenue,
             totalExpenses,
             balance,
             budgetPlanned,
-            budgetRealized
+            budgetRealized,
+            memberBreakdown
         );
     }
 

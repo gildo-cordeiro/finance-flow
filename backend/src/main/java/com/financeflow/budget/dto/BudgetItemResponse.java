@@ -8,5 +8,6 @@ public record BudgetItemResponse(
     String categoryName,
     UUID parentCategoryId,
     BigDecimal plannedAmount,
-    BigDecimal realizedAmount
+    BigDecimal realizedAmount,
+    UUID userId
 ) {}

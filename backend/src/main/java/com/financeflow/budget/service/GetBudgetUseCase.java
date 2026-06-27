@@ -5,6 +5,7 @@ import com.financeflow.budget.dto.BudgetResponse;
 import com.financeflow.budget.model.domain.Budget;
 import com.financeflow.budget.model.mapper.BudgetMapper;
 import com.financeflow.budget.repository.BudgetRepository;
+import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.shared.exception.ValidationException;
 import com.financeflow.transaction.dto.CategoryResponse;
 import com.financeflow.transaction.dto.TransactionResponse;
@@ -32,33 +33,54 @@ public class GetBudgetUseCase {
     private final BudgetRepository budgetRepository;
     private final ListCategoriesUseCase listCategoriesUseCase;
     private final ListTransactionsUseCase listTransactionsUseCase;
+    private final CoupleRepository coupleRepository;
 
     public GetBudgetUseCase(
         BudgetRepository budgetRepository,
         ListCategoriesUseCase listCategoriesUseCase,
-        ListTransactionsUseCase listTransactionsUseCase
+        ListTransactionsUseCase listTransactionsUseCase,
+        CoupleRepository coupleRepository
     ) {
         this.budgetRepository = budgetRepository;
         this.listCategoriesUseCase = listCategoriesUseCase;
         this.listTransactionsUseCase = listTransactionsUseCase;
+        this.coupleRepository = coupleRepository;
     }
 
     public BudgetResponse execute(UUID userId, String month) {
-        log.info("Getting budget for user={}, month={}", userId, month);
+        return execute(userId, "PERSONAL", month);
+    }
+
+    public BudgetResponse execute(UUID userId, String viewContext, String month) {
+        log.info("Getting budget for user={}, viewContext={}, month={}", userId, viewContext, month);
 
         if (month == null || !month.matches("^\\d{4}-\\d{2}$")) {
             throw new ValidationException("month", "Month must be in YYYY-MM format");
         }
 
+        UUID partnerId = null;
+        if ("COUPLE".equalsIgnoreCase(viewContext)) {
+            com.financeflow.couple.model.domain.Couple couple = coupleRepository.findActiveByUserId(userId).orElse(null);
+            if (couple != null) {
+                partnerId = couple.user1Id().equals(userId) ? couple.user2Id() : couple.user1Id();
+            }
+        }
+
         // 1. Fetch all categories
-        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId);
+        List<CategoryResponse> categories = listCategoriesUseCase.execute(userId, viewContext);
 
         // 2. Fetch budgets for the month and map to Domain
-        List<Budget> budgets = budgetRepository.findAllByUserIdAndMonth(userId, month).stream()
+        List<Budget> budgets = new ArrayList<>();
+        budgets.addAll(budgetRepository.findAllByUserIdAndMonth(userId, month).stream()
             .map(b -> BudgetMapper.toDomain(b))
-            .toList();
+            .toList());
+        if (partnerId != null) {
+            budgets.addAll(budgetRepository.findAllByUserIdAndMonth(partnerId, month).stream()
+                .map(b -> BudgetMapper.toDomain(b))
+                .toList());
+        }
         Map<UUID, BigDecimal> plannedAmounts = budgets.stream()
-            .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount()));
+            .collect(Collectors.toMap(b -> b.categoryId(), b -> b.plannedAmount(), (a, b) -> a));
 
         // 3. Fetch transactions for the month based on competenceDate
         String[] parts = month.split("-");
@@ -68,7 +90,7 @@ public class GetBudgetUseCase {
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
         List<TransactionResponse> transactions = listTransactionsUseCase.execute(
-            userId, startDate, endDate, null, null
+            userId, viewContext, startDate, endDate, null, null
         );
 
         // 4. Calculate realized amounts per category
@@ -98,7 +120,8 @@ public class GetBudgetUseCase {
                 category.name(),
                 category.parentId(),
                 planned,
-                realized
+                realized,
+                category.userId()
             ));
         }
 

@@ -32,9 +32,12 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AccountResponse>> listAccounts(Authentication authentication) {
+    public ResponseEntity<List<AccountResponse>> listAccounts(
+        Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext
+    ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        List<AccountResponse> response = listAccountsUseCase.execute(userId);
+        List<AccountResponse> response = listAccountsUseCase.execute(userId, viewContext);
         return ResponseEntity.ok(response);
     }
 

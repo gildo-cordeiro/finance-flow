@@ -7,5 +7,6 @@ public record DashboardSummaryResponse(
     BigDecimal totalExpenses,
     BigDecimal balance,
     BigDecimal budgetPlanned,
-    BigDecimal budgetRealized
+    BigDecimal budgetRealized,
+    MemberBreakdown memberBreakdown
 ) {}

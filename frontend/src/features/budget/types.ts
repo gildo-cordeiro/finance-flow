@@ -4,6 +4,7 @@ export interface BudgetItem {
   parentCategoryId: string | null;
   plannedAmount: number;
   realizedAmount: number;
+  userId?: string;
 }
 
 export interface BudgetResponse {

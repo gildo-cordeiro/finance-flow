@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.financeflow.transaction.model.domain.TransactionVisibility;
+
 @Service
 @Transactional
 public class CreateCategoryUseCase {
@@ -27,7 +29,11 @@ public class CreateCategoryUseCase {
     }
 
     public CategoryResponse execute(UUID userId, CategoryRequest request) {
-        log.info("Creating category for user={} with name={}, parentId={}", userId, request.name(), request.parentId());
+        return execute(userId, "PERSONAL", request);
+    }
+
+    public CategoryResponse execute(UUID userId, String viewContext, CategoryRequest request) {
+        log.info("Creating category for user={} with viewContext={}, name={}, parentId={}", userId, viewContext, request.name(), request.parentId());
 
         if (request.parentId() != null) {
             CategoryEntity parent = categoryRepository.findById(request.parentId())
@@ -46,11 +52,16 @@ public class CreateCategoryUseCase {
             }
         }
 
+        TransactionVisibility visibility = "COUPLE".equalsIgnoreCase(viewContext)
+            ? TransactionVisibility.SHARED
+            : TransactionVisibility.PERSONAL;
+
         Category domainCategory = new Category(
             UUID.randomUUID(),
             userId,
             request.name(),
             request.parentId(),
+            visibility,
             null,
             null
         );
@@ -65,7 +76,8 @@ public class CreateCategoryUseCase {
             savedDomain.id(),
             savedDomain.userId(),
             savedDomain.name(),
-            savedDomain.parentId()
+            savedDomain.parentId(),
+            savedDomain.visibility()
         );
     }
 }

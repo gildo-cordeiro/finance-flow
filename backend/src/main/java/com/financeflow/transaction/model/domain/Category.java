@@ -9,6 +9,7 @@ public record Category(
     UUID userId,
     String name,
     UUID parentId,
+    TransactionVisibility visibility,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -17,6 +18,9 @@ public record Category(
         Objects.requireNonNull(name, "Name cannot be null");
         if (name.isBlank()) {
             throw new IllegalArgumentException("Name cannot be blank");
+        }
+        if (visibility == null) {
+            visibility = TransactionVisibility.PERSONAL;
         }
         if (createdAt == null) {
             createdAt = Instant.now();

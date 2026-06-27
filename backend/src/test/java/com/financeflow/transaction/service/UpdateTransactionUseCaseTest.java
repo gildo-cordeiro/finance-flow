@@ -32,6 +32,7 @@ class UpdateTransactionUseCaseTest {
     private TransactionRepository transactionRepository;
     private AccountRepository accountRepository;
     private CategoryRepository categoryRepository;
+    private com.financeflow.couple.repository.CoupleRepository coupleRepository;
     private UpdateTransactionUseCase updateTransactionUseCase;
 
     @BeforeEach
@@ -39,8 +40,9 @@ class UpdateTransactionUseCaseTest {
         transactionRepository = mock(TransactionRepository.class);
         accountRepository = mock(AccountRepository.class);
         categoryRepository = mock(CategoryRepository.class);
+        coupleRepository = mock(com.financeflow.couple.repository.CoupleRepository.class);
         updateTransactionUseCase = new UpdateTransactionUseCase(
-            transactionRepository, accountRepository, categoryRepository
+            transactionRepository, accountRepository, categoryRepository, coupleRepository
         );
     }
 

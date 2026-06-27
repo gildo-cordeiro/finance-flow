@@ -70,7 +70,8 @@ public class UpdateCategoryUseCase {
             saved.getId(),
             saved.getUserId(),
             saved.getName(),
-            saved.getParentId()
+            saved.getParentId(),
+            saved.getVisibility()
         );
     }
 }

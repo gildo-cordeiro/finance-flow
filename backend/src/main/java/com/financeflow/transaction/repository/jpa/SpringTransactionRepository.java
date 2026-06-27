@@ -50,6 +50,17 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionEn
         @Param("toDate") LocalDate toDate
     );
 
+    @Query("SELECT t FROM TransactionEntity t WHERE " +
+           "((t.userId = :userId) OR (t.userId = :partnerId AND t.visibility = com.financeflow.transaction.model.domain.TransactionVisibility.SHARED)) " +
+           "AND ((t.status = com.financeflow.transaction.model.domain.TransactionStatus.PAID AND t.paymentDate >= :fromDate) " +
+           "OR (t.status <> com.financeflow.transaction.model.domain.TransactionStatus.PAID AND t.dueDate <= :toDate))")
+    List<TransactionEntity> findAllForCashFlowCouple(
+        @Param("userId") UUID userId,
+        @Param("partnerId") UUID partnerId,
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
+
     List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId);
     List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId);
 }

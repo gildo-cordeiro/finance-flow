@@ -27,6 +27,12 @@ public interface TransactionRepository {
         LocalDate fromDate,
         LocalDate toDate
     );
+    List<TransactionEntity> findAllForCashFlowCouple(
+        UUID userId,
+        UUID partnerId,
+        LocalDate fromDate,
+        LocalDate toDate
+    );
     Optional<TransactionEntity> findById(UUID id);
     TransactionEntity save(TransactionEntity transaction);
     void delete(TransactionEntity transaction);

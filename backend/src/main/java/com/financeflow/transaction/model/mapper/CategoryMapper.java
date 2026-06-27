@@ -18,6 +18,7 @@ public final class CategoryMapper {
             entity.getUserId(),
             entity.getName(),
             entity.getParentId(),
+            entity.getVisibility(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -32,6 +33,7 @@ public final class CategoryMapper {
             domain.userId(),
             domain.name(),
             domain.parentId(),
+            domain.visibility(),
             domain.createdAt(),
             domain.updatedAt()
         );

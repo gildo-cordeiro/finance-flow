@@ -45,7 +45,12 @@ class CashFlowControllerTest {
             Collections.emptyList()
         );
 
-        when(getCashFlowUseCase.execute(userId, from, to)).thenReturn(mockResponse);
+        when(getCashFlowUseCase.execute(
+            org.mockito.ArgumentMatchers.eq(userId),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.eq(from),
+            org.mockito.ArgumentMatchers.eq(to)
+        )).thenReturn(mockResponse);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
