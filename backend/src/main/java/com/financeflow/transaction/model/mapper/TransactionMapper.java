@@ -26,6 +26,12 @@ public final class TransactionMapper {
             entity.getPaymentDate(),
             entity.getStatus(),
             entity.getVisibility(),
+            entity.getInstallmentGroupId(),
+            entity.getInstallmentNumber(),
+            entity.getTotalInstallments(),
+            entity.isRecurring(),
+            entity.getRecurrenceRule(),
+            entity.getRecurrenceGroupId(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -48,6 +54,12 @@ public final class TransactionMapper {
             domain.paymentDate(),
             domain.status(),
             domain.visibility(),
+            domain.installmentGroupId(),
+            domain.installmentNumber(),
+            domain.totalInstallments(),
+            domain.isRecurring(),
+            domain.recurrenceRule(),
+            domain.recurrenceGroupId(),
             domain.createdAt(),
             domain.updatedAt()
         );

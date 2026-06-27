@@ -15,6 +15,8 @@ import com.financeflow.transaction.model.entity.TransactionEntity;
 import com.financeflow.transaction.model.mapper.TransactionMapper;
 import com.financeflow.transaction.repository.CategoryRepository;
 import com.financeflow.transaction.repository.TransactionRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -75,13 +77,32 @@ public class CreateTransactionUseCase {
             throw new ValidationException("paymentDate", "Payment date must be null when transaction status is not PAID");
         }
 
+        if (request.totalInstallments() != null && request.totalInstallments() <= 0) {
+            throw new ValidationException("totalInstallments", "Total installments must be greater than zero");
+        }
+
+        if (request.totalInstallments() != null && request.totalInstallments() > 1) {
+            return handleInstallmentCreation(userId, request, account, competenceDate);
+        } else if (request.isRecurring() != null && request.isRecurring()) {
+            return handleRecurringCreation(userId, request, account, competenceDate);
+        } else {
+            return handleSingleCreation(userId, request, account, competenceDate, dueDate);
+        }
+    }
+
+    private TransactionResponse handleSingleCreation(
+        UUID userId,
+        TransactionRequest request,
+        AccountEntity account,
+        LocalDate competenceDate,
+        LocalDate dueDate
+    ) {
         // For credit cards, the payment date (if PAID) must also be the invoice due date
         LocalDate paymentDate = request.paymentDate();
         if (account.getType() == AccountType.CREDIT_CARD && request.status() == TransactionStatus.PAID) {
             paymentDate = dueDate;
         }
 
-        // Build transaction domain object
         Transaction transaction = new Transaction(
             UUID.randomUUID(),
             userId,
@@ -96,27 +117,175 @@ public class CreateTransactionUseCase {
             request.status(),
             request.visibility(),
             null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null,
             null
         );
 
-        // Update account balance if transaction status is PAID
         if (transaction.status() == TransactionStatus.PAID) {
-            if (transaction.type() == TransactionType.INCOME) {
-                account.setBalance(account.getBalance().add(transaction.amount()));
-            } else {
-                account.setBalance(account.getBalance().subtract(transaction.amount()));
-            }
-            accountRepository.save(account);
-            log.info("Account balance updated. New balance={}", account.getBalance());
+            updateAccountBalance(account, transaction.amount(), transaction.type());
         }
 
-        // Save transaction
         TransactionEntity entity = TransactionMapper.toEntity(transaction);
         TransactionEntity saved = transactionRepository.save(entity);
-
         log.info("Transaction created successfully with id={}", saved.getId());
-        Transaction savedDomain = TransactionMapper.toDomain(saved);
+        return mapToResponse(TransactionMapper.toDomain(saved));
+    }
 
+    private TransactionResponse handleInstallmentCreation(
+        UUID userId,
+        TransactionRequest request,
+        AccountEntity account,
+        LocalDate competenceDate
+    ) {
+        UUID installmentGroupId = UUID.randomUUID();
+        int totalInstallments = request.totalInstallments();
+        BigDecimal totalAmount = request.amount();
+
+        BigDecimal installmentAmount = totalAmount.divide(BigDecimal.valueOf(totalInstallments), 2, RoundingMode.HALF_UP);
+        BigDecimal firstInstallmentAmount = totalAmount.subtract(installmentAmount.multiply(BigDecimal.valueOf(totalInstallments - 1)));
+
+        TransactionResponse firstResponse = null;
+
+        for (int i = 1; i <= totalInstallments; i++) {
+            BigDecimal amount = (i == 1) ? firstInstallmentAmount : installmentAmount;
+            LocalDate instCompetenceDate = competenceDate.plusMonths(i - 1);
+            LocalDate instDueDate = calculateDueDate(account, request, instCompetenceDate);
+
+            TransactionStatus status = (i == 1) ? request.status() : TransactionStatus.PLANNED;
+            LocalDate paymentDate = null;
+            if (i == 1) {
+                paymentDate = request.paymentDate();
+                if (account.getType() == AccountType.CREDIT_CARD && status == TransactionStatus.PAID) {
+                    paymentDate = instDueDate;
+                }
+            }
+
+            Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                userId,
+                request.accountId(),
+                request.categoryId(),
+                request.description() + " (" + i + "/" + totalInstallments + ")",
+                amount,
+                request.type(),
+                instCompetenceDate,
+                instDueDate,
+                paymentDate,
+                status,
+                request.visibility(),
+                installmentGroupId,
+                i,
+                totalInstallments,
+                false,
+                null,
+                null,
+                null,
+                null
+            );
+
+            if (transaction.status() == TransactionStatus.PAID) {
+                updateAccountBalance(account, transaction.amount(), transaction.type());
+            }
+
+            TransactionEntity entity = TransactionMapper.toEntity(transaction);
+            TransactionEntity saved = transactionRepository.save(entity);
+
+            if (i == 1) {
+                firstResponse = mapToResponse(TransactionMapper.toDomain(saved));
+            }
+        }
+
+        log.info("Created {} installments under group id={}", totalInstallments, installmentGroupId);
+        return firstResponse;
+    }
+
+    private TransactionResponse handleRecurringCreation(
+        UUID userId,
+        TransactionRequest request,
+        AccountEntity account,
+        LocalDate competenceDate
+    ) {
+        UUID recurrenceGroupId = UUID.randomUUID();
+        String recurrenceRule = request.recurrenceRule();
+        if (recurrenceRule == null || recurrenceRule.isBlank()) {
+            recurrenceRule = "MONTHLY";
+        }
+
+        TransactionResponse firstResponse = null;
+
+        for (int i = 1; i <= 12; i++) {
+            LocalDate recCompetenceDate = competenceDate.plusMonths(i - 1);
+            LocalDate recDueDate;
+            if (account.getType() == AccountType.CREDIT_CARD) {
+                recDueDate = calculateDueDate(account, request, recCompetenceDate);
+            } else {
+                recDueDate = request.dueDate().plusMonths(i - 1);
+            }
+
+            TransactionStatus status = (i == 1) ? request.status() : TransactionStatus.PLANNED;
+            LocalDate paymentDate = null;
+            if (i == 1) {
+                paymentDate = request.paymentDate();
+                if (account.getType() == AccountType.CREDIT_CARD && status == TransactionStatus.PAID) {
+                    paymentDate = recDueDate;
+                }
+            }
+
+            Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                userId,
+                request.accountId(),
+                request.categoryId(),
+                request.description(),
+                request.amount(),
+                request.type(),
+                recCompetenceDate,
+                recDueDate,
+                paymentDate,
+                status,
+                request.visibility(),
+                null,
+                null,
+                null,
+                true,
+                recurrenceRule,
+                recurrenceGroupId,
+                null,
+                null
+            );
+
+            if (transaction.status() == TransactionStatus.PAID) {
+                updateAccountBalance(account, transaction.amount(), transaction.type());
+            }
+
+            TransactionEntity entity = TransactionMapper.toEntity(transaction);
+            TransactionEntity saved = transactionRepository.save(entity);
+
+            if (i == 1) {
+                firstResponse = mapToResponse(TransactionMapper.toDomain(saved));
+            }
+        }
+
+        log.info("Created 12 recurring occurrences under group id={}", recurrenceGroupId);
+        return firstResponse;
+    }
+
+    private void updateAccountBalance(AccountEntity account, BigDecimal amount, TransactionType type) {
+        if (type == TransactionType.INCOME) {
+            account.setBalance(account.getBalance().add(amount));
+        } else {
+            account.setBalance(account.getBalance().subtract(amount));
+        }
+        accountRepository.save(account);
+        log.info("Account balance updated. New balance={}", account.getBalance());
+    }
+
+    private TransactionResponse mapToResponse(Transaction savedDomain) {
         return new TransactionResponse(
             savedDomain.id(),
             savedDomain.userId(),
@@ -129,7 +298,13 @@ public class CreateTransactionUseCase {
             savedDomain.dueDate(),
             savedDomain.paymentDate(),
             savedDomain.status(),
-            savedDomain.visibility()
+            savedDomain.visibility(),
+            savedDomain.installmentGroupId(),
+            savedDomain.installmentNumber(),
+            savedDomain.totalInstallments(),
+            savedDomain.isRecurring(),
+            savedDomain.recurrenceRule(),
+            savedDomain.recurrenceGroupId()
         );
     }
 

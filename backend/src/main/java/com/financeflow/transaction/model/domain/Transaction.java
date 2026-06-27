@@ -19,6 +19,12 @@ public record Transaction(
     LocalDate paymentDate,
     TransactionStatus status,
     TransactionVisibility visibility,
+    UUID installmentGroupId,
+    Integer installmentNumber,
+    Integer totalInstallments,
+    boolean isRecurring,
+    String recurrenceRule,
+    UUID recurrenceGroupId,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -43,6 +49,27 @@ public record Transaction(
 
         if (status == TransactionStatus.PAID && paymentDate == null) {
             throw new IllegalArgumentException("Payment date is required when transaction status is PAID");
+        }
+
+        if (installmentGroupId != null) {
+            Objects.requireNonNull(installmentNumber, "Installment number cannot be null if installmentGroupId is set");
+            Objects.requireNonNull(totalInstallments, "Total installments cannot be null if installmentGroupId is set");
+            if (installmentNumber <= 0) {
+                throw new IllegalArgumentException("Installment number must be greater than zero");
+            }
+            if (totalInstallments <= 0) {
+                throw new IllegalArgumentException("Total installments must be greater than zero");
+            }
+            if (installmentNumber > totalInstallments) {
+                throw new IllegalArgumentException("Installment number cannot exceed total installments");
+            }
+        }
+        if (isRecurring) {
+            Objects.requireNonNull(recurrenceRule, "Recurrence rule cannot be null if transaction is recurring");
+            if (recurrenceRule.isBlank()) {
+                throw new IllegalArgumentException("Recurrence rule cannot be blank if transaction is recurring");
+            }
+            Objects.requireNonNull(recurrenceGroupId, "Recurrence group ID cannot be null if transaction is recurring");
         }
 
         if (createdAt == null) {

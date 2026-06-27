@@ -27,6 +27,12 @@ export interface Transaction {
   paymentDate?: string | null; // YYYY-MM-DD
   status: TransactionStatus;
   visibility: TransactionVisibility;
+  installmentGroupId?: string | null;
+  installmentNumber?: number | null;
+  totalInstallments?: number | null;
+  isRecurring: boolean;
+  recurrenceRule?: string | null;
+  recurrenceGroupId?: string | null;
 }
 
 export interface TransactionPayload {
@@ -40,6 +46,9 @@ export interface TransactionPayload {
   paymentDate?: string | null; // YYYY-MM-DD
   status: TransactionStatus;
   visibility: TransactionVisibility;
+  totalInstallments?: number | null;
+  isRecurring?: boolean | null;
+  recurrenceRule?: string | null;
 }
 
 export interface TransactionFilters {

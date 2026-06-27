@@ -57,6 +57,24 @@ public class TransactionEntity {
     @Column(nullable = false)
     private TransactionVisibility visibility;
 
+    @Column(name = "installment_group_id")
+    private UUID installmentGroupId;
+
+    @Column(name = "installment_number")
+    private Integer installmentNumber;
+
+    @Column(name = "total_installments")
+    private Integer totalInstallments;
+
+    @Column(name = "is_recurring", nullable = false)
+    private boolean isRecurring;
+
+    @Column(name = "recurrence_rule")
+    private String recurrenceRule;
+
+    @Column(name = "recurrence_group_id")
+    private UUID recurrenceGroupId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -83,6 +101,52 @@ public class TransactionEntity {
         Instant createdAt,
         Instant updatedAt
     ) {
+        this(
+            id,
+            userId,
+            accountId,
+            categoryId,
+            description,
+            amount,
+            type,
+            competenceDate,
+            dueDate,
+            paymentDate,
+            status,
+            visibility,
+            null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            createdAt,
+            updatedAt
+        );
+    }
+
+    public TransactionEntity(
+        UUID id,
+        UUID userId,
+        UUID accountId,
+        UUID categoryId,
+        String description,
+        BigDecimal amount,
+        TransactionType type,
+        LocalDate competenceDate,
+        LocalDate dueDate,
+        LocalDate paymentDate,
+        TransactionStatus status,
+        TransactionVisibility visibility,
+        UUID installmentGroupId,
+        Integer installmentNumber,
+        Integer totalInstallments,
+        boolean isRecurring,
+        String recurrenceRule,
+        UUID recurrenceGroupId,
+        Instant createdAt,
+        Instant updatedAt
+    ) {
         this.id = id;
         this.userId = userId;
         this.accountId = accountId;
@@ -95,6 +159,12 @@ public class TransactionEntity {
         this.paymentDate = paymentDate;
         this.status = status;
         this.visibility = visibility;
+        this.installmentGroupId = installmentGroupId;
+        this.installmentNumber = installmentNumber;
+        this.totalInstallments = totalInstallments;
+        this.isRecurring = isRecurring;
+        this.recurrenceRule = recurrenceRule;
+        this.recurrenceGroupId = recurrenceGroupId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -209,5 +279,53 @@ public class TransactionEntity {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UUID getInstallmentGroupId() {
+        return installmentGroupId;
+    }
+
+    public void setInstallmentGroupId(UUID installmentGroupId) {
+        this.installmentGroupId = installmentGroupId;
+    }
+
+    public Integer getInstallmentNumber() {
+        return installmentNumber;
+    }
+
+    public void setInstallmentNumber(Integer installmentNumber) {
+        this.installmentNumber = installmentNumber;
+    }
+
+    public Integer getTotalInstallments() {
+        return totalInstallments;
+    }
+
+    public void setTotalInstallments(Integer totalInstallments) {
+        this.totalInstallments = totalInstallments;
+    }
+
+    public boolean isRecurring() {
+        return isRecurring;
+    }
+
+    public void setRecurring(boolean isRecurring) {
+        this.isRecurring = isRecurring;
+    }
+
+    public String getRecurrenceRule() {
+        return recurrenceRule;
+    }
+
+    public void setRecurrenceRule(String recurrenceRule) {
+        this.recurrenceRule = recurrenceRule;
+    }
+
+    public UUID getRecurrenceGroupId() {
+        return recurrenceGroupId;
+    }
+
+    public void setRecurrenceGroupId(UUID recurrenceGroupId) {
+        this.recurrenceGroupId = recurrenceGroupId;
     }
 }

@@ -22,5 +22,23 @@ public record TransactionRequest(
     @NotNull(message = "DueDate cannot be null") LocalDate dueDate,
     LocalDate paymentDate,
     @NotNull(message = "Status cannot be null") TransactionStatus status,
-    @NotNull(message = "Visibility cannot be null") TransactionVisibility visibility
-) {}
+    @NotNull(message = "Visibility cannot be null") TransactionVisibility visibility,
+    Integer totalInstallments,
+    Boolean isRecurring,
+    String recurrenceRule
+) {
+    public TransactionRequest(
+        UUID accountId,
+        UUID categoryId,
+        String description,
+        BigDecimal amount,
+        TransactionType type,
+        LocalDate competenceDate,
+        LocalDate dueDate,
+        LocalDate paymentDate,
+        TransactionStatus status,
+        TransactionVisibility visibility
+    ) {
+        this(accountId, categoryId, description, amount, type, competenceDate, dueDate, paymentDate, status, visibility, null, null, null);
+    }
+}

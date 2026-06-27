@@ -7,9 +7,9 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Plus, Calendar, AlertTriangle, 
   Trash2, Edit3, X, Info, FolderPlus, 
-  DollarSign, Eye, EyeOff, Tag
+  DollarSign, Eye, EyeOff, Tag, RefreshCw, Layers
 } from 'lucide-react';
-import type { TransactionStatus, Category } from '../types';
+import type { TransactionStatus, Category, Transaction, TransactionPayload } from '../types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +28,10 @@ const transactionSchema = z.object({
   paymentDate: z.string().optional().or(z.literal('')),
   status: z.enum(['PLANNED', 'PENDING', 'PAID', 'OVERDUE']),
   visibility: z.enum(['PERSONAL', 'SHARED']),
+  repetitionType: z.enum(['SINGLE', 'INSTALLMENT', 'RECURRING']).default('SINGLE'),
+  totalInstallments: z.coerce.number().optional().nullable(),
+  isRecurring: z.boolean().optional(),
+  recurrenceRule: z.string().optional().nullable(),
 }).refine((data) => {
   if (data.status === 'PAID') {
     return !!data.paymentDate;
@@ -36,6 +40,14 @@ const transactionSchema = z.object({
 }, {
   message: 'A data de pagamento é obrigatória quando o status é PAGO',
   path: ['paymentDate'],
+}).refine((data) => {
+  if (data.repetitionType === 'INSTALLMENT') {
+    return !!data.totalInstallments && data.totalInstallments > 1;
+  }
+  return true;
+}, {
+  message: 'O número de parcelas deve ser maior que 1',
+  path: ['totalInstallments'],
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -62,7 +74,15 @@ export function Transactions() {
   const [filterAccountId, setFilterAccountId] = useState('');
   const [filterCategoryId, setFilterCategoryId] = useState('');
 
-  const { transactions, isLoading: isTransLoading, error: transError, createTransaction, isCreating: isTransCreating } = useTransactions({
+  const {
+    transactions,
+    isLoading: isTransLoading,
+    error: transError,
+    createTransaction,
+    isCreating: isTransCreating,
+    updateTransaction,
+    deleteTransaction,
+  } = useTransactions({
     startDate: filterStartDate || undefined,
     endDate: filterEndDate || undefined,
     accountId: filterAccountId || undefined,
@@ -71,7 +91,14 @@ export function Transactions() {
 
   // Modal State for Transaction
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [transFormError, setTransFormError] = useState<string | null>(null);
+
+  // Bulk actions states
+  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<TransactionPayload | null>(null);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Modal State for Category
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
@@ -107,8 +134,14 @@ export function Transactions() {
       paymentDate: '',
       status: 'PENDING',
       visibility: 'PERSONAL',
+      repetitionType: 'SINGLE',
+      totalInstallments: null,
+      isRecurring: false,
+      recurrenceRule: 'MONTHLY',
     }
   });
+
+  const watchedRepetitionType = watchTrans('repetitionType');
 
   const watchedAccountId = watchTrans('accountId');
   const watchedType = watchTrans('type');
@@ -133,6 +166,7 @@ export function Transactions() {
   if (!user) return null;
 
   const handleOpenNewTrans = () => {
+    setEditingTransaction(null);
     resetTrans({
       type: 'EXPENSE',
       amount: 0,
@@ -144,6 +178,37 @@ export function Transactions() {
       paymentDate: '',
       status: 'PENDING',
       visibility: 'PERSONAL',
+      repetitionType: 'SINGLE',
+      totalInstallments: null,
+      isRecurring: false,
+      recurrenceRule: 'MONTHLY',
+    });
+    setTransFormError(null);
+    setIsTransModalOpen(true);
+  };
+
+  const handleOpenEditTrans = (t: Transaction) => {
+    setEditingTransaction(t);
+
+    let repetitionType: 'SINGLE' | 'INSTALLMENT' | 'RECURRING' = 'SINGLE';
+    if (t.installmentGroupId) repetitionType = 'INSTALLMENT';
+    else if (t.isRecurring) repetitionType = 'RECURRING';
+
+    resetTrans({
+      type: t.type,
+      amount: t.amount,
+      description: t.description,
+      accountId: t.accountId,
+      categoryId: t.categoryId,
+      competenceDate: t.competenceDate || '',
+      dueDate: t.dueDate,
+      paymentDate: t.paymentDate || '',
+      status: t.status,
+      visibility: t.visibility,
+      repetitionType,
+      totalInstallments: t.totalInstallments || null,
+      isRecurring: t.isRecurring,
+      recurrenceRule: t.recurrenceRule || 'MONTHLY',
     });
     setTransFormError(null);
     setIsTransModalOpen(true);
@@ -152,7 +217,7 @@ export function Transactions() {
   const handleTransFormSubmit = async (data: TransactionFormData) => {
     setTransFormError(null);
 
-    const payload = {
+    const payload: TransactionPayload = {
       accountId: data.accountId,
       categoryId: data.categoryId,
       description: data.description,
@@ -162,15 +227,73 @@ export function Transactions() {
       dueDate: data.dueDate,
       paymentDate: data.status === 'PAID' ? data.paymentDate || null : null,
       status: data.status,
-      visibility: data.visibility
+      visibility: data.visibility,
+      totalInstallments: data.repetitionType === 'INSTALLMENT' ? Number(data.totalInstallments) : null,
+      isRecurring: data.repetitionType === 'RECURRING',
+      recurrenceRule: data.repetitionType === 'RECURRING' ? data.recurrenceRule || 'MONTHLY' : null,
     };
 
     try {
-      await createTransaction(payload);
-      setIsTransModalOpen(false);
+      if (editingTransaction) {
+        if (editingTransaction.installmentGroupId || editingTransaction.recurrenceGroupId) {
+          setPendingUpdatePayload(payload);
+          setIsBulkUpdateModalOpen(true);
+        } else {
+          await updateTransaction(editingTransaction.id, payload, 'ONLY_THIS');
+          setIsTransModalOpen(false);
+          setEditingTransaction(null);
+        }
+      } else {
+        await createTransaction(payload);
+        setIsTransModalOpen(false);
+      }
     } catch (err) {
       const error = err as Error;
-      setTransFormError(error.message || 'Erro ao criar transação.');
+      setTransFormError(error.message || 'Erro ao salvar transação.');
+    }
+  };
+
+  const handleConfirmBulkUpdate = async (mode: 'ONLY_THIS' | 'ALL') => {
+    if (!editingTransaction || !pendingUpdatePayload) return;
+    try {
+      await updateTransaction(editingTransaction.id, pendingUpdatePayload, mode);
+      setIsBulkUpdateModalOpen(false);
+      setIsTransModalOpen(false);
+      setEditingTransaction(null);
+      setPendingUpdatePayload(null);
+    } catch (err) {
+      const error = err as Error;
+      setTransFormError(error.message || 'Erro ao atualizar transações.');
+      setIsBulkUpdateModalOpen(false);
+    }
+  };
+
+  const handleDeleteTrans = async (t: Transaction) => {
+    if (t.installmentGroupId || t.recurrenceGroupId) {
+      setPendingDeleteId(t.id);
+      setIsBulkDeleteModalOpen(true);
+    } else {
+      if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
+        try {
+          await deleteTransaction(t.id, 'ONLY_THIS');
+        } catch (err) {
+          const error = err as Error;
+          alert(error.message || 'Erro ao excluir transação.');
+        }
+      }
+    }
+  };
+
+  const handleConfirmBulkDelete = async (mode: 'ONLY_THIS' | 'ALL') => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteTransaction(pendingDeleteId, mode);
+      setIsBulkDeleteModalOpen(false);
+      setPendingDeleteId(null);
+    } catch (err) {
+      const error = err as Error;
+      alert(error.message || 'Erro ao excluir transações.');
+      setIsBulkDeleteModalOpen(false);
     }
   };
 
@@ -393,6 +516,7 @@ export function Transactions() {
                         <th className="p-4">Status</th>
                         <th className="p-4">Visibilidade</th>
                         <th className="p-4 text-right">Valor</th>
+                        <th className="p-4 text-center">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-800/50 text-sm text-zinc-300">
@@ -401,7 +525,17 @@ export function Transactions() {
                         const cat = categories.find(c => c.id === t.categoryId);
                         return (
                           <tr key={t.id} className="hover:bg-zinc-800/20 transition-colors">
-                            <td className="p-4 font-medium text-white">{t.description}</td>
+                            <td className="p-4 font-medium text-white">
+                              <div className="flex items-center gap-2">
+                                <span>{t.description}</span>
+                                {t.installmentGroupId && (
+                                  <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
+                                )}
+                                {t.isRecurring && (
+                                  <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
+                                )}
+                              </div>
+                            </td>
                             <td className="p-4 text-zinc-400">{acc ? acc.name : 'Conta excluída'}</td>
                             <td className="p-4 text-zinc-400">{cat ? cat.name : 'Sem Categoria'}</td>
                             <td className="p-4 text-zinc-400">{formatDate(t.competenceDate)}</td>
@@ -429,6 +563,24 @@ export function Transactions() {
                             </td>
                             <td className={`p-4 text-right font-bold ${t.type === 'EXPENSE' ? 'text-red-400' : 'text-emerald-400'}`}>
                               {t.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(t.amount)}
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => handleOpenEditTrans(t)}
+                                  className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteTrans(t)}
+                                  className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -686,6 +838,41 @@ export function Transactions() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
+                  label="Repetição"
+                  error={errorsTrans.repetitionType?.message}
+                  disabled={!!editingTransaction}
+                  {...registerTrans('repetitionType')}
+                >
+                  <option value="SINGLE">Único</option>
+                  <option value="INSTALLMENT">Parcelado</option>
+                  <option value="RECURRING">Fixo Mensal</option>
+                </Select>
+
+                {watchedRepetitionType === 'INSTALLMENT' && (
+                  <Input
+                    type="number"
+                    label="Nº de Parcelas"
+                    placeholder="Ex: 3"
+                    disabled={!!editingTransaction}
+                    error={errorsTrans.totalInstallments?.message}
+                    {...registerTrans('totalInstallments')}
+                  />
+                )}
+
+                {watchedRepetitionType === 'RECURRING' && (
+                  <Select
+                    label="Frequência"
+                    disabled={!!editingTransaction}
+                    error={errorsTrans.recurrenceRule?.message}
+                    {...registerTrans('recurrenceRule')}
+                  >
+                    <option value="MONTHLY">Mensal</option>
+                  </Select>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Select
                   label="Status"
                   error={errorsTrans.status?.message}
                   value={watchedStatus}
@@ -793,6 +980,96 @@ export function Transactions() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Update Modal */}
+      {isBulkUpdateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="auth-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Info className="w-5 h-5 text-violet-400" />
+                Editar Lançamento Recorrente
+              </h2>
+              <button onClick={() => setIsBulkUpdateModalOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-zinc-300">
+              Este lançamento faz parte de um grupo (parcelamento ou recorrência). Deseja atualizar apenas este lançamento ou todos os lançamentos do grupo?
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => handleConfirmBulkUpdate('ONLY_THIS')}
+                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
+              >
+                Atualizar apenas este
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmBulkUpdate('ALL')}
+                className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-sm font-semibold rounded-xl shadow-lg shadow-violet-500/25 transition-all"
+              >
+                Atualizar toda a série
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBulkUpdateModalOpen(false)}
+                className="w-full py-2.5 text-zinc-400 hover:text-white text-sm font-semibold transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Modal */}
+      {isBulkDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="auth-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-red-400">
+                <AlertTriangle className="w-5 h-5" />
+                Excluir Lançamento Recorrente
+              </h2>
+              <button onClick={() => setIsBulkDeleteModalOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-zinc-300">
+              Este lançamento faz parte de um grupo (parcelamento ou recorrência). Deseja excluir apenas este lançamento ou todos os lançamentos do grupo?
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => handleConfirmBulkDelete('ONLY_THIS')}
+                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
+              >
+                Excluir apenas este
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmBulkDelete('ALL')}
+                className="w-full py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-sm font-semibold rounded-xl shadow-lg shadow-red-500/25 transition-all"
+              >
+                Excluir toda a série
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBulkDeleteModalOpen(false)}
+                className="w-full py-2.5 text-zinc-400 hover:text-white text-sm font-semibold transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

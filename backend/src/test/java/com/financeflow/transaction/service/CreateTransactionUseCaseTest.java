@@ -262,4 +262,75 @@ class CreateTransactionUseCaseTest {
             .isInstanceOf(ValidationException.class)
             .hasMessageContaining("Account does not belong to the user");
     }
+
+    @Test
+    void shouldCreateInstallmentTransactionsSuccessfully() {
+        UUID userId = UUID.randomUUID();
+        UUID accountId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+
+        AccountEntity checkingAccount = new AccountEntity(
+            accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
+            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+        );
+
+        CategoryEntity category = new CategoryEntity(
+            categoryId, userId, "Salary", null, Instant.now(), Instant.now()
+        );
+
+        TransactionRequest request = new TransactionRequest(
+            accountId, categoryId, "Laptop", new BigDecimal("300.00"),
+            TransactionType.EXPENSE, null, LocalDate.of(2026, 6, 20), null,
+            TransactionStatus.PLANNED, TransactionVisibility.PERSONAL,
+            3, false, null
+        );
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(checkingAccount));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TransactionResponse response = createTransactionUseCase.execute(userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.totalInstallments()).isEqualTo(3);
+        assertThat(response.installmentNumber()).isEqualTo(1);
+        assertThat(response.amount()).isEqualByComparingTo(new BigDecimal("100.00"));
+        assertThat(response.description()).isEqualTo("Laptop (1/3)");
+        verify(transactionRepository, org.mockito.Mockito.times(3)).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    void shouldCreateRecurringTransactionsSuccessfully() {
+        UUID userId = UUID.randomUUID();
+        UUID accountId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+
+        AccountEntity checkingAccount = new AccountEntity(
+            accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
+            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+        );
+
+        CategoryEntity category = new CategoryEntity(
+            categoryId, userId, "Subscription", null, Instant.now(), Instant.now()
+        );
+
+        TransactionRequest request = new TransactionRequest(
+            accountId, categoryId, "Netflix", new BigDecimal("50.00"),
+            TransactionType.EXPENSE, null, LocalDate.of(2026, 6, 20), null,
+            TransactionStatus.PLANNED, TransactionVisibility.PERSONAL,
+            null, true, "MONTHLY"
+        );
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(checkingAccount));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TransactionResponse response = createTransactionUseCase.execute(userId, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isRecurring()).isTrue();
+        assertThat(response.recurrenceRule()).isEqualTo("MONTHLY");
+        assertThat(response.amount()).isEqualByComparingTo(new BigDecimal("50.00"));
+        verify(transactionRepository, org.mockito.Mockito.times(12)).save(any(TransactionEntity.class));
+    }
 }

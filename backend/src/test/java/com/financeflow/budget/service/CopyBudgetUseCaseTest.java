@@ -33,7 +33,6 @@ class CopyBudgetUseCaseTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldCopyBudgetsFromPreviousMonthSuccessfully() {
         UUID userId = UUID.randomUUID();
         String targetMonth = "2026-06";
