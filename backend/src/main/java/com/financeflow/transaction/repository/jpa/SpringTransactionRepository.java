@@ -32,4 +32,7 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionEn
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate
     );
+
+    List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId);
+    List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId);
 }

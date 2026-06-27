@@ -93,5 +93,8 @@ async function handleResponse<T>(res: Response): Promise<T> {
       status: res.status,
     };
   }
+  if (res.status === 204) {
+    return null as unknown as T;
+  }
   return res.json() as Promise<T>;
 }

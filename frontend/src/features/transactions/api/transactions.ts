@@ -21,4 +21,17 @@ export const transactionsApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  async updateTransaction(id: string, payload: TransactionPayload, mode: 'ONLY_THIS' | 'ALL' = 'ONLY_THIS'): Promise<Transaction> {
+    return request<Transaction>(`/transactions/${id}?mode=${mode}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteTransaction(id: string, mode: 'ONLY_THIS' | 'ALL' = 'ONLY_THIS'): Promise<void> {
+    return request<void>(`/transactions/${id}?mode=${mode}`, {
+      method: 'DELETE',
+    });
+  },
 };

@@ -47,7 +47,13 @@ public class ListTransactionsUseCase {
                 t.dueDate(),
                 t.paymentDate(),
                 t.status(),
-                t.visibility()
+                t.visibility(),
+                t.installmentGroupId(),
+                t.installmentNumber(),
+                t.totalInstallments(),
+                t.isRecurring(),
+                t.recurrenceRule(),
+                t.recurrenceGroupId()
             ))
             .toList();
     }

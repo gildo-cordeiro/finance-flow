@@ -6,6 +6,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,6 +20,8 @@ import com.financeflow.transaction.model.domain.TransactionType;
 import com.financeflow.transaction.model.domain.TransactionVisibility;
 import com.financeflow.transaction.service.CreateTransactionUseCase;
 import com.financeflow.transaction.service.ListTransactionsUseCase;
+import com.financeflow.transaction.service.UpdateTransactionUseCase;
+import com.financeflow.transaction.service.DeleteTransactionUseCase;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -49,6 +53,12 @@ class TransactionControllerTest {
 
     @MockitoBean
     private CreateTransactionUseCase createTransactionUseCase;
+
+    @MockitoBean
+    private UpdateTransactionUseCase updateTransactionUseCase;
+
+    @MockitoBean
+    private DeleteTransactionUseCase deleteTransactionUseCase;
 
     @MockitoBean
     private JwtService jwtService;
@@ -113,5 +123,52 @@ class TransactionControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.description").value("Lunch"))
             .andExpect(jsonPath("$.amount").value(50.00));
+    }
+
+    @Test
+    void shouldUpdateTransactionSuccessfullyWhenAuthenticated() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID accountId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+        UUID txId = UUID.randomUUID();
+
+        TransactionRequest request = new TransactionRequest(
+            accountId, categoryId, "Lunch Updated", new BigDecimal("60.00"),
+            TransactionType.EXPENSE, null, LocalDate.of(2026, 6, 10), null,
+            TransactionStatus.PENDING, TransactionVisibility.PERSONAL
+        );
+
+        TransactionResponse response = new TransactionResponse(
+            txId, userId, accountId, categoryId, "Lunch Updated", new BigDecimal("60.00"),
+            TransactionType.EXPENSE, LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 10),
+            null, TransactionStatus.PENDING, TransactionVisibility.PERSONAL
+        );
+
+        when(updateTransactionUseCase.execute(eq(userId), eq(txId), any(TransactionRequest.class), eq("ONLY_THIS")))
+            .thenReturn(response);
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+
+        mockMvc.perform(patch("/api/v1/transactions/" + txId)
+                .with(csrf())
+                .principal(auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.description").value("Lunch Updated"))
+            .andExpect(jsonPath("$.amount").value(60.00));
+    }
+
+    @Test
+    void shouldDeleteTransactionSuccessfullyWhenAuthenticated() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID txId = UUID.randomUUID();
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+
+        mockMvc.perform(delete("/api/v1/transactions/" + txId)
+                .with(csrf())
+                .principal(auth))
+            .andExpect(status().isNoContent());
     }
 }

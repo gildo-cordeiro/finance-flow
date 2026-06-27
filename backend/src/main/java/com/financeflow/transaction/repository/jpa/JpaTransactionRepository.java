@@ -51,4 +51,19 @@ public class JpaTransactionRepository implements TransactionRepository {
     ) {
         return springRepo.findAllForCashFlow(userId, fromDate, toDate);
     }
+
+    @Override
+    public List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId) {
+        return springRepo.findByInstallmentGroupId(installmentGroupId);
+    }
+
+    @Override
+    public List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId) {
+        return springRepo.findByRecurrenceGroupId(recurrenceGroupId);
+    }
+
+    @Override
+    public void deleteAll(List<TransactionEntity> transactions) {
+        springRepo.deleteAll(transactions);
+    }
 }

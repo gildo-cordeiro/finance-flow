@@ -22,4 +22,7 @@ public interface TransactionRepository {
     Optional<TransactionEntity> findById(UUID id);
     TransactionEntity save(TransactionEntity transaction);
     void delete(TransactionEntity transaction);
+    List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId);
+    List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId);
+    void deleteAll(List<TransactionEntity> transactions);
 }
