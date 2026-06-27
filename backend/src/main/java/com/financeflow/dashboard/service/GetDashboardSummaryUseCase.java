@@ -43,7 +43,11 @@ public class GetDashboardSummaryUseCase {
     }
 
     public DashboardSummaryResponse execute(UUID userId, String month) {
-        log.info("Getting dashboard summary for user={}, month={}", userId, month);
+        return execute(userId, "PERSONAL", month);
+    }
+
+    public DashboardSummaryResponse execute(UUID userId, String viewContext, String month) {
+        log.info("Getting dashboard summary for user={}, viewContext={}, month={}", userId, viewContext, month);
 
         if (month == null || month.isBlank()) {
             month = LocalDate.now().toString().substring(0, 7);
@@ -69,7 +73,7 @@ public class GetDashboardSummaryUseCase {
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
         List<TransactionResponse> transactions = listTransactionsUseCase.execute(
-            userId, startDate, endDate, null, null
+            userId, viewContext, startDate, endDate, null, null
         );
 
         // 4. Calculate total revenue and total expenses

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Lock, Mail, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import type { ApiError } from '../types';
@@ -19,6 +19,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +38,14 @@ export function Login() {
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
     try {
+      console.log('[Login] Iniciando chamada de login para:', data.email);
       await login(data);
-      navigate('/');
+      console.log('[Login] Login bem-sucedido!');
+      const redirectTo = searchParams.get('redirectTo') || '/';
+      console.log('[Login] Redirecionando para:', redirectTo);
+      navigate(redirectTo);
     } catch (err) {
+      console.error('[Login] Erro no login:', err);
       const apiErr = err as ApiError;
       setError(apiErr.message || 'Falha ao realizar login. Verifique suas credenciais.');
     }

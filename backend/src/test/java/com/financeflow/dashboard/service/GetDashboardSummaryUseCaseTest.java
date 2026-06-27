@@ -81,7 +81,7 @@ class GetDashboardSummaryUseCaseTest {
         );
 
         when(listTransactionsUseCase.execute(
-            eq(userId), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), any(), any()
+            eq(userId), any(), eq(LocalDate.of(2026, 6, 1)), eq(LocalDate.of(2026, 6, 30)), any(), any()
         )).thenReturn(List.of(salaryTx, foodTx1, foodRefundTx));
 
         DashboardSummaryResponse response = getDashboardSummaryUseCase.execute(userId, month);

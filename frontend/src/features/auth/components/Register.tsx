@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { User, Lock, Mail, Globe, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 import type { ApiError } from '../types';
@@ -40,6 +40,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export function Register() {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -66,8 +67,9 @@ export function Register() {
     try {
       await registerUser(data);
       setSuccess(true);
+      const redirectTo = searchParams.get('redirectTo');
       setTimeout(() => {
-        navigate('/login');
+        navigate(redirectTo ? `/login?redirectTo=${encodeURIComponent(redirectTo)}` : '/login');
       }, 2000);
     } catch (err) {
       const apiErr = err as ApiError;

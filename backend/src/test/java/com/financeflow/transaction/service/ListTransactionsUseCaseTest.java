@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.domain.TransactionType;
@@ -21,12 +22,14 @@ import org.junit.jupiter.api.Test;
 class ListTransactionsUseCaseTest {
 
     private TransactionRepository transactionRepository;
+    private CoupleRepository coupleRepository;
     private ListTransactionsUseCase listTransactionsUseCase;
 
     @BeforeEach
     void setUp() {
         transactionRepository = mock(TransactionRepository.class);
-        listTransactionsUseCase = new ListTransactionsUseCase(transactionRepository);
+        coupleRepository = mock(CoupleRepository.class);
+        listTransactionsUseCase = new ListTransactionsUseCase(transactionRepository, coupleRepository);
     }
 
     @Test

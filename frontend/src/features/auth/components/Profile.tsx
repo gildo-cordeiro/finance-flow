@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { User, Globe, DollarSign, Calendar, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { CoupleSettingsSection } from '../../couple/components/CoupleSettingsSection';
 import type { ApiError } from '../types';
 
 const TIMEZONES = [
@@ -202,6 +203,8 @@ export function Profile() {
             </button>
           </div>
         </form>
+
+        <CoupleSettingsSection />
       </main>
     </div>
   );

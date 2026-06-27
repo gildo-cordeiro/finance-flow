@@ -14,6 +14,14 @@ public interface TransactionRepository {
         UUID categoryId,
         UUID accountId
     );
+    List<TransactionEntity> findAllFilteredCouple(
+        UUID userId,
+        UUID partnerId,
+        LocalDate startDate,
+        LocalDate endDate,
+        UUID categoryId,
+        UUID accountId
+    );
     List<TransactionEntity> findAllForCashFlow(
         UUID userId,
         LocalDate fromDate,

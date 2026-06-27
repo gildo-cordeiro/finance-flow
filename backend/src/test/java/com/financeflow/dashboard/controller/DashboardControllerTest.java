@@ -48,7 +48,7 @@ class DashboardControllerTest {
             new BigDecimal("1400.00")
         );
 
-        when(getDashboardSummaryUseCase.execute(eq(userId), eq(month))).thenReturn(response);
+        when(getDashboardSummaryUseCase.execute(eq(userId), any(), eq(month))).thenReturn(response);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
@@ -74,7 +74,7 @@ class DashboardControllerTest {
             new BigDecimal("1400.00")
         );
 
-        when(getDashboardSummaryUseCase.execute(eq(userId), any())).thenReturn(response);
+        when(getDashboardSummaryUseCase.execute(eq(userId), any(), any())).thenReturn(response);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
