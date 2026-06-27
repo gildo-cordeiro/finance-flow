@@ -9,7 +9,7 @@ import {
   Trash2, Edit3, X, Info, FolderPlus, 
   DollarSign, Eye, EyeOff, Tag, RefreshCw, Layers
 } from 'lucide-react';
-import type { TransactionStatus, Category, Transaction } from '../types';
+import type { TransactionStatus, Category, Transaction, TransactionPayload } from '../types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -91,12 +91,12 @@ export function Transactions() {
 
   // Modal State for Transaction
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [transFormError, setTransFormError] = useState<string | null>(null);
 
   // Bulk actions states
   const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
-  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<any>(null);
+  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<TransactionPayload | null>(null);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -217,7 +217,7 @@ export function Transactions() {
   const handleTransFormSubmit = async (data: TransactionFormData) => {
     setTransFormError(null);
 
-    const payload: any = {
+    const payload: TransactionPayload = {
       accountId: data.accountId,
       categoryId: data.categoryId,
       description: data.description,
