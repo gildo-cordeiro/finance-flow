@@ -1,12 +1,8 @@
 package com.financeflow.transaction.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import com.financeflow.account.model.domain.AccountType;
-import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
 import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.domain.TransactionType;
