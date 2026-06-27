@@ -18,7 +18,7 @@ O **FinanceFlow** resolve isso separando cada transação em três datas indepen
 ## 🛠️ Stack Tecnológica
 
 ### Backend (API REST)
-*   **Linguagem & Framework:** Java 21 + Spring Boot 3
+*   **Linguagem & Framework:** Java 21 + Spring Boot 4.0.7
 *   **Segurança:** Spring Security + JWT (JSON Web Tokens) com rotação de refresh token
 *   **Persistência:** PostgreSQL (Supabase) + Spring Data JPA / Hibernate
 *   **Migrations:** Flyway

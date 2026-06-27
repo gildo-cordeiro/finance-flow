@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.financeflow.auth.dto.UpdateProfileRequest;
 import com.financeflow.auth.dto.UserResponse;
 import com.financeflow.auth.service.GetUserProfileUseCase;
@@ -19,14 +19,17 @@ import java.util.Collections;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = UserController.class, excludeAutoConfiguration = org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class)
+@WebMvcTest(controllers = UserController.class, excludeAutoConfiguration = {
+    org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration.class,
+    org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
+})
 class UserControllerTest {
 
     @Autowired

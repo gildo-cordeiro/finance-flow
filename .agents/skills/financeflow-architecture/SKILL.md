@@ -16,12 +16,12 @@ codificação do FinanceFlow.
 
 ## 1. Stack Tecnológica
 
-### Backend (Java 21 + Spring Boot 3)
+### Backend (Java 21 + Spring Boot 4)
 
 | Camada | Tecnologia | Notas |
 |---|---|---|
 | Linguagem | Java 21 | Records, sealed classes, pattern matching |
-| Framework | Spring Boot 3 | **Sem Lombok** — zero exceções |
+| Framework | Spring Boot 4 | **Sem Lombok** — zero exceções |
 | Segurança | Spring Security 6 + JWT | Stateless, refresh token rotation (RTR) |
 | Persistência | Spring Data JPA + Hibernate | PostgreSQL via Supabase |
 | Migrations | Flyway | Imutáveis após deploy |

@@ -1,4 +1,4 @@
-# Java 21 + Spring Boot 3 — Referência Completa (sem Lombok)
+# Java 21 + Spring Boot 4 — Referência Completa (sem Lombok)
 
 ## Regra Zero: Lombok é proibido
 
@@ -379,7 +379,7 @@ public class AuthService {
 }
 ```
 
-### 3. Configuração de Segurança (Spring Security 6+ / Spring Boot 3)
+### 3. Configuração de Segurança (Spring Security 7+ / Spring Boot 4)
 ```java
 @Configuration
 @EnableWebSecurity
