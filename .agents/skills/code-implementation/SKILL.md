@@ -4,7 +4,7 @@ description: >
   Guia completo e detalhado para implementar código de forma profissional e sustentável no FinanceFlow.
   Use esta skill SEMPRE que o usuário pedir para escrever, criar, refatorar, revisar ou implementar qualquer trecho
   de código — desde um simples script até sistemas complexos. Cobre a stack oficial do FinanceFlow:
-  (1) Java 21 + Spring Boot 3 no back-end (SEM Lombok), com Spring Security + JWT com rotação de refresh token,
+  (1) Java 21 + Spring Boot 4 no back-end (SEM Lombok), com Spring Security + JWT com rotação de refresh token,
   PostgreSQL (Supabase), Flyway para migrations e Redis (Upstash) para cache;
   (2) React 18 + Vite + TypeScript no front-end com Tailwind CSS v3 (travado em ^3.4.17 — NÃO atualizar para v4),
   React Query (TanStack Query), React Router v6, Recharts e date-fns.
@@ -20,7 +20,7 @@ Guia de referência para produzir código de alta qualidade, legível, testável
 ## Stack Tecnológica
 
 ### Backend (API REST)
-- **Linguagem & Framework:** Java 21 + Spring Boot 3 — **sem Lombok, zero exceções**
+- **Linguagem & Framework:** Java 21 + Spring Boot 4 — **sem Lombok, zero exceções**
 - **Segurança:** Spring Security 6 + JWT (stateless) com rotação de refresh token (RTR)
 - **Persistência:** PostgreSQL (Supabase) + Spring Data JPA / Hibernate
 - **Migrations:** Flyway (arquivos imutáveis após deploy)
@@ -103,7 +103,7 @@ ENTENDER → PLANEJAR → ESTRUTURAR → IMPLEMENTAR → VALIDAR → DOCUMENTAR
 > - Back-end: `references/java-spring.md`
 > - Front-end: `references/typescript-react-tailwind.md`
 
-### 3.1 Java 21 + Spring Boot 3 (sem Lombok)
+### 3.1 Java 21 + Spring Boot 4 (sem Lombok)
 
 **Regra absoluta: ZERO Lombok.** Use Records para DTOs e builders manuais para entidades JPA.
 
@@ -247,7 +247,7 @@ function Card(props: any) {
 
 ## 4. Estrutura de Projeto
 
-### Back-end (Java 21 + Spring Boot 3)
+### Back-end (Java 21 + Spring Boot 4)
 
 ```
 src/main/java/com/financeflow/
@@ -307,7 +307,7 @@ Front-end: api ← hooks ← components ← features ← routes
 
 ## 5. Tratamento de Erros
 
-### Back-end (Java 21 + Spring Boot 3)
+### Back-end (Java 21 + Spring Boot 4)
 
 ```java
 // 1. Exceções de domínio (em shared/exception/)
