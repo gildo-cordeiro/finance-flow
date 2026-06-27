@@ -1,4 +1,4 @@
-CREATE TABLE couples (
+CREATE TABLE IF NOT EXISTS couples (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user1_id UUID NOT NULL REFERENCES users(id),
     user2_id UUID NOT NULL REFERENCES users(id),
@@ -9,7 +9,8 @@ CREATE TABLE couples (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX unique_couple_users ON couples (
+CREATE UNIQUE INDEX IF NOT EXISTS unique_couple_users ON couples (
     LEAST(user1_id::text, user2_id::text),
     GREATEST(user1_id::text, user2_id::text)
 );
+
