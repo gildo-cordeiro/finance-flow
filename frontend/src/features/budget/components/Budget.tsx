@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useBudget } from '../hooks/useBudget';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { 
@@ -119,8 +120,9 @@ export function Budget() {
             <span>Voltar ao Painel</span>
           </button>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <span className="font-semibold text-lg tracking-tight text-white">Planejamento Orçamentário</span>
+            <CoupleToggle />
           </div>
 
           <button

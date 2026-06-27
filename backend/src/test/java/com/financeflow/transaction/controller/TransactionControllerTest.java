@@ -77,7 +77,7 @@ class TransactionControllerTest {
             null, TransactionStatus.PENDING, TransactionVisibility.PERSONAL
         );
 
-        when(listTransactionsUseCase.execute(userId, start, end, categoryId, accountId))
+        when(listTransactionsUseCase.execute(eq(userId), eq("PERSONAL"), eq(start), eq(end), eq(categoryId), eq(accountId)))
             .thenReturn(List.of(response));
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());

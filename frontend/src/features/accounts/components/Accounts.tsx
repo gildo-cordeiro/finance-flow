@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../hooks/useAccounts';
 import { useNavigate } from 'react-router-dom';
+import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { 
   ArrowLeft, Plus, CreditCard, Landmark, PiggyBank, 
   HelpCircle, AlertTriangle, X 
@@ -152,8 +153,9 @@ export function Accounts() {
             <span>Voltar ao Painel</span>
           </button>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <span className="font-semibold text-lg tracking-tight text-white">Minhas Contas</span>
+            <CoupleToggle />
           </div>
 
           <button

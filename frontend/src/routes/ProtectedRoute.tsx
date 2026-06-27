@@ -4,6 +4,8 @@ import { useAuth } from '../features/auth/hooks/useAuth';
 export function ProtectedRoute() {
   const { isAuthenticated, isInitializing } = useAuth();
 
+  console.log('[ProtectedRoute] rendered. isAuthenticated:', isAuthenticated, 'isInitializing:', isInitializing);
+
   if (isInitializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -15,5 +17,10 @@ export function ProtectedRoute() {
     );
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    console.log('[ProtectedRoute] User not authenticated. Redirecting to /login');
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 }

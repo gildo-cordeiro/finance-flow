@@ -536,8 +536,12 @@ export function Transactions() {
                                 )}
                               </div>
                             </td>
-                            <td className="p-4 text-zinc-400">{acc ? acc.name : 'Conta excluída'}</td>
-                            <td className="p-4 text-zinc-400">{cat ? cat.name : 'Sem Categoria'}</td>
+                             <td className="p-4 text-zinc-400">
+                               {acc ? acc.name : (t.userId !== user?.id ? 'Conta do Parceiro' : 'Conta excluída')}
+                             </td>
+                             <td className="p-4 text-zinc-400">
+                               {cat ? cat.name : (t.userId !== user?.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
+                             </td>
                             <td className="p-4 text-zinc-400">{formatDate(t.competenceDate)}</td>
                             <td className="p-4 text-zinc-400">{formatDate(t.dueDate)}</td>
                             <td className="p-4 text-zinc-400">{formatDate(t.paymentDate || '')}</td>

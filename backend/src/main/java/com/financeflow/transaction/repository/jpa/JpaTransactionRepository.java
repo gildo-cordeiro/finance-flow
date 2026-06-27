@@ -29,6 +29,18 @@ public class JpaTransactionRepository implements TransactionRepository {
     }
 
     @Override
+    public List<TransactionEntity> findAllFilteredCouple(
+        UUID userId,
+        UUID partnerId,
+        LocalDate startDate,
+        LocalDate endDate,
+        UUID categoryId,
+        UUID accountId
+    ) {
+        return springRepo.findAllFilteredCouple(userId, partnerId, startDate, endDate, categoryId, accountId);
+    }
+
+    @Override
     public Optional<TransactionEntity> findById(UUID id) {
         return springRepo.findById(id);
     }

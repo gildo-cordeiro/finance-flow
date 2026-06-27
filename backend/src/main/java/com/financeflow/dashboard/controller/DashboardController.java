@@ -23,10 +23,11 @@ public class DashboardController {
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryResponse> getSummary(
         Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext,
         @RequestParam(required = false) String month
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        DashboardSummaryResponse response = getDashboardSummaryUseCase.execute(userId, month);
+        DashboardSummaryResponse response = getDashboardSummaryUseCase.execute(userId, viewContext, month);
         return ResponseEntity.ok(response);
     }
 }

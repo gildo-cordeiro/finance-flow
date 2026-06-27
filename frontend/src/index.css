@@ -59,3 +59,16 @@
   -webkit-backdrop-filter: blur(12px);
   border-radius: 1.25rem;
 }
+
+/* Indicacao visual de modo casal (Linha brilhante no topo de toda a janela) */
+.couple-mode-active::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  z-index: 9999;
+  pointer-events: none;
+}

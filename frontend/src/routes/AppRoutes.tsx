@@ -9,6 +9,8 @@ import { Transactions } from '../features/transactions/components/Transactions';
 import { Budget } from '../features/budget/components/Budget';
 import { CashFlow } from '../features/cashflow/components/CashFlow';
 
+import { AcceptInvite } from '../features/couple/components/AcceptInvite';
+
 const router = createBrowserRouter([
   {
     path: '/login',
@@ -19,6 +21,10 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
+    path: '/couple/accept',
+    element: <AcceptInvite />,
+  },
+  {
     element: <ProtectedRoute />,
     children: [
       {
@@ -27,6 +33,10 @@ const router = createBrowserRouter([
       },
       {
         path: '/profile',
+        element: <Profile />,
+      },
+      {
+        path: '/settings',
         element: <Profile />,
       },
       {

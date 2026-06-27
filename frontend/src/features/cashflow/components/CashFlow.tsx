@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useCashFlow } from '../hooks/useCashFlow';
 import { cn } from '../../../lib/cn';
 import type { CashFlowDailyPoint } from '../types';
@@ -168,6 +169,7 @@ export function CashFlow() {
           </div>
 
           <div className="flex items-center gap-4">
+            <CoupleToggle />
             <button
               onClick={() => navigate('/')}
               className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"

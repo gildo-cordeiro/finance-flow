@@ -48,6 +48,7 @@ public class TransactionController {
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> listTransactions(
         Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
         @RequestParam(required = false) UUID categoryId,
@@ -55,7 +56,7 @@ public class TransactionController {
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
         List<TransactionResponse> response = listTransactionsUseCase.execute(
-            userId, startDate, endDate, categoryId, accountId
+            userId, viewContext, startDate, endDate, categoryId, accountId
         );
         return ResponseEntity.ok(response);
     }

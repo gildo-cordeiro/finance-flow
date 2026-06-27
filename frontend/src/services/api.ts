@@ -30,6 +30,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (token) {
       finalHeaders.set('Authorization', `Bearer ${token}`);
     }
+    const viewContext = localStorage.getItem('view_context') || 'PERSONAL';
+    finalHeaders.set('X-View-Context', viewContext);
   }
   if (!finalHeaders.has('Content-Type') && rest.body) {
     finalHeaders.set('Content-Type', 'application/json');
