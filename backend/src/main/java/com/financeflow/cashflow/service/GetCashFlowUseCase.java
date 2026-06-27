@@ -6,6 +6,8 @@ import com.financeflow.cashflow.dto.AccountBalanceInfo;
 import com.financeflow.cashflow.dto.CashFlowDailyPoint;
 import com.financeflow.cashflow.dto.CashFlowPeriodTightness;
 import com.financeflow.cashflow.dto.CashFlowResponse;
+import com.financeflow.couple.model.domain.Couple;
+import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.shared.exception.ValidationException;
 import com.financeflow.transaction.model.domain.Transaction;
 import com.financeflow.transaction.model.domain.TransactionStatus;
@@ -33,17 +35,24 @@ public class GetCashFlowUseCase {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final CoupleRepository coupleRepository;
 
     public GetCashFlowUseCase(
         AccountRepository accountRepository,
-        TransactionRepository transactionRepository
+        TransactionRepository transactionRepository,
+        CoupleRepository coupleRepository
     ) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.coupleRepository = coupleRepository;
     }
 
     public CashFlowResponse execute(UUID userId, LocalDate fromDate, LocalDate toDate) {
-        log.info("Calculating cash flow projection for user={}, from={}, to={}", userId, fromDate, toDate);
+        return execute(userId, "PERSONAL", fromDate, toDate);
+    }
+
+    public CashFlowResponse execute(UUID userId, String viewContext, LocalDate fromDate, LocalDate toDate) {
+        log.info("Calculating cash flow projection for user={}, viewContext={}, from={}, to={}", userId, viewContext, fromDate, toDate);
 
         if (fromDate == null) {
             throw new ValidationException("fromDate", "From date is required");
@@ -55,17 +64,42 @@ public class GetCashFlowUseCase {
             throw new ValidationException("toDate", "To date must be after or equal to from date");
         }
 
-        // 1. Fetch user accounts
-        List<AccountEntity> accounts = accountRepository.findAllByUserId(userId);
+        UUID partnerId = null;
+        if ("COUPLE".equalsIgnoreCase(viewContext)) {
+            Couple couple = coupleRepository.findActiveByUserId(userId).orElse(null);
+            if (couple != null) {
+                partnerId = couple.user1Id().equals(userId) ? couple.user2Id() : couple.user1Id();
+            }
+        }
+
+        // 1. Fetch user accounts (and partner's accounts if in COUPLE context)
+        List<AccountEntity> accounts = new ArrayList<>();
+        accounts.addAll(accountRepository.findAllByUserId(userId));
+        if (partnerId != null) {
+            accounts.addAll(accountRepository.findAllByUserId(partnerId));
+        }
+
         Map<UUID, BigDecimal> currentBalances = accounts.stream()
             .collect(Collectors.toMap(AccountEntity::getId, AccountEntity::getBalance));
         Map<UUID, String> accountNames = accounts.stream()
             .collect(Collectors.toMap(AccountEntity::getId, AccountEntity::getName));
 
         // 2. Fetch relevant transactions
-        List<Transaction> transactions = transactionRepository.findAllForCashFlow(userId, fromDate, toDate)
-            .stream()
-            .map(TransactionMapper::toDomain)
+        List<TransactionEntityForMapping> transactionsEntities;
+        if (partnerId != null) {
+            transactionsEntities = transactionRepository.findAllForCashFlowCouple(userId, partnerId, fromDate, toDate)
+                .stream()
+                .map(t -> new TransactionEntityForMapping(t))
+                .toList();
+        } else {
+            transactionsEntities = transactionRepository.findAllForCashFlow(userId, fromDate, toDate)
+                .stream()
+                .map(t -> new TransactionEntityForMapping(t))
+                .toList();
+        }
+
+        List<Transaction> transactions = transactionsEntities.stream()
+            .map(t -> TransactionMapper.toDomain(t.entity))
             .toList();
 
         List<Transaction> paidTransactions = transactions.stream()
@@ -103,7 +137,7 @@ public class GetCashFlowUseCase {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 BigDecimal projectedAccountBalance = currentBalance.subtract(paidAfterDate).add(unpaidOnOrBeforeDate);
-                
+
                 accountBalances.put(accountId, new AccountBalanceInfo(accountNames.get(accountId), projectedAccountBalance));
                 consolidatedBalance = consolidatedBalance.add(projectedAccountBalance);
             }
@@ -172,5 +206,12 @@ public class GetCashFlowUseCase {
         }
 
         return new CashFlowResponse(dailyPoints, tightnessPeriods);
+    }
+
+    private static class TransactionEntityForMapping {
+        final com.financeflow.transaction.model.entity.TransactionEntity entity;
+        TransactionEntityForMapping(com.financeflow.transaction.model.entity.TransactionEntity entity) {
+            this.entity = entity;
+        }
     }
 }

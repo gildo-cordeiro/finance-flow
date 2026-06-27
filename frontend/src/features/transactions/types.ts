@@ -3,6 +3,7 @@ export interface Category {
   userId?: string | null;
   name: string;
   parentId?: string | null;
+  visibility?: 'PERSONAL' | 'SHARED';
 }
 
 export interface CategoryPayload {

@@ -62,9 +62,9 @@ class CategoryControllerTest {
     @Test
     void shouldListCategoriesSuccessfullyWhenAuthenticated() throws Exception {
         UUID userId = UUID.randomUUID();
-        CategoryResponse response = new CategoryResponse(UUID.randomUUID(), userId, "Transport", null);
+        CategoryResponse response = new CategoryResponse(UUID.randomUUID(), userId, "Transport", null, com.financeflow.transaction.model.domain.TransactionVisibility.PERSONAL);
 
-        when(listCategoriesUseCase.execute(userId)).thenReturn(List.of(response));
+        when(listCategoriesUseCase.execute(eq(userId), any())).thenReturn(List.of(response));
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
@@ -78,9 +78,9 @@ class CategoryControllerTest {
     void shouldCreateCategorySuccessfullyWhenAuthenticated() throws Exception {
         UUID userId = UUID.randomUUID();
         CategoryRequest request = new CategoryRequest("Uber", null);
-        CategoryResponse response = new CategoryResponse(UUID.randomUUID(), userId, "Uber", null);
+        CategoryResponse response = new CategoryResponse(UUID.randomUUID(), userId, "Uber", null, com.financeflow.transaction.model.domain.TransactionVisibility.PERSONAL);
 
-        when(createCategoryUseCase.execute(eq(userId), any(CategoryRequest.class))).thenReturn(response);
+        when(createCategoryUseCase.execute(eq(userId), any(), any(CategoryRequest.class))).thenReturn(response);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
@@ -98,7 +98,7 @@ class CategoryControllerTest {
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
         CategoryRequest request = new CategoryRequest("Uber Moto", null);
-        CategoryResponse response = new CategoryResponse(categoryId, userId, "Uber Moto", null);
+        CategoryResponse response = new CategoryResponse(categoryId, userId, "Uber Moto", null, com.financeflow.transaction.model.domain.TransactionVisibility.PERSONAL);
 
         when(updateCategoryUseCase.execute(eq(userId), eq(categoryId), any(CategoryRequest.class))).thenReturn(response);
 

@@ -124,7 +124,8 @@ public class UpdateBudgetUseCase {
             category.name(),
             category.parentId(),
             saved.getPlannedAmount(),
-            realized
+            realized,
+            category.userId()
         );
     }
 

@@ -33,15 +33,18 @@ public class CreateTransactionUseCase {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
+    private final com.financeflow.couple.repository.CoupleRepository coupleRepository;
 
     public CreateTransactionUseCase(
         TransactionRepository transactionRepository,
         AccountRepository accountRepository,
-        CategoryRepository categoryRepository
+        CategoryRepository categoryRepository,
+        com.financeflow.couple.repository.CoupleRepository coupleRepository
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
+        this.coupleRepository = coupleRepository;
     }
 
     public TransactionResponse execute(UUID userId, TransactionRequest request) {
@@ -59,8 +62,33 @@ public class CreateTransactionUseCase {
         CategoryEntity category = categoryRepository.findById(request.categoryId())
             .orElseThrow(() -> new NotFoundException("Category", request.categoryId()));
 
-        if (category.getUserId() != null && !category.getUserId().equals(userId)) {
-            throw new ValidationException("categoryId", "Category does not belong to the user");
+        if (category.getUserId() != null) {
+            UUID ownerId = category.getUserId();
+            UUID partnerId = null;
+            if (request.visibility() == com.financeflow.transaction.model.domain.TransactionVisibility.SHARED) {
+                com.financeflow.couple.model.domain.Couple couple = coupleRepository.findActiveByUserId(userId).orElse(null);
+                if (couple != null) {
+                    partnerId = couple.user1Id().equals(userId) ? couple.user2Id() : couple.user1Id();
+                }
+            }
+
+            boolean isUserOrPartner = ownerId.equals(userId) || (partnerId != null && ownerId.equals(partnerId));
+            if (!isUserOrPartner) {
+                throw new ValidationException("categoryId", "Category does not belong to the user or partner");
+            }
+
+            if (request.visibility() == com.financeflow.transaction.model.domain.TransactionVisibility.SHARED) {
+                if (category.getVisibility() != com.financeflow.transaction.model.domain.TransactionVisibility.SHARED) {
+                    throw new ValidationException("categoryId", "Only couple categories can be used for couple transactions");
+                }
+            } else {
+                if (category.getVisibility() != com.financeflow.transaction.model.domain.TransactionVisibility.PERSONAL) {
+                    throw new ValidationException("categoryId", "Only personal categories can be used for personal transactions");
+                }
+                if (!ownerId.equals(userId)) {
+                    throw new ValidationException("categoryId", "Personal transactions cannot use partner categories");
+                }
+            }
         }
 
         // Calculate competence date

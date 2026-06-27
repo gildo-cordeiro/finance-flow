@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useCashFlow } from '../hooks/useCashFlow';
 import { cn } from '../../../lib/cn';
+import { useView } from '../../../context/ViewContext';
+import { useCouple } from '../../couple/hooks/useCouple';
 import type { CashFlowDailyPoint } from '../types';
 import {
   Wallet,
@@ -34,6 +36,11 @@ import {
 export function CashFlow() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { viewContext } = useView();
+  const { coupleStatus } = useCouple();
+
+  const isCouple = viewContext === 'COUPLE';
+  const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
   // Range default: today to today + 30 days
   const [fromDate, setFromDate] = useState(() => {
@@ -222,6 +229,15 @@ export function CashFlow() {
           </div>
         </div>
       </nav>
+
+      {/* Couple context banner — visible only in COUPLE mode */}
+      {isCouple && (
+        <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
+          <span className="text-violet-300 text-xs font-medium">
+            🫂 Você está vendo a projeção de fluxo de caixa do casal ({user.name} & {partnerName})
+          </span>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 mt-10 space-y-8">

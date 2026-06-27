@@ -28,13 +28,15 @@ class GetCashFlowUseCaseTest {
 
     private AccountRepository accountRepository;
     private TransactionRepository transactionRepository;
+    private com.financeflow.couple.repository.CoupleRepository coupleRepository;
     private GetCashFlowUseCase getCashFlowUseCase;
 
     @BeforeEach
     void setUp() {
         accountRepository = mock(AccountRepository.class);
         transactionRepository = mock(TransactionRepository.class);
-        getCashFlowUseCase = new GetCashFlowUseCase(accountRepository, transactionRepository);
+        coupleRepository = mock(com.financeflow.couple.repository.CoupleRepository.class);
+        getCashFlowUseCase = new GetCashFlowUseCase(accountRepository, transactionRepository, coupleRepository);
     }
 
     @Test

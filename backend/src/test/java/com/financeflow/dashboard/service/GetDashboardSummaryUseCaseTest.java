@@ -19,6 +19,7 @@ import com.financeflow.transaction.service.ListTransactionsUseCase;
 import com.financeflow.budget.dto.BudgetItemResponse;
 import com.financeflow.budget.dto.BudgetResponse;
 import com.financeflow.budget.service.GetBudgetUseCase;
+import com.financeflow.couple.repository.CoupleRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -31,6 +32,7 @@ class GetDashboardSummaryUseCaseTest {
     private ListCategoriesUseCase listCategoriesUseCase;
     private ListTransactionsUseCase listTransactionsUseCase;
     private GetBudgetUseCase getBudgetUseCase;
+    private CoupleRepository coupleRepository;
     private GetDashboardSummaryUseCase getDashboardSummaryUseCase;
 
     @BeforeEach
@@ -38,7 +40,8 @@ class GetDashboardSummaryUseCaseTest {
         listCategoriesUseCase = mock(ListCategoriesUseCase.class);
         listTransactionsUseCase = mock(ListTransactionsUseCase.class);
         getBudgetUseCase = mock(GetBudgetUseCase.class);
-        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(listCategoriesUseCase, listTransactionsUseCase, getBudgetUseCase);
+        coupleRepository = mock(CoupleRepository.class);
+        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(listCategoriesUseCase, listTransactionsUseCase, getBudgetUseCase, coupleRepository);
     }
 
     @Test
@@ -50,15 +53,15 @@ class GetDashboardSummaryUseCaseTest {
         UUID salaryCatId = UUID.randomUUID();
         UUID foodCatId = UUID.randomUUID();
 
-        CategoryResponse incomeCat = new CategoryResponse(incomeCatId, null, "Receitas", null);
-        CategoryResponse salaryCat = new CategoryResponse(salaryCatId, userId, "Salário", incomeCatId);
-        CategoryResponse foodCat = new CategoryResponse(foodCatId, userId, "Alimentação", null);
+        CategoryResponse incomeCat = new CategoryResponse(incomeCatId, null, "Receitas", null, TransactionVisibility.PERSONAL);
+        CategoryResponse salaryCat = new CategoryResponse(salaryCatId, userId, "Salário", incomeCatId, TransactionVisibility.PERSONAL);
+        CategoryResponse foodCat = new CategoryResponse(foodCatId, userId, "Alimentação", null, TransactionVisibility.PERSONAL);
 
-        when(listCategoriesUseCase.execute(userId)).thenReturn(List.of(incomeCat, salaryCat, foodCat));
+        when(listCategoriesUseCase.execute(eq(userId), any())).thenReturn(List.of(incomeCat, salaryCat, foodCat));
 
-        BudgetItemResponse salaryBudgetItem = new BudgetItemResponse(salaryCatId, "Salário", incomeCatId, new BigDecimal("5000.00"), new BigDecimal("5200.00"));
-        BudgetItemResponse foodBudgetItem = new BudgetItemResponse(foodCatId, "Alimentação", null, new BigDecimal("800.00"), new BigDecimal("130.00"));
-        BudgetItemResponse incomeBudgetItem = new BudgetItemResponse(incomeCatId, "Receitas", null, BigDecimal.ZERO, BigDecimal.ZERO);
+        BudgetItemResponse salaryBudgetItem = new BudgetItemResponse(salaryCatId, "Salário", incomeCatId, new BigDecimal("5000.00"), new BigDecimal("5200.00"), userId);
+        BudgetItemResponse foodBudgetItem = new BudgetItemResponse(foodCatId, "Alimentação", null, new BigDecimal("800.00"), new BigDecimal("130.00"), userId);
+        BudgetItemResponse incomeBudgetItem = new BudgetItemResponse(incomeCatId, "Receitas", null, BigDecimal.ZERO, BigDecimal.ZERO, userId);
 
         when(getBudgetUseCase.execute(userId, month)).thenReturn(new BudgetResponse(month, List.of(salaryBudgetItem, foodBudgetItem, incomeBudgetItem)));
 

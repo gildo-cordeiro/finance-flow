@@ -58,7 +58,7 @@ class AccountControllerTest {
             new BigDecimal("150.00"), null, null, null, null
         );
 
-        when(listAccountsUseCase.execute(userId)).thenReturn(List.of(response1));
+        when(listAccountsUseCase.execute(eq(userId), any())).thenReturn(List.of(response1));
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 

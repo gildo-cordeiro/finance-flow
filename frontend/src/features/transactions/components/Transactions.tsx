@@ -16,6 +16,9 @@ import { z } from 'zod';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
+import { useView } from '../../../context/ViewContext';
+import { useCouple } from '../../couple/hooks/useCouple';
+import { cn } from '../../../lib/cn';
 
 const transactionSchema = z.object({
   type: z.enum(['EXPENSE', 'INCOME']),
@@ -64,6 +67,11 @@ export function Transactions() {
   const { accounts } = useAccounts();
   const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
   const navigate = useNavigate();
+  const { viewContext } = useView();
+  const { coupleStatus } = useCouple();
+
+  const isCouple = viewContext === 'COUPLE';
+  const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
   // Active Tab: 'list' or 'categories'
   const [activeTab, setActiveTab] = useState<'list' | 'categories'>('list');
@@ -142,9 +150,22 @@ export function Transactions() {
   });
 
   const watchedRepetitionType = watchTrans('repetitionType');
-
   const watchedAccountId = watchTrans('accountId');
   const watchedType = watchTrans('type');
+  const watchedVisibility = watchTrans('visibility');
+
+  // Derived helper for filtered lists (form transaction registration)
+  const filteredCategories = categories.filter(c => {
+    if (!c.userId) return true; // System categories
+    return c.visibility === watchedVisibility;
+  });
+
+  const rootCategories = filteredCategories.filter(c => !c.parentId);
+  const getSubcategories = (parentId: string) => filteredCategories.filter(c => c.parentId === parentId);
+
+  // Derived helper for Category Tab (all categories of the current view context)
+  const rootCategoriesAll = categories.filter(c => !c.parentId);
+  const getSubcategoriesAll = (parentId: string) => categories.filter(c => c.parentId === parentId);
   const watchedStatus = watchTrans('status');
 
   const selectedAccount = accounts.find(a => a.id === watchedAccountId);
@@ -350,9 +371,6 @@ export function Transactions() {
   };
 
   // Helper selectors
-  const rootCategories = categories.filter(c => !c.parentId);
-  const getSubcategories = (parentId: string) => categories.filter(c => c.parentId === parentId);
-
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -423,6 +441,15 @@ export function Transactions() {
           </button>
         </div>
       </nav>
+
+      {/* Couple context banner — visible only in COUPLE mode */}
+      {isCouple && (
+        <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
+          <span className="text-violet-300 text-xs font-medium">
+            🫂 Você está vendo os lançamentos do casal ({user.name} & {partnerName})
+          </span>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
@@ -534,6 +561,16 @@ export function Transactions() {
                                 {t.isRecurring && (
                                   <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
                                 )}
+                                {isCouple && (
+                                  <span className={cn(
+                                    "text-[10px] font-bold px-1.5 py-0.5 rounded border",
+                                    t.userId === user.id 
+                                      ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                      : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                  )}>
+                                    {t.userId === user.id ? 'Você' : partnerName}
+                                  </span>
+                                )}
                               </div>
                             </td>
                              <td className="p-4 text-zinc-400">
@@ -568,23 +605,27 @@ export function Transactions() {
                             <td className={`p-4 text-right font-bold ${t.type === 'EXPENSE' ? 'text-red-400' : 'text-emerald-400'}`}>
                               {t.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(t.amount)}
                             </td>
-                            <td className="p-4 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => handleOpenEditTrans(t)}
-                                  className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteTrans(t)}
-                                  className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                             <td className="p-4 text-center">
+                              {t.userId === user.id ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleOpenEditTrans(t)}
+                                    className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteTrans(t)}
+                                    className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-zinc-500 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
+                              )}
                             </td>
                           </tr>
                         );
@@ -618,10 +659,22 @@ export function Transactions() {
                 <p className="text-zinc-500 text-sm">Nenhuma categoria cadastrada.</p>
               ) : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                  {rootCategories.map(parent => (
+                  {rootCategoriesAll.map(parent => (
                     <div key={parent.id} className="border border-zinc-800/80 rounded-xl p-4 bg-zinc-900/30 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-violet-400 text-sm tracking-tight">{parent.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-violet-400 text-sm tracking-tight">{parent.name}</span>
+                          {isCouple && parent.userId && (
+                            <span className={cn(
+                              "text-[8px] font-bold px-1.5 py-0.5 rounded border select-none font-sans leading-none",
+                              parent.userId === user.id 
+                                ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                            )}>
+                              {parent.userId === user.id ? 'Você' : partnerName}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleOpenNewCat(parent.id)}
@@ -630,7 +683,7 @@ export function Transactions() {
                           >
                             <FolderPlus className="w-4 h-4" />
                           </button>
-                          {parent.userId && (
+                          {parent.userId === user.id && (
                             <>
                               <button
                                 onClick={() => handleOpenEditCat(parent)}
@@ -653,11 +706,23 @@ export function Transactions() {
 
                       {/* Subcategories list */}
                       <div className="pl-4 border-l border-zinc-800 space-y-2">
-                        {getSubcategories(parent.id).map(sub => (
+                        {getSubcategoriesAll(parent.id).map(sub => (
                           <div key={sub.id} className="flex items-center justify-between text-xs py-1 group/sub text-zinc-300">
-                            <span>{sub.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{sub.name}</span>
+                              {isCouple && sub.userId && (
+                                <span className={cn(
+                                  "text-[8px] font-bold px-1.5 py-0.5 rounded border select-none font-sans leading-none",
+                                  sub.userId === user.id 
+                                    ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                    : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                )}>
+                                  {sub.userId === user.id ? 'Você' : partnerName}
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                              {sub.userId && (
+                              {sub.userId === user.id && (
                                 <>
                                   <button
                                     onClick={() => handleOpenEditCat(sub)}
@@ -676,7 +741,7 @@ export function Transactions() {
                             </div>
                           </div>
                         ))}
-                        {getSubcategories(parent.id).length === 0 && (
+                        {getSubcategoriesAll(parent.id).length === 0 && (
                           <span className="text-zinc-500 text-xs italic">Sem subcategorias</span>
                         )}
                       </div>

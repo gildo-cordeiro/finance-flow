@@ -60,10 +60,10 @@ class BudgetControllerTest {
         UUID userId = UUID.randomUUID();
         String month = "2026-06";
         BudgetResponse response = new BudgetResponse(month, List.of(
-            new BudgetItemResponse(UUID.randomUUID(), "Food", null, new BigDecimal("100.00"), new BigDecimal("50.00"))
+            new BudgetItemResponse(UUID.randomUUID(), "Food", null, new BigDecimal("100.00"), new BigDecimal("50.00"), userId)
         ));
 
-        when(getBudgetUseCase.execute(userId, month)).thenReturn(response);
+        when(getBudgetUseCase.execute(eq(userId), any(), eq(month))).thenReturn(response);
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
@@ -81,7 +81,7 @@ class BudgetControllerTest {
         String month = "2026-06";
         UUID categoryId = UUID.randomUUID();
         UpdateBudgetRequest request = new UpdateBudgetRequest(new BigDecimal("150.00"));
-        BudgetItemResponse response = new BudgetItemResponse(categoryId, "Food", null, new BigDecimal("150.00"), BigDecimal.ZERO);
+        BudgetItemResponse response = new BudgetItemResponse(categoryId, "Food", null, new BigDecimal("150.00"), BigDecimal.ZERO, userId);
 
         when(updateBudgetUseCase.execute(eq(userId), eq(month), eq(categoryId), any(UpdateBudgetRequest.class))).thenReturn(response);
 

@@ -39,10 +39,11 @@ public class BudgetController {
     @GetMapping("/{month}")
     public ResponseEntity<BudgetResponse> getBudget(
         Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext,
         @PathVariable String month
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        BudgetResponse response = getBudgetUseCase.execute(userId, month);
+        BudgetResponse response = getBudgetUseCase.execute(userId, viewContext, month);
         return ResponseEntity.ok(response);
     }
 

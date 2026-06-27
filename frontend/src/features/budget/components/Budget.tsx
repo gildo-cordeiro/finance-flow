@@ -8,10 +8,18 @@ import {
   Copy, Edit2, Check, X, AlertTriangle, 
   TrendingUp, PiggyBank, Wallet
 } from 'lucide-react';
+import { useView } from '../../../context/ViewContext';
+import { useCouple } from '../../couple/hooks/useCouple';
+import { cn } from '../../../lib/cn';
 
 export function Budget() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { viewContext } = useView();
+  const { coupleStatus } = useCouple();
+
+  const isCouple = viewContext === 'COUPLE';
+  const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
   // Initialize with current month in YYYY-MM format
   const getInitialMonth = () => {
@@ -136,6 +144,15 @@ export function Budget() {
         </div>
       </nav>
 
+      {/* Couple context banner — visible only in COUPLE mode */}
+      {isCouple && (
+        <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
+          <span className="text-violet-300 text-xs font-medium">
+            🫂 Você está vendo o planejamento orçamentário do casal ({user.name} & {partnerName})
+          </span>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12 space-y-8">
         
@@ -242,8 +259,18 @@ export function Budget() {
                       <React.Fragment key={rootCat.categoryId}>
                         {/* Parent Category Row */}
                         <tr className="hover:bg-zinc-900/10 transition-colors bg-zinc-900/5">
-                          <td className="px-6 py-4 font-semibold text-zinc-200">
-                            {rootCat.categoryName}
+                          <td className="px-6 py-4 font-semibold text-zinc-200 flex items-center gap-2">
+                            <span>{rootCat.categoryName}</span>
+                            {isCouple && (
+                              <span className={cn(
+                                "text-[9px] font-bold px-1.5 py-0.5 rounded border select-none font-sans",
+                                rootCat.userId === user.id 
+                                  ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                  : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                              )}>
+                                {rootCat.userId === user.id ? 'Você' : partnerName}
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             {isRootEditing ? (
@@ -291,12 +318,17 @@ export function Budget() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             {!isRootEditing && (
-                              <button
-                                onClick={() => startEditing(rootCat.categoryId, rootCat.plannedAmount)}
-                                className="p-1.5 text-zinc-400 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
+                              (!isCouple || rootCat.userId === user.id) ? (
+                                <button
+                                  onClick={() => startEditing(rootCat.categoryId, rootCat.plannedAmount)}
+                                  className="p-1.5 text-zinc-400 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
+                                  title="Editar limite planejado"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-zinc-500 italic select-none" title="Você não pode alterar o orçamento do parceiro">Somente leitura</span>
+                              )
                             )}
                           </td>
                         </tr>
@@ -312,7 +344,17 @@ export function Budget() {
                             <tr key={subCat.categoryId} className="hover:bg-zinc-900/10 transition-colors">
                               <td className="px-6 py-3 text-sm text-zinc-400 pl-12 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
-                                {subCat.categoryName}
+                                <span>{subCat.categoryName}</span>
+                                {isCouple && (
+                                  <span className={cn(
+                                    "text-[9px] font-bold px-1.5 py-0.5 rounded border select-none font-sans",
+                                    subCat.userId === user.id 
+                                      ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                      : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                  )}>
+                                    {subCat.userId === user.id ? 'Você' : partnerName}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-6 py-3 text-sm">
                                 {isSubEditing ? (
@@ -360,12 +402,17 @@ export function Budget() {
                               </td>
                               <td className="px-6 py-3 text-right">
                                 {!isSubEditing && (
-                                  <button
-                                    onClick={() => startEditing(subCat.categoryId, subCat.plannedAmount)}
-                                    className="p-1.5 text-zinc-500 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  (!isCouple || subCat.userId === user.id) ? (
+                                    <button
+                                      onClick={() => startEditing(subCat.categoryId, subCat.plannedAmount)}
+                                      className="p-1.5 text-zinc-500 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
+                                      title="Editar limite planejado"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  ) : (
+                                    <span className="text-[10px] text-zinc-500 italic select-none" title="Você não pode alterar o orçamento do parceiro">Somente leitura</span>
+                                  )
                                 )}
                               </td>
                             </tr>

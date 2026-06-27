@@ -25,11 +25,12 @@ public class CashFlowController {
     @GetMapping
     public ResponseEntity<CashFlowResponse> getCashFlow(
         Authentication authentication,
+        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
-        CashFlowResponse response = getCashFlowUseCase.execute(userId, from, to);
+        CashFlowResponse response = getCashFlowUseCase.execute(userId, viewContext, from, to);
         return ResponseEntity.ok(response);
     }
 }

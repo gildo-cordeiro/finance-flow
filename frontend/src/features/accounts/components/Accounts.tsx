@@ -3,6 +3,9 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../hooks/useAccounts';
 import { useNavigate } from 'react-router-dom';
 import { CoupleToggle } from '../../couple/components/CoupleToggle';
+import { useView } from '../../../context/ViewContext';
+import { useCouple } from '../../couple/hooks/useCouple';
+import { cn } from '../../../lib/cn';
 import { 
   ArrowLeft, Plus, CreditCard, Landmark, PiggyBank, 
   HelpCircle, AlertTriangle, X 
@@ -56,9 +59,14 @@ export function Accounts() {
   const { user } = useAuth();
   const { accounts, isLoading, error, createAccount, isCreating } = useAccounts();
   const navigate = useNavigate();
+  const { viewContext } = useView();
+  const { coupleStatus } = useCouple();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const isCouple = viewContext === 'COUPLE';
+  const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
   const {
     register,
@@ -168,6 +176,15 @@ export function Accounts() {
         </div>
       </nav>
 
+      {/* Couple context banner — visible only in COUPLE mode */}
+      {isCouple && (
+        <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center">
+          <span className="text-violet-300 text-xs font-medium">
+            🫂 Você está vendo as contas do casal ({user.name} & {partnerName})
+          </span>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12">
         {isLoading ? (
@@ -230,9 +247,21 @@ export function Accounts() {
                                     <p className="text-xs text-zinc-400 mt-0.5">{account.bank}</p>
                                   </div>
                                 </div>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400 capitalize">
-                                  {account.type === 'SAVINGS' ? 'Poupança' : 'Corrente'}
-                                </span>
+                                <div className="flex flex-col items-end gap-1.5">
+                                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400 capitalize">
+                                    {account.type === 'SAVINGS' ? 'Poupança' : 'Corrente'}
+                                  </span>
+                                  {isCouple && (
+                                    <span className={cn(
+                                      "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+                                      account.userId === user.id 
+                                        ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                        : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                    )}>
+                                      {account.userId === user.id ? 'Você' : partnerName}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Main Balance */}
@@ -288,9 +317,21 @@ export function Accounts() {
                                     <p className="text-xs text-zinc-400 mt-0.5">{card.bank}</p>
                                   </div>
                                 </div>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400">
-                                  Cartão
-                                </span>
+                                <div className="flex flex-col items-end gap-1.5">
+                                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400">
+                                    Cartão
+                                  </span>
+                                  {isCouple && (
+                                    <span className={cn(
+                                      "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+                                      card.userId === user.id 
+                                        ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                        : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                    )}>
+                                      {card.userId === user.id ? 'Você' : partnerName}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Main Balance */}
