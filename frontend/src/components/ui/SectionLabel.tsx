@@ -1,7 +1,7 @@
 import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../lib/cn';
 
-interface SectionLabelProps extends HTMLAttributes<HTMLSpanElement> {}
+type SectionLabelProps = HTMLAttributes<HTMLSpanElement>;
 
 export const SectionLabel = forwardRef<HTMLSpanElement, SectionLabelProps>(
   ({ className, children, ...props }, ref) => {
