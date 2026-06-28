@@ -345,7 +345,25 @@ export function Dashboard() {
   };
 
   // Grouped BarChart Custom Tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface ChartPoint {
+    name: string;
+    receitas: number;
+    despesas: number;
+    userRevenue: number;
+    userExpenses: number;
+    partnerRevenue: number;
+    partnerExpenses: number;
+  }
+
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{
+      payload: ChartPoint;
+    }>;
+    label?: string;
+  }
+
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
