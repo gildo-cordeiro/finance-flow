@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { budgetApi } from '../api/budget';
 import type { BudgetResponse, UpdateBudgetPayload } from '../types';
+import { useView } from '../../../context/ViewContext';
 
 export function useBudget(month: string) {
   const queryClient = useQueryClient();
+  const { viewContext } = useView();
 
   const { data: budget, isLoading, error } = useQuery<BudgetResponse, Error>({
-    queryKey: ['budget', month],
+    queryKey: ['budget', month, viewContext],
     queryFn: () => budgetApi.getBudget(month),
     enabled: !!month && /^\d{4}-\d{2}$/.test(month),
   });

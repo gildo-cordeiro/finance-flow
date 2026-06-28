@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { 
   ArrowLeft, Calendar, ChevronLeft, ChevronRight, 
   Copy, Edit2, Check, X, AlertTriangle, 
-  TrendingUp, PiggyBank, Wallet
+  TrendingUp, PiggyBank, Wallet, Lock
 } from 'lucide-react';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
@@ -261,7 +261,7 @@ export function Budget() {
                         <tr className="hover:bg-zinc-900/10 transition-colors bg-zinc-900/5">
                           <td className="px-6 py-4 font-semibold text-zinc-200 flex items-center gap-2">
                             <span>{rootCat.categoryName}</span>
-                            {isCouple && (
+                            {isCouple && rootCat.userId && (
                               <span className={cn(
                                 "text-[9px] font-bold px-1.5 py-0.5 rounded border select-none font-sans",
                                 rootCat.userId === user.id 
@@ -318,7 +318,7 @@ export function Budget() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             {!isRootEditing && (
-                              (!isCouple || rootCat.userId === user.id) ? (
+                              (!isCouple || rootCat.userId === user.id || !rootCat.userId) ? (
                                 <button
                                   onClick={() => startEditing(rootCat.categoryId, rootCat.plannedAmount)}
                                   className="p-1.5 text-zinc-400 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
@@ -327,7 +327,9 @@ export function Budget() {
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                               ) : (
-                                <span className="text-[10px] text-zinc-500 italic select-none" title="Você não pode alterar o orçamento do parceiro">Somente leitura</span>
+                                <span title={`Categoria de ${partnerName}`}>
+                                  <Lock className="w-4 h-4 text-zinc-500 cursor-help inline-block" />
+                                </span>
                               )
                             )}
                           </td>
@@ -345,7 +347,7 @@ export function Budget() {
                               <td className="px-6 py-3 text-sm text-zinc-400 pl-12 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
                                 <span>{subCat.categoryName}</span>
-                                {isCouple && (
+                                {isCouple && subCat.userId && (
                                   <span className={cn(
                                     "text-[9px] font-bold px-1.5 py-0.5 rounded border select-none font-sans",
                                     subCat.userId === user.id 
@@ -402,7 +404,7 @@ export function Budget() {
                               </td>
                               <td className="px-6 py-3 text-right">
                                 {!isSubEditing && (
-                                  (!isCouple || subCat.userId === user.id) ? (
+                                  (!isCouple || subCat.userId === user.id || !subCat.userId) ? (
                                     <button
                                       onClick={() => startEditing(subCat.categoryId, subCat.plannedAmount)}
                                       className="p-1.5 text-zinc-500 hover:text-violet-400 hover:bg-violet-500/5 rounded-lg transition-all"
@@ -411,7 +413,9 @@ export function Budget() {
                                       <Edit2 className="w-3.5 h-3.5" />
                                     </button>
                                   ) : (
-                                    <span className="text-[10px] text-zinc-500 italic select-none" title="Você não pode alterar o orçamento do parceiro">Somente leitura</span>
+                                    <span title={`Categoria de ${partnerName}`}>
+                                      <Lock className="w-3.5 h-3.5 text-zinc-500 cursor-help inline-block" />
+                                    </span>
                                   )
                                 )}
                               </td>
