@@ -3,9 +3,8 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
-import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Plus, Calendar, AlertTriangle, 
+  Plus, Calendar, AlertTriangle, 
   Trash2, Edit3, X, Info, FolderPlus, 
   DollarSign, Eye, EyeOff, Tag, RefreshCw, Layers
 } from 'lucide-react';
@@ -69,7 +68,6 @@ export function Transactions() {
   const { user } = useAuth();
   const { accounts } = useAccounts();
   const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
-  const navigate = useNavigate();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
 
@@ -382,42 +380,6 @@ export function Transactions() {
 
   return (
     <div className="gradient-bg min-h-screen text-white">
-      {/* Navbar */}
-      <nav className="glassmorphism sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Painel</span>
-          </button>
-          
-          <div className="flex gap-4">
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === 'list' ? 'bg-zinc-800 text-white border border-zinc-700' : 'text-zinc-400 hover:text-white'}`}
-            >
-              Lançamentos
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === 'categories' ? 'bg-zinc-800 text-white border border-zinc-700' : 'text-zinc-400 hover:text-white'}`}
-            >
-              Gerenciar Categorias
-            </button>
-          </div>
-
-          <button
-            onClick={handleOpenNewTrans}
-            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Novo Lançamento</span>
-          </button>
-        </div>
-      </nav>
-
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
@@ -429,6 +391,49 @@ export function Transactions() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Transações</h1>
+            <p className="text-zinc-400 text-sm mt-1">Monitore e gerencie seus lançamentos e categorias</p>
+          </div>
+          
+          <div className="flex items-center gap-3 self-start sm:self-center">
+            {/* Tabs */}
+            <div className="flex bg-bg-surface border border-border-subtle p-1 rounded-xl shadow-lg">
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'list'
+                    ? 'bg-zinc-800 text-white shadow-md'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Lançamentos
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'categories'
+                    ? 'bg-zinc-800 text-white shadow-md'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Categorias
+              </button>
+            </div>
+
+            {/* Action CTA */}
+            <button
+              onClick={handleOpenNewTrans}
+              className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Novo Lançamento</span>
+            </button>
+          </div>
+        </div>
+
         {activeTab === 'list' ? (
           <div className="space-y-6">
             {/* Filters Box */}
