@@ -1,7 +1,6 @@
 package com.financeflow.account.service;
 
 import com.financeflow.account.dto.AccountResponse;
-import com.financeflow.account.model.domain.Account;
 import com.financeflow.account.model.mapper.AccountMapper;
 import com.financeflow.account.repository.AccountRepository;
 import com.financeflow.couple.model.domain.Couple;

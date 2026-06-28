@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useBudget } from '../hooks/useBudget';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { 
-  ArrowLeft, Calendar, ChevronLeft, ChevronRight, 
+  Calendar, ChevronLeft, ChevronRight, 
   Copy, Edit2, Check, X, AlertTriangle, 
   TrendingUp, PiggyBank, Wallet, Lock
 } from 'lucide-react';
@@ -16,7 +14,6 @@ import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 export function Budget() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
 
@@ -119,33 +116,6 @@ export function Budget() {
 
   return (
     <div className="gradient-bg min-h-screen text-white">
-      {/* Header / Navbar */}
-      <nav className="glassmorphism sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Voltar ao Painel</span>
-          </button>
-          
-          <div className="flex items-center gap-4">
-            <span className="font-semibold text-lg tracking-tight text-white">Planejamento Orçamentário</span>
-            <CoupleToggle />
-          </div>
-
-          <button
-            onClick={handleCopy}
-            disabled={isCopying}
-            className="bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white font-medium text-sm rounded-xl px-4 py-2 border border-zinc-700/50 transition-all flex items-center gap-2"
-          >
-            <Copy className="w-4 h-4" />
-            <span>{isCopying ? 'Copiando...' : 'Copiar Anterior'}</span>
-          </button>
-        </div>
-      </nav>
-
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
@@ -157,6 +127,21 @@ export function Budget() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12 space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Planejamento Orçamentário</h1>
+            <p className="text-zinc-400 text-sm mt-1">Planeje e acompanhe seus limites de gastos mensais</p>
+          </div>
+          <button
+            onClick={handleCopy}
+            disabled={isCopying}
+            className="bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white font-medium text-sm rounded-xl px-4 py-2.5 border border-zinc-700/50 transition-all flex items-center gap-2 self-start sm:self-center"
+          >
+            <Copy className="w-4 h-4" />
+            <span>{isCopying ? 'Copiando...' : 'Copiar Anterior'}</span>
+          </button>
+        </div>
         
         {/* Month Selector */}
         <div className="flex items-center justify-between glassmorphism p-4 rounded-2xl border border-zinc-800/50">

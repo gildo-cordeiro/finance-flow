@@ -3,7 +3,6 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../hooks/useDashboard';
 import { cn } from '../../../lib/cn';
-import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { Card } from '../../../components/ui/Card';
@@ -11,11 +10,6 @@ import { MoneyValue } from '../../../components/ui/MoneyValue';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { SectionLabel } from '../../../components/ui/SectionLabel';
 import {
-  Settings,
-  LogOut,
-  Wallet,
-  DollarSign,
-  TrendingUp,
   ChevronLeft,
   ChevronRight,
   ArrowUpRight,
@@ -23,8 +17,7 @@ import {
   Coins,
   Percent,
   RefreshCw,
-  AlertTriangle,
-  LineChart
+  AlertTriangle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -40,7 +33,7 @@ import {
 } from 'recharts';
 
 export function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
@@ -108,63 +101,6 @@ export function Dashboard() {
 
   return (
     <div className="gradient-bg min-h-screen text-white pb-16">
-      {/* Navigation bar */}
-      <nav className="glassmorphism sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <span className="text-lg font-bold text-white tracking-wider">FF</span>
-            </div>
-            <span className="font-semibold text-lg tracking-tight text-white">FinanceFlow</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <CoupleToggle />
-            <button
-              onClick={() => navigate('/accounts')}
-              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">Minhas Contas</span>
-            </button>
-            <button
-              onClick={() => navigate('/transactions')}
-              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span className="hidden sm:inline">Transações</span>
-            </button>
-            <button
-              onClick={() => navigate('/budget')}
-              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Orçamento</span>
-            </button>
-            <button
-              onClick={() => navigate('/cashflow')}
-              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <LineChart className="w-4 h-4" />
-              <span className="hidden sm:inline">Fluxo de Caixa</span>
-            </button>
-            <button
-              onClick={() => navigate('/profile')}
-              className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Configurações</span>
-            </button>
-            <button
-              onClick={logout}
-              className="p-2 text-zinc-400 hover:text-red-400 rounded-lg hover:bg-red-500/5 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </button>
-          </div>
-        </div>
-      </nav>
 
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
@@ -176,7 +112,7 @@ export function Dashboard() {
       )}
 
       {/* Main dashboard content */}
-      <main className="max-w-6xl mx-auto px-4 mt-10 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 pt-10 space-y-8">
         {/* Header and month selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">

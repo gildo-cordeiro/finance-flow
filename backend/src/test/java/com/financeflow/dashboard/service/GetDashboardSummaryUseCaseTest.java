@@ -19,7 +19,6 @@ import com.financeflow.transaction.service.ListTransactionsUseCase;
 import com.financeflow.budget.dto.BudgetItemResponse;
 import com.financeflow.budget.dto.BudgetResponse;
 import com.financeflow.budget.service.GetBudgetUseCase;
-import com.financeflow.couple.repository.CoupleRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +31,6 @@ class GetDashboardSummaryUseCaseTest {
     private ListCategoriesUseCase listCategoriesUseCase;
     private ListTransactionsUseCase listTransactionsUseCase;
     private GetBudgetUseCase getBudgetUseCase;
-    private CoupleRepository coupleRepository;
     private GetDashboardSummaryUseCase getDashboardSummaryUseCase;
 
     @BeforeEach
@@ -40,8 +38,7 @@ class GetDashboardSummaryUseCaseTest {
         listCategoriesUseCase = mock(ListCategoriesUseCase.class);
         listTransactionsUseCase = mock(ListTransactionsUseCase.class);
         getBudgetUseCase = mock(GetBudgetUseCase.class);
-        coupleRepository = mock(CoupleRepository.class);
-        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(listCategoriesUseCase, listTransactionsUseCase, getBudgetUseCase, coupleRepository);
+        getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(listCategoriesUseCase, listTransactionsUseCase, getBudgetUseCase);
     }
 
     @Test

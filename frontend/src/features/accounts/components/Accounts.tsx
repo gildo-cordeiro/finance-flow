@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../hooks/useAccounts';
-import { useNavigate } from 'react-router-dom';
-import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
 import { 
-  ArrowLeft, Plus, CreditCard, Landmark, PiggyBank, 
+  Plus, CreditCard, Landmark, PiggyBank, 
   HelpCircle, AlertTriangle, X 
 } from 'lucide-react';
 import type { AccountType, AccountPayload } from '../types';
@@ -58,7 +56,6 @@ type AccountFormData = z.infer<typeof accountSchema>;
 export function Accounts() {
   const { user } = useAuth();
   const { accounts, isLoading, error, createAccount, isCreating } = useAccounts();
-  const navigate = useNavigate();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
 
@@ -150,32 +147,6 @@ export function Accounts() {
 
   return (
     <div className="gradient-bg min-h-screen text-white">
-      {/* Header / Navbar */}
-      <nav className="glassmorphism sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/50 transition-all flex items-center gap-2 text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Voltar ao Painel</span>
-          </button>
-          
-          <div className="flex items-center gap-4">
-            <span className="font-semibold text-lg tracking-tight text-white">Minhas Contas</span>
-            <CoupleToggle />
-          </div>
-
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nova Conta</span>
-          </button>
-        </div>
-      </nav>
-
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center">
@@ -187,6 +158,21 @@ export function Accounts() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Minhas Contas</h1>
+            <p className="text-zinc-400 text-sm mt-1">Gerencie suas contas e cartões de crédito</p>
+          </div>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2 self-start sm:self-center"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Conta</span>
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
             <div className="w-10 h-10 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin"></div>
