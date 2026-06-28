@@ -16,6 +16,9 @@ import { z } from 'zod';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card';
+import { Badge } from '../../../components/ui/Badge';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
@@ -371,37 +374,10 @@ export function Transactions() {
   };
 
   // Helper selectors
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: user.currency,
-    }).format(val);
-  };
-
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
-  };
-
-  const getStatusLabel = (s: TransactionStatus) => {
-    switch (s) {
-      case 'PAID': return 'Pago';
-      case 'PENDING': return 'Pendente';
-      case 'PLANNED': return 'Planejado';
-      case 'OVERDUE': return 'Atrasado';
-      default: return s;
-    }
-  };
-
-  const getStatusColor = (s: TransactionStatus) => {
-    switch (s) {
-      case 'PAID': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'PENDING': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'PLANNED': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'OVERDUE': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-zinc-800 text-zinc-400';
-    }
   };
 
   return (
@@ -456,7 +432,7 @@ export function Transactions() {
         {activeTab === 'list' ? (
           <div className="space-y-6">
             {/* Filters Box */}
-            <div className="auth-card p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+            <Card className="p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Conta</label>
                 <select
@@ -509,7 +485,7 @@ export function Transactions() {
                   className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
                 />
               </div>
-            </div>
+            </Card>
 
             {/* Transactions List */}
             <div className="auth-card overflow-hidden">
@@ -583,9 +559,7 @@ export function Transactions() {
                             <td className="p-4 text-zinc-400">{formatDate(t.dueDate)}</td>
                             <td className="p-4 text-zinc-400">{formatDate(t.paymentDate || '')}</td>
                             <td className="p-4">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusColor(t.status)}`}>
-                                {getStatusLabel(t.status)}
-                              </span>
+                              <Badge status={t.status} />
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-zinc-400">
@@ -602,8 +576,8 @@ export function Transactions() {
                                 )}
                               </div>
                             </td>
-                            <td className={`p-4 text-right font-bold ${t.type === 'EXPENSE' ? 'text-red-400' : 'text-emerald-400'}`}>
-                              {t.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(t.amount)}
+                            <td className="p-4 text-right">
+                              <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
                             </td>
                              <td className="p-4 text-center">
                               {t.userId === user.id ? (

@@ -6,6 +6,10 @@ import { cn } from '../../../lib/cn';
 import { CoupleToggle } from '../../couple/components/CoupleToggle';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
+import { Card } from '../../../components/ui/Card';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
+import { ProgressBar } from '../../../components/ui/ProgressBar';
+import { SectionLabel } from '../../../components/ui/SectionLabel';
 import {
   Settings,
   LogOut,
@@ -253,113 +257,100 @@ export function Dashboard() {
             {/* Financial summary metrics grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Revenue Card */}
-              <div className="auth-card p-6 border-zinc-800 hover:border-emerald-500/20 transition-all duration-300 relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
+              <Card className="p-6 hover:border-success/20 transition-all duration-300 relative group overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-success/5 rounded-full blur-2xl group-hover:bg-success/10 transition-all"></div>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Receitas do Mês</span>
-                    <h2 className="text-2xl font-bold tracking-tight text-emerald-400">{formatCurrency(summary.totalRevenue)}</h2>
+                    <SectionLabel className="block mb-1">Receitas do Mês</SectionLabel>
+                    <MoneyValue amount={summary.totalRevenue} className="text-value-xl tracking-tight" />
                     {isCouple && breakdown && (
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Você: {formatCurrency(breakdown.userRevenue)} · {partnerName}: {formatCurrency(breakdown.partnerRevenue)}
+                      <p className="text-xs text-text-secondary mt-1">
+                        Você: <MoneyValue amount={breakdown.userRevenue} showSign={false} className="font-normal text-text-secondary" /> · {partnerName}: <MoneyValue amount={breakdown.partnerRevenue} showSign={false} className="font-normal text-text-secondary" />
                       </p>
                     )}
                   </div>
-                  <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                  <div className="p-2.5 bg-success/10 text-success rounded-xl">
                     <ArrowUpRight className="w-5 h-5" />
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Expense Card */}
-              <div className="auth-card p-6 border-zinc-800 hover:border-rose-500/20 transition-all duration-300 relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-all"></div>
+              <Card className="p-6 hover:border-danger/20 transition-all duration-300 relative group overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-danger/5 rounded-full blur-2xl group-hover:bg-danger/10 transition-all"></div>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Despesas do Mês</span>
-                    <h2 className="text-2xl font-bold tracking-tight text-rose-400">{formatCurrency(summary.totalExpenses)}</h2>
+                    <SectionLabel className="block mb-1">Despesas do Mês</SectionLabel>
+                    <MoneyValue amount={-summary.totalExpenses} className="text-value-xl tracking-tight" />
                     {isCouple && breakdown && (
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Você: {formatCurrency(breakdown.userExpenses)} · {partnerName}: {formatCurrency(breakdown.partnerExpenses)}
+                      <p className="text-xs text-text-secondary mt-1">
+                        Você: <MoneyValue amount={breakdown.userExpenses} showSign={false} className="font-normal text-text-secondary" /> · {partnerName}: <MoneyValue amount={breakdown.partnerExpenses} showSign={false} className="font-normal text-text-secondary" />
                       </p>
                     )}
                   </div>
-                  <div className="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl">
+                  <div className="p-2.5 bg-danger/10 text-danger rounded-xl">
                     <ArrowDownRight className="w-5 h-5" />
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Balance Card */}
-              <div className="auth-card p-6 border-zinc-800 hover:border-blue-500/20 transition-all duration-300 relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
+              <Card className="p-6 hover:border-info/20 transition-all duration-300 relative group overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-info/5 rounded-full blur-2xl group-hover:bg-info/10 transition-all"></div>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Saldo do Período</span>
-                    <h2 className={cn(
-                      "text-2xl font-bold tracking-tight",
-                      summary.balance >= 0 ? "text-blue-400" : "text-amber-500"
-                    )}>
-                      {formatCurrency(summary.balance)}
-                    </h2>
+                    <SectionLabel className="block mb-1">Saldo do Período</SectionLabel>
+                    <MoneyValue amount={summary.balance} className="text-value-xl tracking-tight" />
                     {isCouple && breakdown && (
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Você: {formatCurrency(breakdown.userRevenue - breakdown.userExpenses)} · {partnerName}: {formatCurrency(breakdown.partnerRevenue - breakdown.partnerExpenses)}
+                      <p className="text-xs text-text-secondary mt-1">
+                        Você: <MoneyValue amount={breakdown.userRevenue - breakdown.userExpenses} showSign={false} className="font-normal text-text-secondary" /> · {partnerName}: <MoneyValue amount={breakdown.partnerRevenue - breakdown.partnerExpenses} showSign={false} className="font-normal text-text-secondary" />
                       </p>
                     )}
                   </div>
                   <div className={cn(
                     "p-2.5 rounded-xl",
-                    summary.balance >= 0 ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-500"
+                    summary.balance >= 0 ? "bg-info/10 text-info" : "bg-warning/10 text-warning"
                   )}>
                     <Coins className="w-5 h-5" />
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Budget Progress Card */}
-              <div className="auth-card p-6 border-zinc-800 hover:border-violet-500/20 transition-all duration-300 relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-all"></div>
+              <Card className="p-6 hover:border-brand/20 transition-all duration-300 relative group overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full blur-2xl group-hover:bg-brand/10 transition-all"></div>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1 w-[70%]">
-                    <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Orçamento Utilizado</span>
+                    <SectionLabel className="block mb-1">Orçamento Utilizado</SectionLabel>
                     {budgetPlanned > 0 ? (
                       <>
-                        <h2 className="text-2xl font-bold tracking-tight text-zinc-100 truncate">
+                        <h2 className="text-value-xl font-bold tracking-tight text-text-primary truncate">
                           {formatCurrency(summary.budgetRealized)}
                         </h2>
-                        <p className="text-xs text-zinc-400 truncate">limite de {formatCurrency(summary.budgetPlanned)}</p>
+                        <p className="text-xs text-text-secondary truncate">limite de {formatCurrency(summary.budgetPlanned)}</p>
                       </>
                     ) : (
-                      <h2 className="text-lg text-zinc-500 mt-1">Não configurado</h2>
+                      <h2 className="text-lg text-text-muted mt-1">Não configurado</h2>
                     )}
                   </div>
                   <div className={cn(
                     "p-2.5 rounded-xl",
-                    isOverBudget ? "bg-rose-500/10 text-rose-400" : "bg-violet-500/10 text-violet-400"
+                    isOverBudget ? "bg-danger/10 text-danger" : "bg-brand/10 text-brand"
                   )}>
                     <Percent className="w-5 h-5" />
                   </div>
                 </div>
                 {/* Visual horizontal progress bar inside the card */}
                 {summary.budgetPlanned > 0 && (
-                  <div className="mt-4 w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        isOverBudget ? "bg-rose-500" : "bg-violet-500"
-                      )}
-                      style={{ width: `${budgetPercent}%` }}
-                    ></div>
-                  </div>
+                  <ProgressBar value={summary.budgetRealized} max={summary.budgetPlanned} className="mt-4" />
                 )}
-              </div>
+              </Card>
             </div>
 
             {/* Graphs grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Cashflow visual comparison */}
-              <div className="auth-card p-8 border-zinc-800 space-y-6 flex flex-col justify-between">
+              <Card className="p-8 space-y-6 flex flex-col justify-between">
                 <div>
                   <h3 className="text-xl font-bold tracking-tight">Fluxo de Caixa Rápido</h3>
                   <p className="text-zinc-400 text-xs mt-1">Comparação de entradas e saídas no mês selecionado.</p>
@@ -406,10 +397,10 @@ export function Dashboard() {
                     </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </Card>
 
               {/* Budget limits and status */}
-              <div className="auth-card p-8 border-zinc-800 space-y-6 flex flex-col justify-between">
+              <Card className="p-8 space-y-6 flex flex-col justify-between">
                 <div>
                   <h3 className="text-xl font-bold tracking-tight">Limites de Orçamento</h3>
                   <p className="text-zinc-400 text-xs mt-1">Status de gastos em comparação com o limite planejado.</p>
@@ -482,11 +473,11 @@ export function Dashboard() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             </div>
 
             {/* Feature info footer card */}
-            <div className="auth-card p-8 space-y-6">
+            <Card className="p-8 space-y-6">
               <div>
                 <h2 className="text-xl font-bold">Painel de Resumo do Dashboard (Fase 1)</h2>
                 <p className="text-zinc-400 text-sm mt-1">Métricas calculadas dinamicamente com base nas transações e limites mensais.</p>
@@ -510,7 +501,7 @@ export function Dashboard() {
                   Consolidação baseada em datas de competência
                 </div>
               </div>
-            </div>
+            </Card>
           </>
         )}
       </main>

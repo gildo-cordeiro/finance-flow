@@ -24,79 +24,39 @@ O FinanceFlow usa um tema escuro sofisticado. Todos os componentes devem seguir 
 
 ### Paleta de Cores
 
-| Papel | Classe Tailwind | Uso |
-|---|---|---|
-| Fundo base da página | `bg-zinc-950` | Body / layout raiz |
-| Fundo de cards | `bg-zinc-900/60` | Cards, painéis, sidebars |
-| Borda sutil | `border-zinc-800` | Divisores, cards |
-| Borda interativa | `border-zinc-700/50` | Hover states, inputs inativos |
-| Texto primário | `text-zinc-100` | Títulos, valores principais |
-| Texto secundário | `text-zinc-400` | Labels, descrições |
-| Texto placeholder | `text-zinc-500` | Placeholders, hints |
-| Destaque principal | `violet-600` / `violet-500` | CTAs, links ativos, badges principais |
-| Destaque hover | `violet-400` / `violet-300` | Hover de elementos violet |
-| Sucesso | `emerald-400` / `emerald-500/10` | Receitas, PAID, positivo |
-| Atenção | `amber-400` / `amber-500/10` | PENDING, alertas |
-| Perigo | `red-400` / `red-500/10` | OVERDUE, erros, negativos |
-| Neutro | `zinc-400` / `zinc-800` | PLANNED, disabled |
-
-### Classes de Utilidade Globais (definidas em `index.css`)
-
-```css
-/* Glassmorphism — container principal de cards */
-.glassmorphism {
-  @apply bg-zinc-900/60 backdrop-blur-sm border border-zinc-800 rounded-2xl;
-}
-
-/* Auth card — formulários de login/registro */
-.auth-card {
-  @apply bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 rounded-3xl shadow-2xl shadow-black/60;
-}
-
-/* Fundo com gradiente da página */
-.gradient-bg {
-  @apply bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950;
-}
-```
+| Papel | Token / Classe Tailwind | Valor HEX | Uso |
+|---|---|---|---|
+| Fundo base da página | `bg-bg-base` | `#0F1117` | Body / layout raiz |
+| Fundo de cards | `bg-bg-surface` | `#1A1D27` | Cards, painéis, sidebars |
+| Fundo elevado / hover | `bg-bg-elevated` | `#21253A` | Modais, dropdowns, hover states |
+| Borda sutil | `border-border-subtle` | `#2A2E45` | Divisores, cards |
+| Destaque principal (Brand) | `text-brand` / `bg-brand` | `#7C5CFC` | CTAs, links ativos, badges principais |
+| Destaque hover | `bg-brand-hover` | `#6B4EE6` | Hover de botões/links brand |
+| Sucesso | `text-success` / `bg-success` | `#22C55E` | Receitas, PAID, positivo, limites saudáveis |
+| Perigo | `text-danger` / `bg-danger` | `#EF4444` | OVERDUE, despesas, negativos, acima do limite |
+| Atenção | `text-warning` / `bg-warning` | `#F59E0B` | PENDING, alertas, sem limite definido |
+| Neutro informativo | `text-info` / `bg-info` | `#3B82F6` | PLANNED, informações neutras |
+| Texto primário | `text-text-primary` | `#F1F5F9` | Títulos, valores principais |
+| Texto secundário | `text-text-secondary` | `#94A3B8` | Labels secundários, descrições |
+| Texto muted | `text-text-muted` | `#4B5563` | Sublabels, placeholders, hints, labels de card uppercase |
 
 ### Tipografia
 
-```tsx
-// Hierarquia de texto
-<h1 className="text-2xl font-bold text-zinc-100">Título de Página</h1>
-<h2 className="text-lg font-semibold text-zinc-100">Título de Seção</h2>
-<h3 className="text-sm font-semibold text-zinc-100">Título de Card</h3>
-<p  className="text-sm text-zinc-400">Descrição / label</p>
-<span className="text-xs text-zinc-500">Metadado / hint</span>
+| Token | Tamanho / Estilo | Uso |
+|---|---|---|
+| `text-value-xl` | 28px, LineHeight 1.2, Bold (700) | Valores monetários grandes |
+| `text-label-xs` | 11px, LineHeight 1.4, Medium (500), tracking 0.08em | Labels uppercase tracking |
+| `text-section` | 18px, LineHeight 1.4, SemiBold (600) | Títulos de seção |
+| `text-body` | 14px, LineHeight 1.6, Regular (400) | Corpo, tabelas, parágrafos |
+| `text-hint` | 12px, LineHeight 1.5, Regular (400) | Sublabels, hints secundários |
 
-// Valores monetários — sempre destacados
-<span className="text-xl font-bold tabular-nums text-zinc-100">
-  {formatCurrency(amount)}
-</span>
+### Regras Visuais
 
-// Valor positivo (receita)
-<span className="text-lg font-semibold tabular-nums text-emerald-400">
-  +{formatCurrency(amount)}
-</span>
-
-// Valor negativo (despesa)
-<span className="text-lg font-semibold tabular-nums text-red-400">
-  -{formatCurrency(amount)}
-</span>
-```
-
-### Sombras e Elevação
-
-```tsx
-// Nível 1 — card padrão
-className="shadow-xl shadow-black/40"
-
-// Nível 2 — modal, dropdown
-className="shadow-2xl shadow-black/60"
-
-// Glow de destaque (botão CTA, elemento ativo)
-className="shadow-lg shadow-violet-500/25"
-```
+- **Nunca usar preto absoluto `#000` como fundo** — usar sempre `bg-bg-base`.
+- **Nunca usar shadow em cards** — usar sempre `border border-border-subtle`.
+- **Valores monetários sempre com `<MoneyValue>`** — nunca cor hardcoded ou formatação inline.
+- **Labels de card sempre uppercase** — usar `<SectionLabel>`.
+- **ProgressBar sempre com os 3 estados** — nunca omitir o estado "sem limite".
 
 ---
 
@@ -201,29 +161,155 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 ```
 
-### Badge de Status (Transação)
+### Card
 
 ```tsx
-// components/ui/StatusBadge.tsx
-import { cn } from '@/lib/cn';
+// components/ui/Card.tsx
+import { HTMLAttributes, forwardRef } from 'react';
+import { cn } from '../../lib/cn';
 
-type TransactionStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'PLANNED';
+interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn('bg-bg-surface border border-border-subtle rounded-xl p-5', className)}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+);
+```
+
+### Badge
+
+```tsx
+// components/ui/Badge.tsx
+import { HTMLAttributes } from 'react';
+import { cn } from '../../lib/cn';
+
+export type TransactionStatus = 'PLANNED' | 'PAID' | 'PENDING' | 'OVERDUE';
 
 const STATUS_CONFIG: Record<TransactionStatus, { label: string; classes: string }> = {
-  PAID:    { label: 'Pago',      classes: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-  PENDING: { label: 'Pendente',  classes: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  OVERDUE: { label: 'Atrasado',  classes: 'bg-red-500/10 text-red-400 border-red-500/20' },
-  PLANNED: { label: 'Planejado', classes: 'bg-zinc-800 text-zinc-400 border-zinc-700/50' },
+  PLANNED: { label: 'Planejado', classes: 'bg-info/10 text-info border-info/20' },
+  PAID:    { label: 'Pago',      classes: 'bg-success/10 text-success border-success/20' },
+  PENDING: { label: 'Pendente',  classes: 'bg-warning/10 text-warning border-warning/20' },
+  OVERDUE: { label: 'Atrasado',  classes: 'bg-danger/10 text-danger border-danger/20' },
 };
 
-export function StatusBadge({ status }: { status: TransactionStatus }) {
-  const { label, classes } = STATUS_CONFIG[status];
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  status: TransactionStatus;
+}
+
+export function Badge({ status, className, children, ...props }: BadgeProps) {
+  const config = STATUS_CONFIG[status] || { label: status, classes: 'bg-bg-elevated text-text-secondary border-border-subtle' };
   return (
-    <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium border', classes)}>
-      {label}
+    <span className={cn('inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold border', config.classes, className)} {...props}>
+      {children || config.label}
     </span>
   );
 }
+```
+
+### ProgressBar
+
+```tsx
+// components/ui/ProgressBar.tsx
+import { cn } from '../../lib/cn';
+
+interface ProgressBarProps {
+  value: number;
+  max?: number | null;
+  className?: string;
+}
+
+export function ProgressBar({ value, max, className }: ProgressBarProps) {
+  const hasLimit = typeof max === 'number' && max > 0;
+  let percentage = 0;
+  let isOverLimit = false;
+
+  if (hasLimit && max) {
+    percentage = Math.round((value / max) * 100);
+    isOverLimit = value > max;
+  }
+
+  return (
+    <div className={cn('space-y-1.5 w-full', className)}>
+      <div className="flex justify-between items-center text-xs">
+        <span className="text-text-secondary font-medium">Progresso</span>
+        <span className={cn('font-semibold', !hasLimit && 'text-warning', hasLimit && !isOverLimit && 'text-success', hasLimit && isOverLimit && 'text-danger')}>
+          {hasLimit ? `${percentage}%` : 'Sem limite'}
+        </span>
+      </div>
+      {hasLimit ? (
+        <div className="w-full bg-bg-elevated h-2 rounded-full overflow-hidden">
+          <div className={cn('h-full rounded-full transition-all duration-300', isOverLimit ? 'bg-danger' : 'bg-success')} style={{ width: `${Math.min(percentage, 100)}%` }} />
+        </div>
+      ) : (
+        <div className="w-full border border-dashed border-warning/40 bg-warning/5 h-2 rounded-full" />
+      )}
+    </div>
+  );
+}
+```
+
+### MoneyValue
+
+```tsx
+// components/ui/MoneyValue.tsx
+import { HTMLAttributes } from 'react';
+import { cn } from '../../lib/cn';
+import { formatCurrency } from '../../utils/formatters';
+
+interface MoneyValueProps extends HTMLAttributes<HTMLSpanElement> {
+  amount: number;
+  showSign?: boolean;
+}
+
+export function MoneyValue({ amount, showSign = true, className, ...props }: MoneyValueProps) {
+  let colorClass = 'text-text-primary';
+  let formattedValue = '';
+
+  const absValue = Math.abs(amount);
+  const formattedAbs = formatCurrency(absValue);
+
+  if (amount > 0) {
+    colorClass = 'text-success';
+    formattedValue = showSign ? `+${formattedAbs}` : formattedAbs;
+  } else if (amount < 0) {
+    colorClass = 'text-danger';
+    formattedValue = showSign ? `-${formattedAbs}` : formattedAbs;
+  } else {
+    colorClass = 'text-text-primary';
+    formattedValue = formattedAbs;
+  }
+
+  return (
+    <span className={cn('font-semibold tabular-nums', colorClass, className)} {...props}>
+      {formattedValue}
+    </span>
+  );
+}
+```
+
+### SectionLabel
+
+```tsx
+// components/ui/SectionLabel.tsx
+import { HTMLAttributes, forwardRef } from 'react';
+import { cn } from '../../lib/cn';
+
+interface SectionLabelProps extends HTMLAttributes<HTMLSpanElement> {}
+
+export const SectionLabel = forwardRef<HTMLSpanElement, SectionLabelProps>(
+  ({ className, children, ...props }, ref) => (
+    <span ref={ref} className={cn('text-label-xs text-text-muted uppercase tracking-widest', className)} {...props}>
+      {children}
+    </span>
+  )
+);
 ```
 
 ### Skeleton Loader
