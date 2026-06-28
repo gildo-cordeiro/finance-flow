@@ -1,7 +1,6 @@
 package com.financeflow.dashboard.service;
 
 
-import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.dashboard.dto.DashboardSummaryResponse;
 import com.financeflow.dashboard.dto.MemberBreakdown;
 import com.financeflow.shared.exception.ValidationException;
@@ -34,18 +33,15 @@ public class GetDashboardSummaryUseCase {
     private final ListCategoriesUseCase listCategoriesUseCase;
     private final ListTransactionsUseCase listTransactionsUseCase;
     private final GetBudgetUseCase getBudgetUseCase;
-    private final CoupleRepository coupleRepository;
 
     public GetDashboardSummaryUseCase(
         ListCategoriesUseCase listCategoriesUseCase,
         ListTransactionsUseCase listTransactionsUseCase,
-        GetBudgetUseCase getBudgetUseCase,
-        CoupleRepository coupleRepository
+        GetBudgetUseCase getBudgetUseCase
     ) {
         this.listCategoriesUseCase = listCategoriesUseCase;
         this.listTransactionsUseCase = listTransactionsUseCase;
         this.getBudgetUseCase = getBudgetUseCase;
-        this.coupleRepository = coupleRepository;
     }
 
     public DashboardSummaryResponse execute(UUID userId, String month) {
