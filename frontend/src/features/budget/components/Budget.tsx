@@ -11,6 +11,8 @@ import {
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
+import { ProgressBar } from '../../../components/ui/ProgressBar';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 export function Budget() {
   const { user } = useAuth();
@@ -251,9 +253,6 @@ export function Budget() {
                   {rootCategories.map(rootCat => {
                     const children = subCategories.filter(sub => sub.parentCategoryId === rootCat.categoryId);
                     const isRootEditing = editingCategoryId === rootCat.categoryId;
-                    const percent = rootCat.plannedAmount > 0 
-                      ? Math.min(Math.round((rootCat.realizedAmount / rootCat.plannedAmount) * 100), 100)
-                      : 0;
 
                     return (
                       <React.Fragment key={rootCat.categoryId}>
@@ -296,25 +295,17 @@ export function Budget() {
                                 </button>
                               </div>
                             ) : (
-                              <span className="font-medium">{formatCurrency(rootCat.plannedAmount)}</span>
+                              <span className="font-medium text-text-primary"><MoneyValue amount={rootCat.plannedAmount} showSign={false} className="font-medium text-text-primary" /></span>
                             )}
                             {isRootEditing && saveError && (
                               <div className="text-[10px] text-red-400 mt-1">{saveError}</div>
                             )}
                           </td>
-                          <td className="px-6 py-4 font-medium text-zinc-300">
-                            {formatCurrency(rootCat.realizedAmount)}
+                          <td className="px-6 py-4 font-medium text-text-secondary">
+                            <MoneyValue amount={rootCat.realizedAmount} showSign={false} className="font-medium text-text-secondary" />
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-32 bg-zinc-800 rounded-full h-2 overflow-hidden border border-zinc-700/30">
-                                <div 
-                                  className={`h-full rounded-full ${percent >= 100 ? 'bg-red-500' : percent >= 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
-                                  style={{ width: `${percent}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs text-zinc-400 font-medium">{percent}%</span>
-                            </div>
+                            <ProgressBar value={rootCat.realizedAmount} max={rootCat.plannedAmount} className="w-40" />
                           </td>
                           <td className="px-6 py-4 text-right">
                             {!isRootEditing && (
@@ -338,9 +329,6 @@ export function Budget() {
                         {/* Child Subcategories Rows */}
                         {children.map(subCat => {
                           const isSubEditing = editingCategoryId === subCat.categoryId;
-                          const subPercent = subCat.plannedAmount > 0 
-                            ? Math.min(Math.round((subCat.realizedAmount / subCat.plannedAmount) * 100), 100)
-                            : 0;
 
                           return (
                             <tr key={subCat.categoryId} className="hover:bg-zinc-900/10 transition-colors">
@@ -382,25 +370,17 @@ export function Budget() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <span>{formatCurrency(subCat.plannedAmount)}</span>
+                                  <span className="text-text-secondary"><MoneyValue amount={subCat.plannedAmount} showSign={false} className="text-text-secondary" /></span>
                                 )}
                                 {isSubEditing && saveError && (
                                   <div className="text-[10px] text-red-400 mt-1">{saveError}</div>
                                 )}
                               </td>
-                              <td className="px-6 py-3 text-sm text-zinc-400">
-                                {formatCurrency(subCat.realizedAmount)}
+                              <td className="px-6 py-3 text-sm text-text-secondary">
+                                <MoneyValue amount={subCat.realizedAmount} showSign={false} className="text-text-secondary font-normal" />
                               </td>
                               <td className="px-6 py-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-32 bg-zinc-800 rounded-full h-1.5 overflow-hidden border border-zinc-700/30">
-                                    <div 
-                                      className={`h-full rounded-full ${subPercent >= 100 ? 'bg-red-500' : subPercent >= 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
-                                      style={{ width: `${subPercent}%` }}
-                                    ></div>
-                                  </div>
-                                  <span className="text-xs text-zinc-400">{subPercent}%</span>
-                                </div>
+                                <ProgressBar value={subCat.realizedAmount} max={subCat.plannedAmount} className="w-40" />
                               </td>
                               <td className="px-6 py-3 text-right">
                                 {!isSubEditing && (
