@@ -97,6 +97,27 @@ class BudgetControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenCategoryBelongsToOtherUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        String month = "2026-06";
+        UUID categoryId = UUID.randomUUID();
+        UpdateBudgetRequest request = new UpdateBudgetRequest(new BigDecimal("150.00"));
+
+        when(updateBudgetUseCase.execute(eq(userId), eq(month), eq(categoryId), any(UpdateBudgetRequest.class)))
+            .thenThrow(new com.financeflow.shared.exception.ValidationException("categoryId", "Category does not belong to the user"));
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+
+        mockMvc.perform(put("/api/v1/budget/" + month + "/categories/" + categoryId)
+                .with(csrf())
+                .principal(auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.message").value("Invalid categoryId: Category does not belong to the user"));
+    }
+
+    @Test
     void shouldCopyBudgetSuccessfully() throws Exception {
         UUID userId = UUID.randomUUID();
         String month = "2026-06";
