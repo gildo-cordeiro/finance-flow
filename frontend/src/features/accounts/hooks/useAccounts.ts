@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountsApi } from '../api/accounts';
 import type { Account, AccountPayload } from '../types';
+import { useView } from '../../../context/ViewContext';
 
 export function useAccounts() {
   const queryClient = useQueryClient();
+  const { viewContext } = useView();
 
   const { data: accounts = [], isLoading, error } = useQuery<Account[], Error>({
-    queryKey: ['accounts'],
+    queryKey: ['accounts', viewContext],
     queryFn: () => accountsApi.listAccounts(),
   });
 
