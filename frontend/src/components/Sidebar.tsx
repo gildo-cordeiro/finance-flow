@@ -34,7 +34,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Orçamento', path: '/budget', icon: TrendingUp },
     { label: 'Transações', path: '/transactions', icon: DollarSign },
-    { label: 'Fluxo de Caixa', path: '/cashflow', icon: LineChart },
+    { label: 'Fluxo de Caixa', path: '/cash-flow', icon: LineChart },
     { label: 'Contas', path: '/accounts', icon: Wallet },
   ];
 
