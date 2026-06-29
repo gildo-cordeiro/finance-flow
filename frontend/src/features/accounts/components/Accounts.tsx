@@ -8,13 +8,14 @@ import {
   Plus, CreditCard, Landmark, PiggyBank, 
   HelpCircle, AlertTriangle, X 
 } from 'lucide-react';
-import type { AccountType, AccountPayload } from '../types';
+import type { Account, AccountType, AccountPayload } from '../types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
+import { Badge } from '../../../components/ui/Badge';
 
 const accountSchema = z.object({
   name: z.string().min(1, 'Nome da conta é obrigatório'),
@@ -93,6 +94,14 @@ export function Accounts() {
   const bankAccounts = accounts.filter((acc) => acc.type === 'CHECKING' || acc.type === 'SAVINGS');
   const creditCards = accounts.filter((acc) => acc.type === 'CREDIT_CARD');
 
+  // Sort checking/savings first, then credit cards
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const aIsCard = a.type === 'CREDIT_CARD' ? 1 : 0;
+    const bIsCard = b.type === 'CREDIT_CARD' ? 1 : 0;
+    if (aIsCard !== bIsCard) return aIsCard - bIsCard;
+    return a.name.localeCompare(b.name);
+  });
+
   const resetForm = () => {
     reset();
     setFormError(null);
@@ -125,17 +134,24 @@ export function Accounts() {
     }
   };
 
-  const getAccountIcon = (type: AccountType) => {
-    switch (type) {
-      case 'CHECKING':
-        return <Landmark className="w-5 h-5 text-violet-400" />;
-      case 'SAVINGS':
-        return <PiggyBank className="w-5 h-5 text-emerald-400" />;
-      case 'CREDIT_CARD':
-        return <CreditCard className="w-5 h-5 text-blue-400" />;
-      default:
-        return <HelpCircle className="w-5 h-5 text-zinc-400" />;
-    }
+  const getAccountIconCircle = (type: AccountType) => {
+    const iconClasses = {
+      CHECKING: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+      SAVINGS: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      CREDIT_CARD: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    }[type] || 'bg-zinc-800 text-zinc-400 border-zinc-700/50';
+
+    const icon = {
+      CHECKING: <Landmark className="w-5 h-5" />,
+      SAVINGS: <PiggyBank className="w-5 h-5" />,
+      CREDIT_CARD: <CreditCard className="w-5 h-5" />,
+    }[type] || <HelpCircle className="w-5 h-5" />;
+
+    return (
+      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center border shrink-0", iconClasses)}>
+        {icon}
+      </div>
+    );
   };
 
   const formatCurrency = (val: number) => {
@@ -143,6 +159,178 @@ export function Accounts() {
       style: 'currency',
       currency: user.currency,
     }).format(val);
+  };
+
+  const renderMemberBadge = (account: Account) => {
+    if (!isCouple) return null;
+
+    const isJoint = account.name.toLowerCase().includes('conjunta') || 
+                    account.name.toLowerCase().includes('casal') || 
+                    account.bank.toLowerCase().includes('conjunta') || 
+                    account.bank.toLowerCase().includes('casal');
+
+    if (isJoint) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border bg-violet-500/10 border-violet-500/20 text-violet-300">
+          Casal
+        </span>
+      );
+    }
+
+    const isOwn = account.userId === user.id;
+    return (
+      <span className={cn(
+        "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+        isOwn 
+          ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+          : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+      )}>
+        {isOwn ? 'Você' : partnerName}
+      </span>
+    );
+  };
+
+  const renderBankAccount = (account: Account) => {
+    const associatedCardsSum = creditCards
+      .filter((card) => card.associatedAccountId === account.id)
+      .reduce((sum, card) => sum + (card.balance || 0), 0);
+    const projectedBalance = account.balance + associatedCardsSum;
+
+    return (
+      <div 
+        key={account.id} 
+        className="bg-bg-surface border border-border-subtle hover:border-brand/40 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 group min-h-[220px]"
+      >
+        <div className="space-y-4 w-full">
+          {/* Top Header Card */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              {getAccountIconCircle(account.type)}
+              <div>
+                <h4 className="font-bold text-text-primary tracking-tight text-base">{account.bank}</h4>
+                <p className="text-xs text-text-secondary mt-0.5">{account.name}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <Badge status="PAID">Ativo</Badge>
+              {renderMemberBadge(account)}
+            </div>
+          </div>
+
+          {/* Main Balance */}
+          <div className="pt-2 space-y-3">
+            <div>
+              <span className="text-text-secondary text-xs font-semibold uppercase tracking-wider block">Saldo disponível</span>
+              <p className={cn(
+                "text-2xl font-bold tracking-tight mt-1",
+                account.balance < 0 ? "text-danger" : "text-text-primary"
+              )}>
+                {formatCurrency(account.balance)}
+              </p>
+            </div>
+
+            {associatedCardsSum < 0 && (
+              <div className="pt-3 border-t border-border-subtle flex flex-col gap-1">
+                <span className="text-[10px] text-text-secondary font-semibold uppercase tracking-wider block">Saldo Projetado (Livre)</span>
+                <p className={cn(
+                  "text-base font-bold tracking-tight",
+                  projectedBalance < 0 ? "text-danger" : "text-success"
+                )}>
+                  {formatCurrency(projectedBalance)}
+                </p>
+                <span className="text-[10px] text-text-muted">
+                  Deduzindo {formatCurrency(Math.abs(associatedCardsSum))} em faturas vinculadas
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-border-subtle/50 flex items-center justify-between text-xs text-text-secondary">
+          <span>Tipo:</span>
+          <span className="font-semibold text-text-primary">
+            {account.type === 'SAVINGS' ? 'Poupança' : 'Conta Corrente'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCreditCard = (card: Account) => {
+    const limit = card.creditLimit || 1;
+    const currentInvoice = Math.abs(card.balance);
+    const usagePercent = Math.round((currentInvoice / limit) * 100);
+
+    let barColor = 'bg-brand'; // up to 70%
+    if (usagePercent > 90) {
+      barColor = 'bg-danger'; // > 90%
+    } else if (usagePercent >= 70) {
+      barColor = 'bg-warning'; // 70-90%
+    }
+
+    const payingAccount = bankAccounts.find((acc) => acc.id === card.associatedAccountId);
+
+    return (
+      <div 
+        key={card.id} 
+        className="bg-bg-surface border border-border-subtle hover:border-brand/40 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 group min-h-[220px]"
+      >
+        <div className="space-y-4 w-full">
+          {/* Top Header Card */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              {getAccountIconCircle(card.type)}
+              <div>
+                <h4 className="font-bold text-text-primary tracking-tight text-base">{card.bank}</h4>
+                <p className="text-xs text-text-secondary mt-0.5">{card.name}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 uppercase">
+                Crédito
+              </span>
+              {renderMemberBadge(card)}
+            </div>
+          </div>
+
+          {/* Main Balance */}
+          <div className="pt-2 space-y-3">
+            <div>
+              <span className="text-text-secondary text-xs font-semibold uppercase tracking-wider block">Fatura atual</span>
+              <p className="text-2xl font-bold text-text-primary tracking-tight mt-1">
+                {formatCurrency(currentInvoice)} <span className="text-sm font-normal text-text-secondary">/ {formatCurrency(card.creditLimit || 0)}</span>
+              </p>
+            </div>
+
+            {/* Usage Limit Bar */}
+            <div className="space-y-1.5 w-full">
+              <div className="flex justify-between items-center text-[10px] text-text-secondary">
+                <span>Uso do limite</span>
+                <span className="font-semibold">{usagePercent}%</span>
+              </div>
+              <div className="w-full bg-bg-elevated h-2 rounded-full overflow-hidden">
+                <div 
+                  className={cn('h-full rounded-full transition-all duration-300', barColor)} 
+                  style={{ width: `${Math.min(usagePercent, 100)}%` }} 
+                />
+              </div>
+              {payingAccount && (
+                <p className="text-[10px] text-text-muted mt-1">
+                  Pagamento: <span className="font-medium text-text-secondary">{payingAccount.name}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-border-subtle/50 flex items-center justify-between text-sm text-text-muted">
+          <span>Fatura:</span>
+          <span className="font-semibold text-text-secondary">
+            Fecha dia {card.closingDay} · Vence dia {card.dueDay}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -161,12 +349,12 @@ export function Accounts() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Minhas Contas</h1>
-            <p className="text-zinc-400 text-sm mt-1">Gerencie suas contas e cartões de crédito</p>
+            <h1 className="text-3xl font-bold tracking-tight text-white animate-fade-in">Minhas Contas</h1>
+            <p className="text-text-secondary text-sm mt-1">Gerencie suas contas e cartões de crédito</p>
           </div>
           <button
             onClick={() => setIsFormOpen(true)}
-            className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2 self-start sm:self-center"
+            className="bg-brand hover:bg-brand-hover active:bg-brand text-white font-medium text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-brand/25 transition-all flex items-center gap-2 self-start sm:self-center cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Conta</span>
@@ -175,10 +363,10 @@ export function Accounts() {
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="w-10 h-10 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin"></div>
+            <div className="w-10 h-10 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
           </div>
         ) : error ? (
-          <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 max-w-lg mx-auto text-center space-y-4">
+          <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-danger max-w-lg mx-auto text-center space-y-4">
             <AlertTriangle className="w-12 h-12 mx-auto" />
             <h3 className="font-bold text-lg">Erro ao carregar contas</h3>
             <p className="text-sm text-red-400/80">{error.message}</p>
@@ -187,187 +375,44 @@ export function Accounts() {
           <div className="space-y-10">
             {/* Grid of Accounts */}
             {accounts.length === 0 ? (
-              <div className="auth-card p-12 text-center max-w-lg mx-auto space-y-6">
-                <div className="w-16 h-16 bg-zinc-900/80 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800">
-                  <Landmark className="w-8 h-8 text-zinc-500" />
+              <div className="bg-bg-surface border border-border-subtle p-12 text-center max-w-lg mx-auto space-y-6 rounded-2xl">
+                <div className="w-16 h-16 bg-bg-elevated rounded-2xl flex items-center justify-center mx-auto border border-border-subtle">
+                  <Landmark className="w-8 h-8 text-text-secondary" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-semibold">Nenhuma conta cadastrada</h3>
-                  <p className="text-sm text-zinc-400">Comece adicionando uma conta corrente, poupança ou cartão de crédito.</p>
+                  <p className="text-sm text-text-secondary">Comece adicionando uma conta corrente, poupança ou cartão de crédito.</p>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(true)}
-                  className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-xl px-6 py-2.5 shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 transition-all inline-flex items-center gap-2"
+                  className="bg-brand hover:bg-brand-hover text-white font-medium text-sm rounded-xl px-6 py-2.5 shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   Adicionar primeira conta
                 </button>
               </div>
             ) : (
-              <div className="space-y-12">
-                {/* Contas Bancárias */}
-                {bankAccounts.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-zinc-350 tracking-tight flex items-center gap-2">
-                      <Landmark className="w-5 h-5 text-violet-400" />
-                      <span>Contas Bancárias</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {bankAccounts.map((account) => {
-                        const associatedCardsSum = creditCards
-                          .filter((card) => card.associatedAccountId === account.id)
-                          .reduce((sum, card) => sum + (card.balance || 0), 0);
-                        const projectedBalance = account.balance + associatedCardsSum;
-
-                        return (
-                          <div key={account.id} className="auth-card p-6 flex flex-col justify-between hover:border-violet-500/30 transition-all group">
-                            <div className="space-y-4">
-                              {/* Top Header Card */}
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 group-hover:border-zinc-700 transition-all">
-                                    {getAccountIcon(account.type)}
-                                  </div>
-                                  <div>
-                                    <h4 className="font-bold text-white tracking-tight">{account.name}</h4>
-                                    <p className="text-xs text-zinc-400 mt-0.5">{account.bank}</p>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1.5">
-                                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400 capitalize">
-                                    {account.type === 'SAVINGS' ? 'Poupança' : 'Corrente'}
-                                  </span>
-                                  {isCouple && (
-                                    <span className={cn(
-                                      "text-[10px] font-bold px-2 py-0.5 rounded-md border",
-                                      account.userId === user.id 
-                                        ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
-                                        : "bg-pink-500/10 border-pink-500/20 text-pink-300"
-                                    )}>
-                                      {account.userId === user.id ? 'Você' : partnerName}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Main Balance */}
-                              <div className="pt-2 space-y-3">
-                                <div>
-                                  <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Saldo Atual</span>
-                                  <p className={`text-2xl font-bold tracking-tight mt-0.5 ${account.balance < 0 ? 'text-red-400' : 'text-zinc-100'}`}>
-                                    {formatCurrency(account.balance)}
-                                  </p>
-                                </div>
-
-                                {associatedCardsSum < 0 && (
-                                  <div className="pt-3 border-t border-zinc-805 flex flex-col gap-1">
-                                    <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Saldo Projetado (Livre)</span>
-                                    <p className={`text-lg font-bold tracking-tight ${projectedBalance < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                                      {formatCurrency(projectedBalance)}
-                                    </p>
-                                    <span className="text-[10px] text-zinc-500">
-                                      Deduzindo {formatCurrency(Math.abs(associatedCardsSum))} em faturas vinculadas
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedAccounts.map((account) => {
+                  if (account.type === 'CREDIT_CARD') {
+                    return renderCreditCard(account);
+                  } else {
+                    return renderBankAccount(account);
+                  }
+                })}
+                {/* Phantom Card (Nova Conta Button) */}
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="border-2 border-dashed border-border-subtle bg-bg-surface/20 hover:bg-bg-surface/40 hover:border-brand/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 transition-all cursor-pointer group min-h-[220px]"
+                >
+                  <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center border border-border-subtle group-hover:border-brand/40 group-hover:bg-brand/10 transition-all">
+                    <Plus className="w-6 h-6 text-text-secondary group-hover:text-brand transition-all" />
                   </div>
-                )}
-
-                {/* Cartões de Crédito */}
-                {creditCards.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-zinc-350 tracking-tight flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-blue-400" />
-                      <span>Cartões de Crédito</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {creditCards.map((card) => {
-                        const payingAccount = bankAccounts.find((acc) => acc.id === card.associatedAccountId);
-                        return (
-                          <div key={card.id} className="relative bg-gradient-to-br from-zinc-900 to-indigo-950/20 p-6 rounded-2xl border border-zinc-800 hover:border-violet-500/30 transition-all flex flex-col justify-between group">
-                            <div className="space-y-4">
-                              {/* Top Header Card */}
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 group-hover:border-zinc-700 transition-all">
-                                    {getAccountIcon(card.type)}
-                                  </div>
-                                  <div>
-                                    <h4 className="font-bold text-white tracking-tight">{card.name}</h4>
-                                    <p className="text-xs text-zinc-400 mt-0.5">{card.bank}</p>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1.5">
-                                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700 text-zinc-400">
-                                    Cartão
-                                  </span>
-                                  {isCouple && (
-                                    <span className={cn(
-                                      "text-[10px] font-bold px-2 py-0.5 rounded-md border",
-                                      card.userId === user.id 
-                                        ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
-                                        : "bg-pink-500/10 border-pink-500/20 text-pink-300"
-                                    )}>
-                                      {card.userId === user.id ? 'Você' : partnerName}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Main Balance */}
-                              <div className="pt-2">
-                                <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Fatura Atual</span>
-                                <p className={`text-2xl font-bold tracking-tight mt-0.5 ${card.balance < 0 ? 'text-red-400' : 'text-zinc-100'}`}>
-                                  {formatCurrency(Math.abs(card.balance))}
-                                </p>
-                              </div>
-
-                              {/* Credit Card Details */}
-                              <div className="border-t border-zinc-800/80 pt-4 space-y-3 text-xs text-zinc-400">
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Total:</span>
-                                    <span className="font-semibold text-zinc-300">{formatCurrency(card.creditLimit || 0)}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Ciclo de Fatura:</span>
-                                    <span className="font-semibold text-zinc-300">Dia {card.closingDay} ao {card.dueDay}</span>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800/30">
-                                  <div>
-                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Limite Disponível:</span>
-                                    <span className="font-semibold text-emerald-400">{formatCurrency((card.creditLimit || 0) + card.balance)}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-zinc-500 block uppercase font-medium tracking-wider">Conta de Pagamento:</span>
-                                    <span className="font-semibold text-violet-400 truncate block">
-                                      {payingAccount ? payingAccount.name : 'Avulso'}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2 overflow-hidden">
-                                  <div 
-                                    className="bg-violet-600 h-1.5 rounded-full transition-all" 
-                                    style={{ 
-                                      width: `${Math.min(100, Math.max(0, (Math.abs(card.balance) / (card.creditLimit || 1)) * 100))}%` 
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div>
+                    <p className="font-bold text-text-secondary group-hover:text-text-primary transition-colors">Nova Conta</p>
+                    <p className="text-xs text-text-muted mt-1">Adicione uma conta ou cartão</p>
                   </div>
-                )}
+                </button>
               </div>
             )}
           </div>
@@ -377,21 +422,21 @@ export function Accounts() {
       {/* Modal Overlay / Registration Form */}
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="auth-card w-full max-w-lg p-8 relative animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-bg-surface border border-border-subtle w-full max-w-lg p-8 relative rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={resetForm}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
+              className="absolute top-4 right-4 text-text-secondary hover:text-white p-1.5 hover:bg-bg-elevated rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="mb-6">
-              <h3 className="text-xl font-bold">Cadastrar Nova Conta</h3>
-              <p className="text-sm text-zinc-400 mt-1">Configure seus saldos ou cartões de crédito.</p>
+              <h3 className="text-xl font-bold text-text-primary">Cadastrar Nova Conta</h3>
+              <p className="text-sm text-text-secondary mt-1">Configure seus saldos ou cartões de crédito.</p>
             </div>
 
             {formError && (
-              <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-3">
+              <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-danger text-sm flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 <span>{formError}</span>
               </div>
@@ -447,8 +492,8 @@ export function Accounts() {
 
               {/* Credit Card Specific Fields */}
               {watchedType === 'CREDIT_CARD' && (
-                <div className="border-t border-zinc-800/80 pt-4 mt-2 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-violet-400">Parâmetros do Cartão de Crédito</h4>
+                <div className="border-t border-border-subtle pt-4 mt-2 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-brand">Parâmetros do Cartão de Crédito</h4>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Limite de Crédito */}
@@ -504,12 +549,12 @@ export function Accounts() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-800/80 mt-6">
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-subtle mt-6">
                 <button
                   type="button"
                   onClick={resetForm}
                   disabled={isCreating}
-                  className="px-5 py-2.5 rounded-xl border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-sm font-medium transition-all"
+                  className="px-5 py-2.5 rounded-xl border border-border-subtle hover:bg-bg-elevated text-text-secondary text-sm font-medium transition-all cursor-pointer"
                 >
                   Cancelar
                 </button>
