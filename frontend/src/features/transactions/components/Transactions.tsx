@@ -67,7 +67,6 @@ export function Transactions() {
   const { categories } = useCategories();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
-
   const isCouple = viewContext === 'COUPLE';
   const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 

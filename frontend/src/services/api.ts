@@ -85,7 +85,7 @@ async function refreshTokens(): Promise<{ accessToken: string; refreshToken: str
   return data;
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
+export async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
     throw {
