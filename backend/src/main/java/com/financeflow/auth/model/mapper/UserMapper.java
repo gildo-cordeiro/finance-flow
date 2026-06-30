@@ -21,6 +21,7 @@ public final class UserMapper {
             entity.getTimeZone(),
             entity.getCurrency(),
             entity.getBudgetClosingDay(),
+            entity.getDateFormat(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -38,6 +39,7 @@ public final class UserMapper {
             domain.timeZone(),
             domain.currency(),
             domain.budgetClosingDay(),
+            domain.dateFormat(),
             domain.createdAt(),
             domain.updatedAt()
         );

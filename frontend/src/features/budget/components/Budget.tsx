@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBudget } from '../hooks/useBudget';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { useToast } from '../../../context/ToastContext';
 import { 
   ChevronLeft, ChevronRight,
   Copy, Edit2, Check, X, AlertTriangle, Plus, Tag,
@@ -16,6 +17,7 @@ import { Input } from '../../../components/ui/Input';
 export function Budget() {
   const { user } = useAuth();
   const { viewContext } = useView();
+  const toast = useToast();
   const { coupleStatus } = useCouple();
 
   const isCouple = viewContext === 'COUPLE';
@@ -94,14 +96,17 @@ export function Budget() {
     const num = parseFloat(editValue);
     if (isNaN(num) || num < 0) {
       setSaveError('Valor inválido');
+      toast.error('Valor inválido.');
       return;
     }
 
     try {
       await updatePlannedAmount(categoryId, num);
       setEditingCategoryId(null);
+      toast.success('Orçamento atualizado!');
     } catch {
       setSaveError('Erro ao salvar');
+      toast.error('Erro ao salvar orçamento.');
     }
   };
 
@@ -121,8 +126,9 @@ export function Budget() {
     if (window.confirm('Deseja copiar o planejamento do mês anterior para este mês? Os valores existentes serão mesclados.')) {
       try {
         await copyPreviousBudget();
+        toast.success('Planejamento do mês anterior copiado!');
       } catch {
-        alert('Erro ao copiar orçamento anterior.');
+        toast.error('Erro ao copiar orçamento anterior.');
       }
     }
   };
@@ -132,11 +138,13 @@ export function Budget() {
     setNewBudgetError(null);
     if (!newBudgetCategoryId) {
       setNewBudgetError('Selecione uma categoria');
+      toast.error('Selecione uma categoria.');
       return;
     }
     const amt = parseFloat(newBudgetAmount);
     if (isNaN(amt) || amt < 0) {
       setNewBudgetError('Valor inválido');
+      toast.error('Valor inválido.');
       return;
     }
     try {
@@ -145,8 +153,10 @@ export function Budget() {
       setNewBudgetCategoryId('');
       setNewBudgetAmount('');
       setNewBudgetError(null);
+      toast.success('Orçamento salvo com sucesso!');
     } catch {
       setNewBudgetError('Erro ao salvar orçamento');
+      toast.error('Erro ao salvar orçamento.');
     }
   };
 

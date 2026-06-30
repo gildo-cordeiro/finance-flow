@@ -36,7 +36,8 @@ public class UpdateProfileUseCase {
             request.name(),
             request.timeZone(),
             request.currency(),
-            request.budgetClosingDay()
+            request.budgetClosingDay(),
+            request.dateFormat()
         );
 
         UserEntity updatedEntity = UserMapper.toEntity(updatedUser);
@@ -51,7 +52,8 @@ public class UpdateProfileUseCase {
             finalDomain.name(),
             finalDomain.timeZone(),
             finalDomain.currency(),
-            finalDomain.budgetClosingDay()
+            finalDomain.budgetClosingDay(),
+            finalDomain.dateFormat()
         );
     }
 }

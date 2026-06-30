@@ -3,7 +3,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { Dashboard } from '../features/dashboard/components/Dashboard';
 import { Login } from '../features/auth/components/Login';
 import { Register } from '../features/auth/components/Register';
-import { Profile } from '../features/auth/components/Profile';
+import { Settings } from '../features/auth/components/Settings';
 import { Accounts } from '../features/accounts/components/Accounts';
 import { Transactions } from '../features/transactions/components/Transactions';
 import { Budget } from '../features/budget/components/Budget';
@@ -33,11 +33,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/profile',
-        element: <Profile />,
+        element: <Navigate to="/settings" replace />,
       },
       {
         path: '/settings',
-        element: <Profile />,
+        element: <Settings />,
       },
       {
         path: '/accounts',

@@ -1,5 +1,6 @@
 import { request } from '../../../services/api';
-import type { RegisterPayload, LoginPayload, TokenResponse, UserProfile, UpdateProfilePayload } from '../types';
+import type { RegisterPayload, LoginPayload, TokenResponse, UserProfile, UpdateProfilePayload, ChangePasswordPayload } from '../types';
+
 
 export const authApi = {
   async register(payload: RegisterPayload): Promise<UserProfile> {
@@ -30,4 +31,18 @@ export const authApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  async changePassword(payload: ChangePasswordPayload): Promise<void> {
+    return request<void>('/users/me/password', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteAccount(): Promise<void> {
+    return request<void>('/users/me', {
+      method: 'DELETE',
+    });
+  },
 };
+

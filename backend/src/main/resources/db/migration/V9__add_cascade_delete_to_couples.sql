@@ -1,0 +1,5 @@
+ALTER TABLE couples DROP CONSTRAINT IF EXISTS couples_user1_id_fkey;
+ALTER TABLE couples DROP CONSTRAINT IF EXISTS couples_user2_id_fkey;
+
+ALTER TABLE couples ADD CONSTRAINT fk_couples_user1 FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE couples ADD CONSTRAINT fk_couples_user2 FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE;

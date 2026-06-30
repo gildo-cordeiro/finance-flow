@@ -32,7 +32,8 @@ public class GetUserProfileUseCase {
             user.name(),
             user.timeZone(),
             user.currency(),
-            user.budgetClosingDay()
+            user.budgetClosingDay(),
+            user.dateFormat()
         );
     }
 }

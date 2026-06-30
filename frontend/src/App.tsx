@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './features/auth/context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { ViewProvider } from './context/ViewContext';
 import { AppRoutes } from './routes/AppRoutes';
 
@@ -17,9 +18,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ViewProvider>
-          <AppRoutes />
-        </ViewProvider>
+        <ToastProvider>
+          <ViewProvider>
+            <AppRoutes />
+          </ViewProvider>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN date_format VARCHAR(20) NOT NULL DEFAULT 'dd/MM/yyyy';

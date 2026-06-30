@@ -3,6 +3,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
+import { useToast } from '../../../context/ToastContext';
 import { 
   Plus, Calendar, AlertTriangle, 
   Trash2, Edit3, X, Info, FolderPlus, 
@@ -69,6 +70,7 @@ type CategoryFormData = z.infer<typeof categorySchema>;
 export function Transactions() {
   const { user } = useAuth();
   const { accounts } = useAccounts();
+  const toast = useToast();
   const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
   const { viewContext } = useView();
   const { coupleStatus } = useCouple();
@@ -279,14 +281,17 @@ export function Transactions() {
           await updateTransaction(editingTransaction.id, payload, 'ONLY_THIS');
           setIsTransModalOpen(false);
           setEditingTransaction(null);
+          toast.success('Lançamento atualizado com sucesso!');
         }
       } else {
         await createTransaction(payload);
         setIsTransModalOpen(false);
+        toast.success('Lançamento adicionado com sucesso!');
       }
     } catch (err) {
       const error = err as Error;
       setTransFormError(error.message || 'Erro ao salvar transação.');
+      toast.error(error.message || 'Erro ao salvar transação.');
     }
   };
 
@@ -298,9 +303,11 @@ export function Transactions() {
       setIsTransModalOpen(false);
       setEditingTransaction(null);
       setPendingUpdatePayload(null);
+      toast.success('Lançamentos recorrentes atualizados!');
     } catch (err) {
       const error = err as Error;
       setTransFormError(error.message || 'Erro ao atualizar transações.');
+      toast.error(error.message || 'Erro ao atualizar transações.');
       setIsBulkUpdateModalOpen(false);
     }
   };
@@ -313,9 +320,10 @@ export function Transactions() {
       if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
         try {
           await deleteTransaction(t.id, 'ONLY_THIS');
+          toast.success('Lançamento excluído com sucesso!');
         } catch (err) {
           const error = err as Error;
-          alert(error.message || 'Erro ao excluir transação.');
+          toast.error(error.message || 'Erro ao excluir transação.');
         }
       }
     }
@@ -327,9 +335,10 @@ export function Transactions() {
       await deleteTransaction(pendingDeleteId, mode);
       setIsBulkDeleteModalOpen(false);
       setPendingDeleteId(null);
+      toast.success('Lançamentos recorrentes excluídos!');
     } catch (err) {
       const error = err as Error;
-      alert(error.message || 'Erro ao excluir transações.');
+      toast.error(error.message || 'Erro ao excluir transações.');
       setIsBulkDeleteModalOpen(false);
     }
   };
@@ -365,13 +374,16 @@ export function Transactions() {
 
       if (editingCategory) {
         await updateCategory(editingCategory.id, payload);
+        toast.success('Categoria atualizada!');
       } else {
         await createCategory(payload);
+        toast.success('Categoria criada!');
       }
       setIsCatModalOpen(false);
     } catch (err) {
       const error = err as Error;
       setCatFormError(error.message || 'Erro ao salvar categoria.');
+      toast.error(error.message || 'Erro ao salvar categoria.');
     }
   };
 
@@ -379,9 +391,10 @@ export function Transactions() {
     if (window.confirm('Tem certeza que deseja excluir esta categoria? As subcategorias e transações vinculadas serão afetadas.')) {
       try {
         await deleteCategory(id);
+        toast.success('Categoria excluída!');
       } catch (err) {
         const error = err as Error;
-        alert(error.message || 'Erro ao excluir categoria.');
+        toast.error(error.message || 'Erro ao excluir categoria.');
       }
     }
   };
