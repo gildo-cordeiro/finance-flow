@@ -2,16 +2,22 @@ package com.financeflow.auth.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import tools.jackson.databind.ObjectMapper;
+import com.financeflow.auth.dto.ChangePasswordRequest;
 import com.financeflow.auth.dto.UpdateProfileRequest;
 import com.financeflow.auth.dto.UserResponse;
+import com.financeflow.auth.service.ChangePasswordUseCase;
+import com.financeflow.auth.service.DeleteUserUseCase;
 import com.financeflow.auth.service.GetUserProfileUseCase;
 import com.financeflow.auth.service.UpdateProfileUseCase;
 import com.financeflow.auth.service.JwtService;
@@ -25,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
+
 
 @WebMvcTest(controllers = UserController.class, excludeAutoConfiguration = {
     org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration.class,
@@ -43,6 +50,12 @@ class UserControllerTest {
 
     @MockitoBean
     private UpdateProfileUseCase updateProfileUseCase;
+
+    @MockitoBean
+    private ChangePasswordUseCase changePasswordUseCase;
+
+    @MockitoBean
+    private DeleteUserUseCase deleteUserUseCase;
 
     @MockitoBean
     private JwtService jwtService; // Required because of JwtAuthenticationFilter dependency
@@ -89,4 +102,40 @@ class UserControllerTest {
             .andExpect(jsonPath("$.currency").value("USD"))
             .andExpect(jsonPath("$.budgetClosingDay").value(10));
     }
+
+    @Test
+    void shouldChangePasswordWhenUserIsAuthenticatedAndRequestIsValid() throws Exception {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPass123", "newPass123");
+
+        doNothing().when(changePasswordUseCase).execute(eq(userId), any(ChangePasswordRequest.class));
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+
+        mockMvc.perform(put("/api/v1/users/me/password")
+                .principal(auth)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNoContent());
+
+        verify(changePasswordUseCase).execute(eq(userId), any(ChangePasswordRequest.class));
+    }
+
+    @Test
+    void shouldDeleteProfileWhenUserIsAuthenticated() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        doNothing().when(deleteUserUseCase).execute(userId);
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+
+        mockMvc.perform(delete("/api/v1/users/me")
+                .principal(auth)
+                .with(csrf()))
+            .andExpect(status().isNoContent());
+
+        verify(deleteUserUseCase).execute(userId);
+    }
 }
+

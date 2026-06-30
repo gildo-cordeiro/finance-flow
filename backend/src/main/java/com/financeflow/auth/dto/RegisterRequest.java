@@ -28,5 +28,11 @@ public record RegisterRequest(
     @NotNull(message = "Budget closing day is required")
     @Min(value = 1, message = "Budget closing day must be at least 1")
     @Max(value = 31, message = "Budget closing day must be at most 31")
-    Integer budgetClosingDay
-) {}
+    Integer budgetClosingDay,
+
+    String dateFormat
+) {
+    public RegisterRequest(String email, String password, String name, String timeZone, String currency, Integer budgetClosingDay) {
+        this(email, password, name, timeZone, currency, budgetClosingDay, "dd/MM/yyyy");
+    }
+}

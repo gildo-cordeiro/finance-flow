@@ -59,7 +59,8 @@ export function Profile() {
         name,
         timeZone,
         currency,
-        budgetClosingDay: Number(budgetClosingDay)
+        budgetClosingDay: Number(budgetClosingDay),
+        dateFormat: user?.dateFormat || 'dd/MM/yyyy'
       });
       setSuccess('Configurações atualizadas com sucesso!');
       setTimeout(() => setSuccess(null), 3000);

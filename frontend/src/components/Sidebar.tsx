@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useView } from '../context/ViewContext';
 import { useCouple } from '../features/couple/hooks/useCouple';
 import { cn } from '../lib/cn';
+
 import {
   LayoutDashboard,
   TrendingUp,
@@ -27,6 +29,25 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { coupleStatus } = useCouple();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setAvatar(localStorage.getItem(`avatar_${user.id}`));
+    }
+
+    const handleAvatarChange = () => {
+      if (user) {
+        setAvatar(localStorage.getItem(`avatar_${user.id}`));
+      }
+    };
+
+    window.addEventListener('avatar-changed', handleAvatarChange);
+    return () => {
+      window.removeEventListener('avatar-changed', handleAvatarChange);
+    };
+  }, [user]);
 
   if (!user) return null;
 
@@ -161,9 +182,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* User Info & Logout */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-sm font-semibold text-brand shrink-0">
-                {user.name.charAt(0).toUpperCase()}
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-brand/20 border border-brand/30 flex items-center justify-center text-sm font-semibold text-brand shrink-0">
+                {avatar ? (
+                  <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
               </div>
+
               <div className="flex flex-col min-w-0 overflow-hidden">
                 <span className="text-sm font-medium text-text-primary truncate">{user.name}</span>
                 <span className="text-xs text-text-muted truncate">{user.email}</span>

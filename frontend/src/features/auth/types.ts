@@ -5,6 +5,7 @@ export interface UserProfile {
   timeZone: string;
   currency: string;
   budgetClosingDay: number;
+  dateFormat: string;
 }
 
 export interface RegisterPayload {
@@ -14,6 +15,7 @@ export interface RegisterPayload {
   timeZone: string;
   currency: string;
   budgetClosingDay: number;
+  dateFormat?: string;
 }
 
 export interface LoginPayload {
@@ -31,6 +33,7 @@ export interface UpdateProfilePayload {
   timeZone: string;
   currency: string;
   budgetClosingDay: number;
+  dateFormat: string;
 }
 
 export interface ApiError {
@@ -39,3 +42,9 @@ export interface ApiError {
   errors?: { field: string; message: string }[];
   status?: number;
 }
+
+export interface ChangePasswordPayload {
+  currentPassword?: string;
+  newPassword?: string;
+}
+

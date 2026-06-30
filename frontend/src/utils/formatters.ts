@@ -3,7 +3,8 @@ import { ptBR } from 'date-fns/locale';
 
 export const formatDate = (iso: string) => {
   if (!iso) return '';
-  return format(parseISO(iso), 'dd/MM/yyyy', { locale: ptBR });
+  const formatPattern = localStorage.getItem('user_date_format') || 'dd/MM/yyyy';
+  return format(parseISO(iso), formatPattern, { locale: ptBR });
 };
 
 export const formatMonth = (iso: string) => {
@@ -17,7 +18,8 @@ export const formatMonthShort = (iso: string) => {
 };
 
 export const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  const currency = localStorage.getItem('user_currency') || 'BRL';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value);
 };
 
 export const currentCompetenceMonth = () => {

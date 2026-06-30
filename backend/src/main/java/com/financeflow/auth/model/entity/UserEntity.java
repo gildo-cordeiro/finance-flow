@@ -32,6 +32,9 @@ public class UserEntity {
     @Column(name = "budget_closing_day", nullable = false)
     private int budgetClosingDay;
 
+    @Column(name = "date_format", nullable = false)
+    private String dateFormat;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -42,7 +45,7 @@ public class UserEntity {
         // JPA requirement
     }
 
-    public UserEntity(UUID id, String email, String password, String name, String timeZone, String currency, int budgetClosingDay, Instant createdAt, Instant updatedAt) {
+    public UserEntity(UUID id, String email, String password, String name, String timeZone, String currency, int budgetClosingDay, String dateFormat, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -50,8 +53,13 @@ public class UserEntity {
         this.timeZone = timeZone;
         this.currency = currency;
         this.budgetClosingDay = budgetClosingDay;
+        this.dateFormat = dateFormat;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public UserEntity(UUID id, String email, String password, String name, String timeZone, String currency, int budgetClosingDay, Instant createdAt, Instant updatedAt) {
+        this(id, email, password, name, timeZone, currency, budgetClosingDay, "dd/MM/yyyy", createdAt, updatedAt);
     }
 
     public UUID getId() {
@@ -108,6 +116,14 @@ public class UserEntity {
 
     public void setBudgetClosingDay(int budgetClosingDay) {
         this.budgetClosingDay = budgetClosingDay;
+    }
+
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
     }
 
     public Instant getCreatedAt() {

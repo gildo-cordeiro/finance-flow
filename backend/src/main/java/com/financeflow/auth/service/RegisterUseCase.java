@@ -45,6 +45,7 @@ public class RegisterUseCase {
             request.timeZone(),
             request.currency(),
             request.budgetClosingDay(),
+            request.dateFormat() != null ? request.dateFormat() : "dd/MM/yyyy",
             null,
             null
         );
@@ -61,7 +62,8 @@ public class RegisterUseCase {
             savedDomain.name(),
             savedDomain.timeZone(),
             savedDomain.currency(),
-            savedDomain.budgetClosingDay()
+            savedDomain.budgetClosingDay(),
+            savedDomain.dateFormat()
         );
     }
 }

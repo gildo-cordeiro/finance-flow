@@ -64,6 +64,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('auth-expired', handleAuthExpired);
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user_currency', user.currency);
+      localStorage.setItem('user_timezone', user.timeZone);
+      localStorage.setItem('user_date_format', user.dateFormat || 'dd/MM/yyyy');
+    } else {
+      localStorage.removeItem('user_currency');
+      localStorage.removeItem('user_timezone');
+      localStorage.removeItem('user_date_format');
+    }
+  }, [user]);
+
   const login = async (payload: LoginPayload) => {
     await loginMutation.mutateAsync(payload);
   };

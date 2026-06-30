@@ -18,5 +18,12 @@ public record UpdateProfileRequest(
     @NotNull(message = "Budget closing day is required")
     @Min(value = 1, message = "Budget closing day must be at least 1")
     @Max(value = 31, message = "Budget closing day must be at most 31")
-    Integer budgetClosingDay
-) {}
+    Integer budgetClosingDay,
+
+    @NotBlank(message = "Date format is required")
+    String dateFormat
+) {
+    public UpdateProfileRequest(String name, String timeZone, String currency, Integer budgetClosingDay) {
+        this(name, timeZone, currency, budgetClosingDay, "dd/MM/yyyy");
+    }
+}

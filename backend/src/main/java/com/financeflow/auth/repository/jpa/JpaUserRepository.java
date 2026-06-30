@@ -29,4 +29,9 @@ public class JpaUserRepository implements UserRepository {
     public UserEntity save(UserEntity user) {
         return springRepo.save(user);
     }
+
+    @Override
+    public void delete(UserEntity user) {
+        springRepo.delete(user);
+    }
 }
