@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Dashboard } from '../features/dashboard/components/Dashboard';
 import { Login } from '../features/auth/components/Login';
@@ -52,8 +52,12 @@ const router = createBrowserRouter([
         element: <Budget />,
       },
       {
-        path: '/cashflow',
+        path: '/cash-flow',
         element: <CashFlow />,
+      },
+      {
+        path: '/cashflow',
+        element: <Navigate to="/cash-flow" replace />,
       },
     ],
   },
