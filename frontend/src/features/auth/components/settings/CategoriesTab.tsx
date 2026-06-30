@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCategories } from '../../../transactions/hooks/useCategories';
 import { useToast } from '../../../../context/ToastContext';
+import type { Category } from '../../../transactions/types';
 import {
   Tag,
   FolderPlus,
@@ -61,7 +62,7 @@ export function CategoriesTab() {
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [catModalMode, setCatModalMode] = useState<'create' | 'edit'>('create');
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Form States
   const [categoryName, setCategoryName] = useState('');
@@ -75,7 +76,9 @@ export function CategoriesTab() {
     if (stored) {
       try {
         return JSON.parse(stored);
-      } catch (e) {}
+      } catch {
+        localStorage.removeItem(`cat_meta_${catId}`);
+      }
     }
 
     const nameLower = catName.toLowerCase();
@@ -128,7 +131,7 @@ export function CategoriesTab() {
     setIsCatModalOpen(true);
   };
 
-  const handleOpenEditCat = (cat: any) => {
+  const handleOpenEditCat = (cat: Category) => {
     setCatModalMode('edit');
     setEditingCategory(cat);
     setCategoryName(cat.name);
@@ -166,9 +169,10 @@ export function CategoriesTab() {
         );
         toast.success('Categoria criada com sucesso!');
       } else {
+        if (!editingCategory) return;
         const payload = {
           name: categoryName.trim(),
-          parentId: editingCategory.parentId
+          parentId: editingCategory.parentId || null
         };
         const updatedCat = await updateCategory(editingCategory.id, payload);
         
@@ -180,9 +184,10 @@ export function CategoriesTab() {
       }
 
       setIsCatModalOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar categoria.');
-      setCategoryError(err.message || 'Erro ao salvar categoria.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Erro ao salvar categoria.');
+      setCategoryError(error.message || 'Erro ao salvar categoria.');
     } finally {
       setIsSavingCategory(false);
     }
@@ -196,8 +201,9 @@ export function CategoriesTab() {
       await deleteCategory(id);
       localStorage.removeItem(`cat_meta_${id}`);
       toast.success('Categoria excluída com sucesso!');
-    } catch (err: any) {
-      toast.error(err.message || 'Falha ao excluir categoria.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Falha ao excluir categoria.');
     }
   };
 

@@ -142,9 +142,10 @@ export function ProfileTab() {
       toast.success('Configurações atualizadas com sucesso!');
       setProfileSuccess('Configurações atualizadas com sucesso!');
       setTimeout(() => setProfileSuccess(null), 3000);
-    } catch (err: any) {
-      toast.error(err.message || 'Falha ao atualizar configurações.');
-      setProfileError(err.message || 'Falha ao atualizar configurações.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Falha ao atualizar configurações.');
+      setProfileError(error.message || 'Falha ao atualizar configurações.');
     } finally {
       setIsSavingProfile(false);
     }
@@ -180,9 +181,10 @@ export function ProfileTab() {
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setPasswordSuccess(null), 4000);
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao alterar a senha. Verifique sua senha atual.');
-      setPasswordError(err.message || 'Erro ao alterar a senha. Verifique sua senha atual.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Erro ao alterar a senha. Verifique sua senha atual.');
+      setPasswordError(error.message || 'Erro ao alterar a senha. Verifique sua senha atual.');
     } finally {
       setIsChangingPassword(false);
     }

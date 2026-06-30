@@ -67,8 +67,9 @@ export function DangerZoneTab() {
       }
       logout();
       navigate('/login');
-    } catch (err: any) {
-      setDangerZoneError(err.message || 'Ocorreu um erro ao excluir sua conta. Tente novamente.');
+    } catch (err) {
+      const error = err as Error;
+      setDangerZoneError(error.message || 'Ocorreu um erro ao excluir sua conta. Tente novamente.');
       setIsDeletingAccount(false);
     }
   };

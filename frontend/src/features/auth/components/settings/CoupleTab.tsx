@@ -41,8 +41,9 @@ export function CoupleTab() {
       setCoupleSuccessMsg('Convite enviado com sucesso! Aguardando o parceiro aceitar.');
       setPartnerEmail('');
       setTimeout(() => setCoupleSuccessMsg(null), 5000);
-    } catch (err: any) {
-      setCoupleErrorMsg(err.message || 'Ocorreu um erro ao enviar o convite. Verifique o e-mail digitado.');
+    } catch (err) {
+      const error = err as Error;
+      setCoupleErrorMsg(error.message || 'Ocorreu um erro ao enviar o convite. Verifique o e-mail digitado.');
     }
   };
 
@@ -54,8 +55,9 @@ export function CoupleTab() {
       await declineInvite();
       setCoupleSuccessMsg('Convite cancelado com sucesso.');
       setTimeout(() => setCoupleSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setCoupleErrorMsg(err.message || 'Falha ao cancelar o convite.');
+    } catch (err) {
+      const error = err as Error;
+      setCoupleErrorMsg(error.message || 'Falha ao cancelar o convite.');
     }
   };
 
@@ -68,8 +70,9 @@ export function CoupleTab() {
       await dissolveCouple();
       setCoupleSuccessMsg('Vínculo de casal desfeito com sucesso.');
       setTimeout(() => setCoupleSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setCoupleErrorMsg(err.message || 'Falha ao desvincular.');
+    } catch (err) {
+      const error = err as Error;
+      setCoupleErrorMsg(error.message || 'Falha ao desvincular.');
     }
   };
 

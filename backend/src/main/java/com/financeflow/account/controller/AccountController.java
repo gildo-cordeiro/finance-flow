@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
@@ -34,7 +35,7 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<List<AccountResponse>> listAccounts(
         Authentication authentication,
-        @org.springframework.web.bind.annotation.RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext
+        @RequestHeader(value = "X-View-Context", required = false, defaultValue = "PERSONAL") String viewContext
     ) {
         UUID userId = (UUID) authentication.getPrincipal();
         List<AccountResponse> response = listAccountsUseCase.execute(userId, viewContext);
