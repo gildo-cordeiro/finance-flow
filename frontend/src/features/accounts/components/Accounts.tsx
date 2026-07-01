@@ -182,7 +182,7 @@ function ConfirmModal({ open, title, description, confirmLabel, onConfirm, onCan
 interface CreateBankModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (payload: AccountPayload) => Promise<void>;
+  onCreate: (payload: AccountPayload) => Promise<any>;
   isCreating: boolean;
   currency: string;
 }
@@ -262,7 +262,7 @@ function CreateBankModal({ open, onClose, onCreate, isCreating, currency }: Crea
 interface CreateCardModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (payload: AccountPayload) => Promise<void>;
+  onCreate: (payload: AccountPayload) => Promise<any>;
   isCreating: boolean;
   currency: string;
   bankAccounts: Account[];
