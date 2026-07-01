@@ -1,4 +1,5 @@
 export type AccountType = 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD';
+export type AccountStatus = 'ACTIVE' | 'ARCHIVED' | 'CLOSED';
 
 export interface Account {
   id: string;
@@ -11,6 +12,7 @@ export interface Account {
   closingDay?: number | null;
   dueDay?: number | null;
   associatedAccountId?: string | null;
+  status: AccountStatus;
 }
 
 export interface AccountPayload {
@@ -22,4 +24,13 @@ export interface AccountPayload {
   closingDay?: number | null;
   dueDay?: number | null;
   associatedAccountId?: string | null;
+}
+
+export interface UpdateAccountPayload {
+  name: string;
+  bank: string;
+  balance?: number | null;
+  creditLimit?: number | null;
+  closingDay?: number | null;
+  dueDay?: number | null;
 }
