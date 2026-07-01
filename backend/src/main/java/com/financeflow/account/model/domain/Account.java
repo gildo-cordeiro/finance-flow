@@ -16,6 +16,7 @@ public record Account(
     Integer closingDay,
     Integer dueDay,
     UUID associatedAccountId,
+    AccountStatus status,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -32,6 +33,7 @@ public record Account(
             throw new IllegalArgumentException("Bank cannot be blank");
         }
         Objects.requireNonNull(balance, "Balance cannot be null");
+        Objects.requireNonNull(status, "Status cannot be null");
 
         if (type == AccountType.CREDIT_CARD) {
             Objects.requireNonNull(creditLimit, "Credit limit is required for credit cards");

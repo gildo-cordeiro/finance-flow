@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.financeflow.account.dto.AccountRequest;
 import com.financeflow.account.dto.AccountResponse;
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
@@ -44,6 +45,7 @@ class CreateAccountUseCaseTest {
         assertThat(response.type()).isEqualTo(AccountType.CHECKING);
         assertThat(response.balance()).isEqualTo(new BigDecimal("100.50"));
         assertThat(response.creditLimit()).isNull();
+        assertThat(response.status()).isEqualTo(AccountStatus.ACTIVE);
     }
 
     @Test
@@ -63,6 +65,7 @@ class CreateAccountUseCaseTest {
         assertThat(response.creditLimit()).isEqualTo(new BigDecimal("5000.00"));
         assertThat(response.closingDay()).isEqualTo(10);
         assertThat(response.dueDay()).isEqualTo(20);
+        assertThat(response.status()).isEqualTo(AccountStatus.ACTIVE);
     }
 
     @Test
@@ -96,7 +99,7 @@ class CreateAccountUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             associatedAccountId, userId, "Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, null, null
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, null, null
         );
 
         when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(checkingAccount));
@@ -121,7 +124,7 @@ class CreateAccountUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             associatedAccountId, otherUserId, "Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, null, null
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, null, null
         );
 
         when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(checkingAccount));
@@ -143,7 +146,7 @@ class CreateAccountUseCaseTest {
 
         AccountEntity otherCard = new AccountEntity(
             associatedAccountId, userId, "Other Card", AccountType.CREDIT_CARD, "Bank A",
-            new BigDecimal("0.00"), new BigDecimal("1000.00"), 10, 20, null, null, null
+            new BigDecimal("0.00"), new BigDecimal("1000.00"), 10, 20, null, AccountStatus.ACTIVE, null, null
         );
 
         when(accountRepository.findById(associatedAccountId)).thenReturn(java.util.Optional.of(otherCard));

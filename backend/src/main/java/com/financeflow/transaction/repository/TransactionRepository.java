@@ -1,5 +1,6 @@
 package com.financeflow.transaction.repository;
 
+import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.entity.TransactionEntity;
 import java.time.LocalDate;
 import java.util.List;
@@ -39,4 +40,6 @@ public interface TransactionRepository {
     List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId);
     List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId);
     void deleteAll(List<TransactionEntity> transactions);
+    boolean existsByAccountId(UUID accountId);
+    boolean existsByAccountIdAndStatusIn(UUID accountId, List<TransactionStatus> statuses);
 }

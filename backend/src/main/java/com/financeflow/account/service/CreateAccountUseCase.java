@@ -3,6 +3,7 @@ package com.financeflow.account.service;
 import com.financeflow.account.dto.AccountRequest;
 import com.financeflow.account.dto.AccountResponse;
 import com.financeflow.account.model.domain.Account;
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.model.mapper.AccountMapper;
 import com.financeflow.account.repository.AccountRepository;
@@ -49,6 +50,7 @@ public class CreateAccountUseCase {
             request.closingDay(),
             request.dueDay(),
             request.associatedAccountId(),
+            AccountStatus.ACTIVE,
             null,
             null
         );
@@ -69,7 +71,8 @@ public class CreateAccountUseCase {
             savedDomain.creditLimit(),
             savedDomain.closingDay(),
             savedDomain.dueDay(),
-            savedDomain.associatedAccountId()
+            savedDomain.associatedAccountId(),
+            savedDomain.status()
         );
     }
 }

@@ -2,6 +2,7 @@ package com.financeflow.account.service;
 
 import com.financeflow.account.dto.AccountResponse;
 import com.financeflow.account.model.mapper.AccountMapper;
+import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
 import com.financeflow.couple.model.domain.Couple;
 import com.financeflow.couple.repository.CoupleRepository;
@@ -28,13 +29,13 @@ public class ListAccountsUseCase {
     }
 
     public List<AccountResponse> execute(UUID userId, String viewContext) {
-        List<com.financeflow.account.model.entity.AccountEntity> accounts;
+        List<AccountEntity> accounts;
         if ("COUPLE".equalsIgnoreCase(viewContext)) {
             Couple couple = coupleRepository.findActiveByUserId(userId).orElse(null);
             if (couple != null) {
                 UUID partnerId = couple.user1Id().equals(userId) ? couple.user2Id() : couple.user1Id();
-                List<com.financeflow.account.model.entity.AccountEntity> ownAccounts = accountRepository.findAllByUserId(userId);
-                List<com.financeflow.account.model.entity.AccountEntity> partnerAccounts = accountRepository.findAllByUserId(partnerId);
+                List<AccountEntity> ownAccounts = accountRepository.findAllByUserId(userId);
+                List<AccountEntity> partnerAccounts = accountRepository.findAllByUserId(partnerId);
                 accounts = new ArrayList<>();
                 accounts.addAll(ownAccounts);
                 accounts.addAll(partnerAccounts);
@@ -57,7 +58,8 @@ public class ListAccountsUseCase {
                 domain.creditLimit(),
                 domain.closingDay(),
                 domain.dueDay(),
-                domain.associatedAccountId()
+                domain.associatedAccountId(),
+                domain.status()
             ))
             .toList();
     }

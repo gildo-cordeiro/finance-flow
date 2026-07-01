@@ -1,6 +1,7 @@
 package com.financeflow.transaction.repository.jpa;
 
 import com.financeflow.transaction.model.entity.TransactionEntity;
+import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.repository.TransactionRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -87,5 +88,15 @@ public class JpaTransactionRepository implements TransactionRepository {
     @Override
     public void deleteAll(List<TransactionEntity> transactions) {
         springRepo.deleteAll(transactions);
+    }
+
+    @Override
+    public boolean existsByAccountId(UUID accountId) {
+        return springRepo.existsByAccountId(accountId);
+    }
+
+    @Override
+    public boolean existsByAccountIdAndStatusIn(UUID accountId, List<TransactionStatus> statuses) {
+        return springRepo.existsByAccountIdAndStatusIn(accountId, statuses);
     }
 }
