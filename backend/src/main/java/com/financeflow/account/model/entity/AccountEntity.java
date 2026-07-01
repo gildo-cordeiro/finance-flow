@@ -1,5 +1,6 @@
 package com.financeflow.account.model.entity;
 
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,6 +47,10 @@ public class AccountEntity {
     @Column(name = "associated_account_id")
     private UUID associatedAccountId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -56,7 +61,9 @@ public class AccountEntity {
         // JPA requirement
     }
 
-    public AccountEntity(UUID id, UUID userId, String name, AccountType type, String bank, BigDecimal balance, BigDecimal creditLimit, Integer closingDay, Integer dueDay, UUID associatedAccountId, Instant createdAt, Instant updatedAt) {
+    public AccountEntity(UUID id, UUID userId, String name, AccountType type, String bank, BigDecimal balance,
+                         BigDecimal creditLimit, Integer closingDay, Integer dueDay, UUID associatedAccountId,
+                         AccountStatus status, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.userId = userId;
         this.name = name;
@@ -67,6 +74,7 @@ public class AccountEntity {
         this.closingDay = closingDay;
         this.dueDay = dueDay;
         this.associatedAccountId = associatedAccountId;
+        this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -165,5 +173,13 @@ public class AccountEntity {
 
     public void setAssociatedAccountId(UUID associatedAccountId) {
         this.associatedAccountId = associatedAccountId;
+    }
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
     }
 }

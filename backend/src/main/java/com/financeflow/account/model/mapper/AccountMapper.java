@@ -1,6 +1,7 @@
 package com.financeflow.account.model.mapper;
 
 import com.financeflow.account.model.domain.Account;
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.entity.AccountEntity;
 
 public final class AccountMapper {
@@ -24,6 +25,7 @@ public final class AccountMapper {
             entity.getClosingDay(),
             entity.getDueDay(),
             entity.getAssociatedAccountId(),
+            entity.getStatus() != null ? entity.getStatus() : AccountStatus.ACTIVE,
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
@@ -44,6 +46,7 @@ public final class AccountMapper {
             domain.closingDay(),
             domain.dueDay(),
             domain.associatedAccountId(),
+            domain.status(),
             domain.createdAt(),
             domain.updatedAt()
         );

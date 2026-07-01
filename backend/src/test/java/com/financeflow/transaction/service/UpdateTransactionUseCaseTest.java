@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
@@ -55,7 +56,7 @@ class UpdateTransactionUseCaseTest {
 
         AccountEntity account = new AccountEntity(
             accountId, userId, "Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -100,7 +101,7 @@ class UpdateTransactionUseCaseTest {
 
         AccountEntity account = new AccountEntity(
             accountId, userId, "Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(

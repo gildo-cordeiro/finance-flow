@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
@@ -50,7 +51,7 @@ class GetCashFlowUseCaseTest {
         // Account with current balance = 100.00
         AccountEntity account = new AccountEntity(
             accountId1, userId, "Checking", AccountType.CHECKING, "Bank X",
-            new BigDecimal("100.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("100.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         // Transactions:

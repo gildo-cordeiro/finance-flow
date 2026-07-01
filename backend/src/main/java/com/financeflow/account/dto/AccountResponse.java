@@ -1,5 +1,6 @@
 package com.financeflow.account.dto;
 
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,5 +15,6 @@ public record AccountResponse(
     BigDecimal creditLimit,
     Integer closingDay,
     Integer dueDay,
-    UUID associatedAccountId
+    UUID associatedAccountId,
+    AccountStatus status
 ) {}

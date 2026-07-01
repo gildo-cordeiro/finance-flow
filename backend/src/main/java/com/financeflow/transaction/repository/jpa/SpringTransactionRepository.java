@@ -1,5 +1,6 @@
 package com.financeflow.transaction.repository.jpa;
 
+import com.financeflow.transaction.model.domain.TransactionStatus;
 import com.financeflow.transaction.model.entity.TransactionEntity;
 import java.time.LocalDate;
 import java.util.List;
@@ -63,4 +64,11 @@ public interface SpringTransactionRepository extends JpaRepository<TransactionEn
 
     List<TransactionEntity> findByInstallmentGroupId(UUID installmentGroupId);
     List<TransactionEntity> findByRecurrenceGroupId(UUID recurrenceGroupId);
+
+    @Query("SELECT COUNT(t) > 0 FROM TransactionEntity t WHERE t.accountId = :accountId")
+    boolean existsByAccountId(@Param("accountId") UUID accountId);
+
+    @Query("SELECT COUNT(t) > 0 FROM TransactionEntity t WHERE t.accountId = :accountId AND t.status IN :statuses")
+    boolean existsByAccountIdAndStatusIn(@Param("accountId") UUID accountId,
+                                        @Param("statuses") List<TransactionStatus> statuses);
 }

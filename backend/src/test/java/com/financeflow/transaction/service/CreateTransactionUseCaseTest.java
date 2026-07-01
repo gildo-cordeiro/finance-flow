@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.financeflow.account.model.domain.AccountStatus;
 import com.financeflow.account.model.domain.AccountType;
 import com.financeflow.account.model.entity.AccountEntity;
 import com.financeflow.account.repository.AccountRepository;
@@ -55,7 +56,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -90,7 +91,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -123,7 +124,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity cardAccount = new AccountEntity(
             accountId, userId, "My Card", AccountType.CREDIT_CARD, "Bank A",
-            new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20, null, Instant.now(), Instant.now()
+            new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -154,7 +155,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity cardAccount = new AccountEntity(
             accountId, userId, "My Card", AccountType.CREDIT_CARD, "Bank A",
-            new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20, null, Instant.now(), Instant.now()
+            new BigDecimal("0.00"), new BigDecimal("5000.00"), 10, 20, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -185,7 +186,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity cardAccount = new AccountEntity(
             accountId, userId, "My Card", AccountType.CREDIT_CARD, "Bank A",
-            new BigDecimal("0.00"), new BigDecimal("5000.00"), 28, 5, null, Instant.now(), Instant.now()
+            new BigDecimal("0.00"), new BigDecimal("5000.00"), 28, 5, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -219,7 +220,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity account = new AccountEntity(
             accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -249,7 +250,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity account = new AccountEntity(
             accountId, otherUserId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -273,7 +274,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
@@ -309,7 +310,7 @@ class CreateTransactionUseCaseTest {
 
         AccountEntity checkingAccount = new AccountEntity(
             accountId, userId, "My Checking", AccountType.CHECKING, "Bank A",
-            new BigDecimal("1000.00"), null, null, null, null, Instant.now(), Instant.now()
+            new BigDecimal("1000.00"), null, null, null, null, AccountStatus.ACTIVE, Instant.now(), Instant.now()
         );
 
         CategoryEntity category = new CategoryEntity(
