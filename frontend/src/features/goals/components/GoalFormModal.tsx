@@ -100,8 +100,9 @@ export function GoalFormModal({ isOpen, onClose, editingGoal }: GoalFormModalPro
         toast.success('Objetivo financeiro criado com sucesso!');
       }
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || 'Ocorreu um erro ao salvar o objetivo.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Ocorreu um erro ao salvar o objetivo.');
     }
   };
 

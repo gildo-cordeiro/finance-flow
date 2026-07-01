@@ -22,7 +22,7 @@ export function Goals() {
 
   const [filterStatus, setFilterStatus] = useState<'ACTIVE' | 'COMPLETED' | 'ARCHIVED'>(() => {
     const saved = sessionStorage.getItem('goals_filter_status');
-    return (saved as any) || 'ACTIVE';
+    return (saved as 'ACTIVE' | 'COMPLETED' | 'ARCHIVED') || 'ACTIVE';
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -44,8 +44,9 @@ export function Goals() {
       try {
         await deleteGoal.mutateAsync(id);
         toast.success('Objetivo arquivado com sucesso!');
-      } catch (err: any) {
-        toast.error(err.message || 'Erro ao arquivar objetivo.');
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || 'Erro ao arquivar objetivo.');
       }
     }
   };
@@ -56,8 +57,9 @@ export function Goals() {
       try {
         await unarchiveGoal.mutateAsync(id);
         toast.success('Objetivo desarquivado com sucesso!');
-      } catch (err: any) {
-        toast.error(err.message || 'Erro ao desarquivar objetivo.');
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || 'Erro ao desarquivar objetivo.');
       }
     }
   };

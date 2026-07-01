@@ -65,8 +65,9 @@ export function AddContributionModal({ isOpen, onClose, goalId }: AddContributio
       await addContribution.mutateAsync(data);
       toast.success('Contribuição registrada com sucesso!');
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao registrar contribuição.');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Erro ao registrar contribuição.');
     }
   };
 

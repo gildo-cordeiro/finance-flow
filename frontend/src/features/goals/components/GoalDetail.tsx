@@ -39,8 +39,9 @@ export function GoalDetail() {
         await deleteGoal.mutateAsync(id);
         toast.success('Objetivo arquivado com sucesso!');
         navigate('/goals');
-      } catch (err: any) {
-        toast.error(err.message || 'Erro ao arquivar objetivo.');
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || 'Erro ao arquivar objetivo.');
       }
     }
   };
@@ -51,8 +52,9 @@ export function GoalDetail() {
       try {
         await unarchiveGoal.mutateAsync(id);
         toast.success('Objetivo desarquivado com sucesso!');
-      } catch (err: any) {
-        toast.error(err.message || 'Erro ao desarquivar objetivo.');
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || 'Erro ao desarquivar objetivo.');
       }
     }
   };
@@ -62,8 +64,9 @@ export function GoalDetail() {
       try {
         await deleteContribution.mutateAsync(contributionId);
         toast.success('Contribuição excluída com sucesso!');
-      } catch (err: any) {
-        toast.error(err.message || 'Erro ao excluir contribuição.');
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || 'Erro ao excluir contribuição.');
       }
     }
   };
@@ -299,7 +302,7 @@ export function GoalDetail() {
                     fontSize: '12px',
                     color: '#F1F5F9',
                   }}
-                  formatter={(value: any) => [formatCurrency(value as number), 'Saldo Acumulado']}
+                  formatter={(value) => [formatCurrency(Number(value)), 'Saldo Acumulado']}
                 />
                 <Area
                   type="monotone"

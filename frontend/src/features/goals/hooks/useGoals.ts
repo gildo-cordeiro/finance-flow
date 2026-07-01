@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { goalsApi } from '../api/goalsApi';
-import { CreateGoalRequest, UpdateGoalRequest, GoalContributionRequest } from '../types';
+import { CreateGoalRequest, UpdateGoalRequest, GoalContributionRequest, Goal, GoalContribution } from '../types';
 import type { ApiError } from '../../auth/types';
 import { useView } from '../../../context/ViewContext';
 
@@ -24,7 +24,7 @@ export function useGoal(id: string) {
 export function useCreateGoal() {
   const queryClient = useQueryClient();
 
-  return useMutation<any, ApiError, CreateGoalRequest>({
+  return useMutation<Goal, ApiError, CreateGoalRequest>({
     mutationFn: goalsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -37,7 +37,7 @@ export function useCreateGoal() {
 export function useUpdateGoal(id: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<any, ApiError, UpdateGoalRequest>({
+  return useMutation<Goal, ApiError, UpdateGoalRequest>({
     mutationFn: (data) => goalsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -61,7 +61,7 @@ export function useDeleteGoal() {
 export function useAddContribution(goalId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<any, ApiError, GoalContributionRequest>({
+  return useMutation<GoalContribution, ApiError, GoalContributionRequest>({
     mutationFn: (data) => goalsApi.addContribution(goalId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
