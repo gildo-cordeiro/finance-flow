@@ -15,7 +15,8 @@ import {
   LogOut,
   User,
   Heart,
-  X
+  X,
+  Target
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -57,6 +58,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Transações', path: '/transactions', icon: DollarSign },
     { label: 'Fluxo de Caixa', path: '/cash-flow', icon: LineChart },
     { label: 'Contas', path: '/accounts', icon: Wallet },
+    { label: 'Objetivos', path: '/goals', icon: Target },
   ];
 
   const handleNavigation = (path: string) => {

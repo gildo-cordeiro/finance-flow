@@ -8,6 +8,8 @@ import { Accounts } from '../features/accounts/components/Accounts';
 import { Transactions } from '../features/transactions/components/Transactions';
 import { Budget } from '../features/budget/components/Budget';
 import { CashFlow } from '../features/cashflow/components/CashFlow';
+import { Goals } from '../features/goals/components/Goals';
+import { GoalDetail } from '../features/goals/components/GoalDetail';
 
 import { AcceptInvite } from '../features/couple/components/AcceptInvite';
 
@@ -58,6 +60,14 @@ const router = createBrowserRouter([
       {
         path: '/cashflow',
         element: <Navigate to="/cash-flow" replace />,
+      },
+      {
+        path: '/goals',
+        element: <Goals />,
+      },
+      {
+        path: '/goals/:id',
+        element: <GoalDetail />,
       },
     ],
   },
