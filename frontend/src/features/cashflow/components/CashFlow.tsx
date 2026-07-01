@@ -62,10 +62,7 @@ export function CashFlow() {
   const { projection, isLoading: isCashFlowLoading, error: cashFlowError } = useCashFlow(fromDate, toDate);
 
   // Fetch transactions for the selected month to show in tooltip
-  const { transactions, isLoading: isTxLoading } = useTransactions({
-    startDate: fromDate,
-    endDate: toDate,
-  });
+  const { transactions, isLoading: isTxLoading } = useTransactions(selectedMonth);
 
   const isLoading = isCashFlowLoading || isTxLoading;
 

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
-import { useTransactions } from '../hooks/useTransactions';
+import { useTransactions, useTransactionSummary } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useToast } from '../../../context/ToastContext';
 import {
   Plus, Calendar, AlertTriangle,
   Trash2, Edit3, X, Info,
-  DollarSign, RefreshCw, Layers, ChevronDown
+  DollarSign, RefreshCw, Layers, ChevronDown,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import type { TransactionStatus, Transaction, TransactionPayload } from '../types';
 import { useForm } from 'react-hook-form';
@@ -23,7 +25,7 @@ import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, previousMonth } from '../../../utils/formatters';
 
 const transactionSchema = z.object({
   type: z.enum(['EXPENSE', 'INCOME']),
@@ -72,27 +74,28 @@ export function Transactions() {
 
 
 
-  // Filters State
-  const [filterMonth, setFilterMonth] = useState('');
+  // Filters State and URL Month
+  const [searchParams, setSearchParams] = useSearchParams();
+  const monthParam = searchParams.get('month');
+  
+  // Default to current competence month
+  const currentCompetenceMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const searchMonth = monthParam || currentCompetenceMonth();
+
   const [filterAccountId, setFilterAccountId] = useState('');
   const [filterCategoryId, setFilterCategoryId] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'PAID' | 'PLANNED' | 'PENDING' | 'OVERDUE'>('ALL');
   const [filterMember, setFilterMember] = useState<'ALL' | 'OWN' | 'PARTNER'>('ALL');
 
-  // Month collapse and pagination states
+  // Month collapse, pagination and row expansion states
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const [monthLimits, setMonthLimits] = useState<Record<string, number>>({});
+  const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
 
-  const getLastDayOfMonthStr = (monthStr: string) => {
-    if (!monthStr) return '';
-    const [year, month] = monthStr.split('-');
-    const date = new Date(Number(year), Number(month), 0);
-    return `${year}-${month}-${String(date.getDate()).padStart(2, '0')}`;
-  };
-
-  const derivedStartDate = filterMonth ? `${filterMonth}-01` : undefined;
-  const derivedEndDate = filterMonth ? getLastDayOfMonthStr(filterMonth) : undefined;
-
+  // Hook for transactions
   const {
     transactions,
     isLoading: isTransLoading,
@@ -101,12 +104,31 @@ export function Transactions() {
     isCreating: isTransCreating,
     updateTransaction,
     deleteTransaction,
-  } = useTransactions({
-    startDate: derivedStartDate,
-    endDate: derivedEndDate,
+  } = useTransactions(searchMonth, {
     accountId: filterAccountId || undefined,
     categoryId: filterCategoryId || undefined
   });
+
+  // Hook for summary
+  const {
+    summary: monthSummary,
+    isLoading: isSummaryLoading,
+  } = useTransactionSummary(searchMonth, {
+    accountId: filterAccountId || undefined,
+    categoryId: filterCategoryId || undefined
+  });
+
+  // Collapse expanded row on outside click
+  React.useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.transactions-table-container')) {
+        setExpandedTransactionId(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   // Modal State for Transaction
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
@@ -354,16 +376,28 @@ export function Transactions() {
     return name.charAt(0).toUpperCase() + name.slice(1);
   };
 
+  // Month navigation helpers
+  const handlePrevMonth = () => {
+    if (searchMonth === 'ALL') return;
+    const prev = previousMonth(searchMonth);
+    setSearchParams({ month: prev });
+  };
+
+  const handleNextMonth = () => {
+    if (searchMonth === 'ALL') return;
+    const [year, month] = searchMonth.split('-').map(Number);
+    const date = new Date(year, month, 1); // June is index 5, month index 6 is July
+    const next = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    setSearchParams({ month: next });
+  };
+
+  const handleMonthChange = (val: string) => {
+    setSearchParams({ month: val });
+  };
+
   // Generate active filter chips
   const activeChips = React.useMemo(() => {
     const chips = [];
-    if (filterMonth) {
-      chips.push({
-        id: 'month',
-        label: `Mês: ${getMonthName(filterMonth)}`,
-        onClear: () => setFilterMonth('')
-      });
-    }
     if (filterAccountId) {
       const acc = accounts.find(a => a.id === filterAccountId);
       chips.push({
@@ -380,11 +414,17 @@ export function Transactions() {
         onClear: () => setFilterCategoryId('')
       });
     }
-    if (filterType !== 'ALL') {
+    if (filterStatus !== 'ALL') {
+      const statusLabels: Record<string, string> = {
+        PAID: 'Pago',
+        PLANNED: 'Planejado',
+        PENDING: 'Pendente',
+        OVERDUE: 'Atrasado'
+      };
       chips.push({
-        id: 'type',
-        label: `Tipo: ${filterType === 'INCOME' ? 'Receita' : 'Despesa'}`,
-        onClear: () => setFilterType('ALL')
+        id: 'status',
+        label: `Status: ${statusLabels[filterStatus] || filterStatus}`,
+        onClear: () => setFilterStatus('ALL')
       });
     }
     if (isCouple && filterMember !== 'ALL') {
@@ -395,21 +435,20 @@ export function Transactions() {
       });
     }
     return chips;
-  }, [filterMonth, filterAccountId, filterCategoryId, filterType, filterMember, accounts, categories, isCouple, partnerName]);
+  }, [filterAccountId, filterCategoryId, filterStatus, filterMember, accounts, categories, isCouple, partnerName]);
 
   const handleClearAllFilters = () => {
-    setFilterMonth('');
     setFilterAccountId('');
     setFilterCategoryId('');
-    setFilterType('ALL');
+    setFilterStatus('ALL');
     setFilterMember('ALL');
   };
 
   // Client-side filtering
   const filteredTransactions = React.useMemo(() => {
     return transactions.filter(t => {
-      // Filter by Type
-      if (filterType !== 'ALL' && t.type !== filterType) return false;
+      // Filter by Status
+      if (filterStatus !== 'ALL' && t.status !== filterStatus) return false;
       // Filter by Member (only relevant in Couple view)
       if (isCouple && filterMember !== 'ALL') {
         if (filterMember === 'OWN' && t.userId !== user?.id) return false;
@@ -417,7 +456,7 @@ export function Transactions() {
       }
       return true;
     });
-  }, [transactions, filterType, filterMember, isCouple, user?.id]);
+  }, [transactions, filterStatus, filterMember, isCouple, user?.id]);
 
   // Group by Month (using competenceDate)
   const groupedTransactions = React.useMemo(() => {
@@ -433,7 +472,22 @@ export function Transactions() {
 
   // Sorted month keys
   const sortedMonthKeys = React.useMemo(() => {
-    return Object.keys(groupedTransactions).sort((a, b) => b.localeCompare(a));
+    const currentMonthKey = currentCompetenceMonth();
+    return Object.keys(groupedTransactions).sort((a, b) => {
+      if (a === 'sem-competencia') return 1;
+      if (b === 'sem-competencia') return -1;
+      
+      const isFutureA = a > currentMonthKey;
+      const isFutureB = b > currentMonthKey;
+
+      if (isFutureA && !isFutureB) return 1;
+      if (!isFutureA && isFutureB) return -1;
+
+      if (isFutureA && isFutureB) {
+        return a.localeCompare(b);
+      }
+      return b.localeCompare(a);
+    });
   }, [groupedTransactions]);
 
   // Month collapse states helper
@@ -441,6 +495,8 @@ export function Transactions() {
     if (expandedMonths[monthKey] !== undefined) {
       return expandedMonths[monthKey];
     }
+    if (searchMonth !== 'ALL') return true;
+    
     const today = new Date();
     const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     return monthKey === currentMonthKey;
@@ -487,7 +543,57 @@ export function Transactions() {
             <p className="text-zinc-400 text-sm mt-1">Monitore e gerencie seus lançamentos</p>
           </div>
 
-          <div className="flex items-center gap-3 self-start sm:self-center">
+          <div className="flex items-center gap-3 flex-wrap">
+            {searchMonth !== 'ALL' ? (
+              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-2 py-1 shadow-sm">
+                <button
+                  onClick={handlePrevMonth}
+                  className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
+                  title="Mês anterior"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <select
+                  value={searchMonth}
+                  onChange={(e) => handleMonthChange(e.target.value)}
+                  className="bg-transparent border-none text-zinc-100 font-semibold text-sm focus:outline-none focus:ring-0 cursor-pointer py-1 pl-2 pr-8"
+                >
+                  {monthOptions.map(opt => (
+                    <option key={opt.value} value={opt.value} className="bg-bg-surface text-zinc-100">{opt.label}</option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={handleNextMonth}
+                  className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
+                  title="Próximo mês"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-305">
+                <span>Busca Avançada</span>
+              </div>
+            )}
+
+            {searchMonth !== 'ALL' ? (
+              <button
+                onClick={() => handleMonthChange('ALL')}
+                className="bg-bg-surface hover:bg-bg-elevated border border-border-subtle rounded-xl px-4 py-2 text-sm font-semibold transition-all text-zinc-300"
+              >
+                Ver todos os meses
+              </button>
+            ) : (
+              <button
+                onClick={() => handleMonthChange(currentCompetenceMonth())}
+                className="bg-violet-650/10 hover:bg-violet-650/20 border border-violet-500/20 text-violet-400 rounded-xl px-4 py-2 text-sm font-semibold transition-all"
+              >
+                Voltar para mês atual
+              </button>
+            )}
+
             {/* Action CTA */}
             <button
               onClick={handleOpenNewTrans}
@@ -504,22 +610,8 @@ export function Transactions() {
           <Card className="p-6 space-y-4">
             <div className={cn(
               "grid grid-cols-1 gap-4 items-end",
-              isCouple ? "sm:grid-cols-5" : "sm:grid-cols-4"
+              isCouple ? "sm:grid-cols-4" : "sm:grid-cols-3"
             )}>
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Mês</label>
-                <select
-                  value={filterMonth}
-                  onChange={(e) => setFilterMonth(e.target.value)}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                >
-                  <option value="">Todos os meses</option>
-                  {monthOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
               <div>
                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Conta</label>
                 <select
@@ -554,15 +646,17 @@ export function Transactions() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Tipo</label>
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Status</label>
                 <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value as 'ALL' | 'INCOME' | 'EXPENSE')}
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as 'ALL' | 'PAID' | 'PLANNED' | 'PENDING' | 'OVERDUE')}
                   className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
                 >
-                  <option value="ALL">Todos os tipos</option>
-                  <option value="INCOME">Receita</option>
-                  <option value="EXPENSE">Despesa</option>
+                  <option value="ALL">Todos os status</option>
+                  <option value="PAID">Pago</option>
+                  <option value="PLANNED">Planejado</option>
+                  <option value="PENDING">Pendente</option>
+                  <option value="OVERDUE">Atrasado</option>
                 </select>
               </div>
 
@@ -612,7 +706,7 @@ export function Transactions() {
           </Card>
 
           {/* Transactions List */}
-          <div className="space-y-4">
+          <div className="space-y-4 transactions-table-container">
             {isTransLoading ? (
               <div className="flex justify-center items-center py-20 bg-bg-surface border border-border-subtle rounded-xl">
                 <div className="w-10 h-10 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin"></div>
@@ -636,7 +730,167 @@ export function Transactions() {
                   }
                 />
               </div>
+            ) : searchMonth !== 'ALL' ? (
+              // Single month view - direct table rendering, not collapsible
+              <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden">
+                {isSummaryLoading ? (
+                  <div className="animate-pulse bg-zinc-850/60 h-14 w-full border-b border-border-subtle" />
+                ) : (
+                  <div className="bg-bg-surface border-b border-border-subtle p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-violet-400" />
+                      <span className="font-semibold text-zinc-100 text-sm">Resumo de {getMonthName(searchMonth)}</span>
+                    </div>
+                    <div className="flex items-center gap-4 flex-wrap text-xs">
+                      <div className="text-zinc-400">
+                        Total: <span className="font-semibold text-zinc-200">{monthSummary?.totalCount || 0} {monthSummary?.totalCount === 1 ? 'lançamento' : 'lançamentos'}</span>
+                      </div>
+                      <div className="text-zinc-400">
+                        Entradas: <span className="font-bold text-success">+{formatCurrency(monthSummary?.income || 0)}</span>
+                      </div>
+                      <div className="text-zinc-400">
+                        Saídas: <span className="font-bold text-danger">-{formatCurrency(monthSummary?.expense || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
+                        <th className="p-4">Competência</th>
+                        <th className="p-4">Descrição</th>
+                        <th className="p-4">Categoria</th>
+                        <th className="p-4">Conta</th>
+                        <th className="p-4 text-right">Valor</th>
+                        {isCouple && <th className="p-4">Membro</th>}
+                        <th className="p-4 text-center">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/40 text-sm text-zinc-300">
+                      {filteredTransactions.slice(0, getMonthLimit(searchMonth)).map(t => {
+                        const acc = accounts.find(a => a.id === t.accountId);
+                        const cat = categories.find(c => c.id === t.categoryId);
+                        const isExpandedRow = expandedTransactionId === t.id;
+                        return (
+                          <React.Fragment key={t.id}>
+                            <tr
+                              onClick={() => setExpandedTransactionId(prev => prev === t.id ? null : t.id)}
+                              className="hover:bg-bg-elevated/10 transition-colors group cursor-pointer select-none"
+                            >
+                              <td className="p-4 text-zinc-400">
+                                {formatDate(t.competenceDate || t.dueDate)}
+                              </td>
+                              <td className="p-4 font-medium text-white">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span>{t.description}</span>
+                                  {t.installmentGroupId && (
+                                    <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
+                                  )}
+                                  {t.isRecurring && (
+                                    <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
+                                  )}
+                                  <Badge status={t.status} className="text-[10px] px-1.5 py-0" />
+                                </div>
+                              </td>
+                              <td className="p-4 text-zinc-400">
+                                {cat ? cat.name : (t.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
+                              </td>
+                              <td className="p-4 text-zinc-400">
+                                {acc ? acc.name : (t.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
+                              </td>
+                              <td className="p-4 text-right">
+                                <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
+                              </td>
+                              {isCouple && (
+                                <td className="p-4">
+                                  <span className={cn(
+                                    "text-[10px] font-bold px-1.5 py-0.5 rounded border select-none",
+                                    t.userId === user.id
+                                      ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                      : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                  )}>
+                                    {t.userId === user.id ? 'Você' : partnerName}
+                                  </span>
+                                </td>
+                              )}
+                              <td className="p-4 text-center">
+                                <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
+                                  {t.userId === user.id ? (
+                                    <>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleOpenEditTrans(t); }}
+                                        className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
+                                        title="Editar"
+                                      >
+                                        <Edit3 className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteTrans(t); }}
+                                        className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
+                                        title="Excluir"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-zinc-550 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                            {isExpandedRow && (
+                              <tr className="bg-bg-elevated/20 border-b border-zinc-800/40">
+                                <td colSpan={isCouple ? 7 : 6} className="p-4 text-xs text-zinc-400">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-2">
+                                    <div>
+                                      <span className="font-semibold text-zinc-300">Vencimento:</span>{' '}
+                                      <span className="text-zinc-200">{formatDate(t.dueDate)}</span>
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold text-zinc-300">Pagamento:</span>{' '}
+                                      <span className="text-zinc-200">{t.paymentDate ? formatDate(t.paymentDate) : 'Pendente / Não pago'}</span>
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold text-zinc-300">Visibilidade:</span>{' '}
+                                      <span className="text-zinc-200">
+                                        {t.visibility === 'SHARED' ? 'Compartilhado (Casal)' : 'Pessoal (Privado)'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {t.recurrenceRule && (
+                                    <div className="text-zinc-400 mt-2 text-[11px]">
+                                      <span className="font-semibold text-zinc-300">Regra de recorrência:</span> {t.recurrenceRule === 'MONTHLY' ? 'Mensal' : t.recurrenceRule}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Indicator / Load More */}
+                {filteredTransactions.length > getMonthLimit(searchMonth) && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-zinc-800/40 text-xs text-zinc-400 bg-bg-surface/20">
+                    <span>
+                      Exibindo {Math.min(filteredTransactions.length, getMonthLimit(searchMonth))} de {filteredTransactions.length} transações em {getMonthLabelOnly(searchMonth)}
+                    </span>
+                    <button
+                      onClick={() => handleLoadMore(searchMonth)}
+                      className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors bg-bg-elevated/45 hover:bg-bg-elevated px-3 py-1.5 rounded-lg border border-border-subtle"
+                    >
+                      Ver mais
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
+              // ALL months view - collapsible cards grouped by month
               sortedMonthKeys.map(monthKey => {
                 const allMonthTxs = groupedTransactions[monthKey] || [];
                 const visibleLimit = getMonthLimit(monthKey);
@@ -679,7 +933,7 @@ export function Transactions() {
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
-                                <th className="p-4">Data</th>
+                                <th className="p-4">Competência</th>
                                 <th className="p-4">Descrição</th>
                                 <th className="p-4">Categoria</th>
                                 <th className="p-4">Conta</th>
@@ -692,69 +946,102 @@ export function Transactions() {
                               {visibleTxs.map(t => {
                                 const acc = accounts.find(a => a.id === t.accountId);
                                 const cat = categories.find(c => c.id === t.categoryId);
+                                const isExpandedRow = expandedTransactionId === t.id;
                                 return (
-                                  <tr key={t.id} className="hover:bg-bg-elevated/10 transition-colors group">
-                                    <td className="p-4 text-zinc-400">
-                                      {formatDate(t.dueDate)}
-                                    </td>
-                                    <td className="p-4 font-medium text-white">
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <span>{t.description}</span>
-                                        {t.installmentGroupId && (
-                                          <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
-                                        )}
-                                        {t.isRecurring && (
-                                          <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
-                                        )}
-                                        <Badge status={t.status} className="text-[10px] px-1.5 py-0" />
-                                      </div>
-                                    </td>
-                                    <td className="p-4 text-zinc-400">
-                                      {cat ? cat.name : (t.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
-                                    </td>
-                                    <td className="p-4 text-zinc-400">
-                                      {acc ? acc.name : (t.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                      <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
-                                    </td>
-                                    {isCouple && (
-                                      <td className="p-4">
-                                        <span className={cn(
-                                          "text-[10px] font-bold px-1.5 py-0.5 rounded border select-none",
-                                          t.userId === user.id
-                                            ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
-                                            : "bg-pink-500/10 border-pink-500/20 text-pink-300"
-                                        )}>
-                                          {t.userId === user.id ? 'Você' : partnerName}
-                                        </span>
+                                  <React.Fragment key={t.id}>
+                                    <tr
+                                      onClick={() => setExpandedTransactionId(prev => prev === t.id ? null : t.id)}
+                                      className="hover:bg-bg-elevated/10 transition-colors group cursor-pointer select-none"
+                                    >
+                                      <td className="p-4 text-zinc-400">
+                                        {formatDate(t.competenceDate || t.dueDate)}
                                       </td>
+                                      <td className="p-4 font-medium text-white">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span>{t.description}</span>
+                                          {t.installmentGroupId && (
+                                            <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
+                                          )}
+                                          {t.isRecurring && (
+                                            <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
+                                          )}
+                                          <Badge status={t.status} className="text-[10px] px-1.5 py-0" />
+                                        </div>
+                                      </td>
+                                      <td className="p-4 text-zinc-400">
+                                        {cat ? cat.name : (t.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
+                                      </td>
+                                      <td className="p-4 text-zinc-400">
+                                        {acc ? acc.name : (t.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
+                                      </td>
+                                      <td className="p-4 text-right">
+                                        <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
+                                      </td>
+                                      {isCouple && (
+                                        <td className="p-4">
+                                          <span className={cn(
+                                            "text-[10px] font-bold px-1.5 py-0.5 rounded border select-none",
+                                            t.userId === user.id
+                                              ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
+                                              : "bg-pink-500/10 border-pink-500/20 text-pink-300"
+                                          )}>
+                                            {t.userId === user.id ? 'Você' : partnerName}
+                                          </span>
+                                        </td>
+                                      )}
+                                      <td className="p-4 text-center">
+                                        <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
+                                          {t.userId === user.id ? (
+                                            <>
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleOpenEditTrans(t); }}
+                                                className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
+                                                title="Editar"
+                                              >
+                                                <Edit3 className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteTrans(t); }}
+                                                className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
+                                                title="Excluir"
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </>
+                                          ) : (
+                                            <span className="text-xs text-zinc-550 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    {isExpandedRow && (
+                                      <tr className="bg-bg-elevated/20 border-b border-zinc-800/40">
+                                        <td colSpan={isCouple ? 7 : 6} className="p-4 text-xs text-zinc-400">
+                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-2">
+                                            <div>
+                                              <span className="font-semibold text-zinc-300">Vencimento:</span>{' '}
+                                              <span className="text-zinc-200">{formatDate(t.dueDate)}</span>
+                                            </div>
+                                            <div>
+                                              <span className="font-semibold text-zinc-300">Pagamento:</span>{' '}
+                                              <span className="text-zinc-200">{t.paymentDate ? formatDate(t.paymentDate) : 'Pendente / Não pago'}</span>
+                                            </div>
+                                            <div>
+                                              <span className="font-semibold text-zinc-300">Visibilidade:</span>{' '}
+                                              <span className="text-zinc-200">
+                                                {t.visibility === 'SHARED' ? 'Compartilhado (Casal)' : 'Pessoal (Privado)'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          {t.recurrenceRule && (
+                                            <div className="text-zinc-400 mt-2 text-[11px]">
+                                              <span className="font-semibold text-zinc-300">Regra de recorrência:</span> {t.recurrenceRule === 'MONTHLY' ? 'Mensal' : t.recurrenceRule}
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
                                     )}
-                                    <td className="p-4 text-center">
-                                      <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                                        {t.userId === user.id ? (
-                                          <>
-                                            <button
-                                              onClick={() => handleOpenEditTrans(t)}
-                                              className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                              title="Editar"
-                                            >
-                                              <Edit3 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                              onClick={() => handleDeleteTrans(t)}
-                                              className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
-                                              title="Excluir"
-                                            >
-                                              <Trash2 className="w-4 h-4" />
-                                            </button>
-                                          </>
-                                        ) : (
-                                          <span className="text-xs text-zinc-500 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
-                                        )}
-                                      </div>
-                                    </td>
-                                  </tr>
+                                  </React.Fragment>
                                 );
                               })}
                             </tbody>

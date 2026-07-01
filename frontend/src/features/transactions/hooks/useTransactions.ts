@@ -1,12 +1,68 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi } from '../api/transactions';
 import type { Transaction, TransactionPayload, TransactionFilters } from '../types';
 
-export function useTransactions(filters: TransactionFilters) {
-  const queryClient = useQueryClient();
+function getLastDayOfMonthStr(monthStr: string) {
+  if (!monthStr || monthStr === 'ALL') return '';
+  const [year, month] = monthStr.split('-');
+  const date = new Date(Number(year), Number(month), 0);
+  return `${year}-${month}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function useTransactionSummary(
+  month: string,
+  additionalFilters?: TransactionFilters
+) {
+  const filters = {
+    ...additionalFilters,
+    startDate: month !== 'ALL' && !additionalFilters?.startDate ? `${month}-01` : additionalFilters?.startDate,
+    endDate: month !== 'ALL' && !additionalFilters?.endDate ? getLastDayOfMonthStr(month) : additionalFilters?.endDate,
+  };
 
   const { data: transactions = [], isLoading, error } = useQuery<Transaction[], Error>({
-    queryKey: ['transactions', filters],
+    queryKey: ['transactions', { month, ...additionalFilters }],
+    queryFn: () => transactionsApi.listTransactions(filters),
+  });
+
+  const summary = React.useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    transactions.forEach((t) => {
+      if (t.type === 'INCOME') {
+        income += t.amount;
+      } else {
+        expense += t.amount;
+      }
+    });
+    return {
+      income,
+      expense,
+      totalCount: transactions.length,
+    };
+  }, [transactions]);
+
+  return {
+    summary,
+    isLoading,
+    error,
+  };
+}
+
+export function useTransactions(
+  month: string,
+  additionalFilters?: TransactionFilters
+) {
+  const queryClient = useQueryClient();
+
+  const filters = {
+    ...additionalFilters,
+    startDate: month !== 'ALL' && !additionalFilters?.startDate ? `${month}-01` : additionalFilters?.startDate,
+    endDate: month !== 'ALL' && !additionalFilters?.endDate ? getLastDayOfMonthStr(month) : additionalFilters?.endDate,
+  };
+
+  const { data: transactions = [], isLoading, error } = useQuery<Transaction[], Error>({
+    queryKey: ['transactions', { month, ...additionalFilters }],
     queryFn: () => transactionsApi.listTransactions(filters),
   });
 
