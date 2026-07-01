@@ -145,7 +145,7 @@ export function Dashboard() {
     transactions: upcomingTransactions, 
     isLoading: isUpcomingLoading, 
     error: upcomingError 
-  } = useTransactions({
+  } = useTransactions("ALL", {
     startDate: todayStr,
     endDate: nextWeekStr,
   });
@@ -170,7 +170,7 @@ export function Dashboard() {
     transactions: historyTransactions, 
     isLoading: isHistoryLoading, 
     error: historyError 
-  } = useTransactions({
+  } = useTransactions("ALL", {
     startDate: start6MonthsDate,
     endDate: end6MonthsDate,
   });
