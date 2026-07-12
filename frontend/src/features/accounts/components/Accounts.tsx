@@ -244,7 +244,7 @@ function CreateBankModal({ open, onClose, onCreate, isCreating, currency }: Crea
               <option value="CHECKING" className="bg-zinc-900">Conta Corrente</option>
               <option value="SAVINGS" className="bg-zinc-900">Poupança</option>
             </Select>
-            <Input type="number" step="0.01" label={`Saldo atual (${currency}) *`} placeholder="0,00" error={errors.balance?.message} disabled={isCreating} {...register('balance')} />
+            <Input isCurrency={true} label={`Saldo atual (${currency}) *`} placeholder="0,00" error={errors.balance?.message} disabled={isCreating} {...register('balance')} />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-5 border-t border-border-subtle">
@@ -330,7 +330,7 @@ function CreateCardModal({ open, onClose, onCreate, isCreating, currency, bankAc
             <Input type="text" label="Emissor / Bandeira *" placeholder="Ex: Nubank, Mastercard…" error={errors.bank?.message} disabled={isCreating} {...register('bank')} />
           </div>
 
-          <Input type="number" step="0.01" label={`Limite de crédito (${currency}) *`} placeholder="Ex: 5000,00" error={errors.creditLimit?.message} disabled={isCreating} {...register('creditLimit')} />
+          <Input isCurrency={true} label={`Limite de crédito (${currency}) *`} placeholder="Ex: 5.000,00" error={errors.creditLimit?.message} disabled={isCreating} {...register('creditLimit')} />
 
           <div className="grid grid-cols-2 gap-4">
             <Input type="number" min="1" max="31" label="Fechamento da fatura (dia) *" placeholder="Ex: 10" error={errors.closingDay?.message} disabled={isCreating} {...register('closingDay')} />
@@ -419,7 +419,7 @@ function EditBankModal({ account, onClose, currency }: { account: Account; onClo
             <Input type="text" label="Apelido *" error={errors.name?.message} disabled={updateAccount.isPending} {...register('name')} />
             <Input type="text" label="Banco / Instituição *" error={errors.bank?.message} disabled={updateAccount.isPending} {...register('bank')} />
           </div>
-          <Input type="number" step="0.01" label={`Saldo atual (${currency}) *`} error={errors.balance?.message} disabled={updateAccount.isPending} {...register('balance')} />
+          <Input isCurrency={true} label={`Saldo atual (${currency}) *`} error={errors.balance?.message} disabled={updateAccount.isPending} {...register('balance')} />
 
           <div className="flex items-center justify-end gap-3 pt-5 border-t border-border-subtle">
             <button type="button" onClick={onClose} disabled={updateAccount.isPending} className="px-5 py-2.5 rounded-xl border border-border-subtle hover:bg-bg-elevated text-text-secondary text-sm font-medium transition-all cursor-pointer">Cancelar</button>
@@ -499,7 +499,7 @@ function EditCardModal({ account, onClose, currency }: { account: Account; onClo
             <Input type="text" label="Emissor / Bandeira *" error={errors.bank?.message} disabled={updateAccount.isPending} {...register('bank')} />
           </div>
 
-          <Input type="number" step="0.01" label={`Limite de crédito (${currency}) *`} error={errors.creditLimit?.message} disabled={updateAccount.isPending} {...register('creditLimit')} />
+          <Input isCurrency={true} label={`Limite de crédito (${currency}) *`} error={errors.creditLimit?.message} disabled={updateAccount.isPending} {...register('creditLimit')} />
 
           <div className="grid grid-cols-2 gap-4">
             <Input type="number" min="1" max="31" label="Fechamento da fatura (dia) *" error={errors.closingDay?.message} disabled={updateAccount.isPending} {...register('closingDay')} />

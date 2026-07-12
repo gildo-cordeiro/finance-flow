@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCategories } from '../../../transactions/hooks/useCategories';
 import { useToast } from '../../../../context/ToastContext';
 import type { Category } from '../../../transactions/types';
@@ -57,6 +58,7 @@ const CATEGORY_COLORS = [
 
 export function CategoriesTab() {
   const { categories, createCategory, updateCategory, deleteCategory, isLoading: isCategoriesLoading } = useCategories();
+  const queryClient = useQueryClient();
   const toast = useToast();
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({});
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
@@ -170,16 +172,26 @@ export function CategoriesTab() {
         toast.success('Categoria criada com sucesso!');
       } else {
         if (!editingCategory) return;
-        const payload = {
-          name: categoryName.trim(),
-          parentId: editingCategory.parentId || null
-        };
-        const updatedCat = await updateCategory(editingCategory.id, payload);
-        
-        localStorage.setItem(
-          `cat_meta_${updatedCat.id}`,
-          JSON.stringify({ icon: categoryIcon, color: categoryColor })
-        );
+
+        if (editingCategory.userId) {
+          const payload = {
+            name: categoryName.trim(),
+            parentId: editingCategory.parentId || null
+          };
+          const updatedCat = await updateCategory(editingCategory.id, payload);
+          
+          localStorage.setItem(
+            `cat_meta_${updatedCat.id}`,
+            JSON.stringify({ icon: categoryIcon, color: categoryColor })
+          );
+        } else {
+          // Standard Category (no userId): only save metadata in localStorage
+          localStorage.setItem(
+            `cat_meta_${editingCategory.id}`,
+            JSON.stringify({ icon: categoryIcon, color: categoryColor })
+          );
+          queryClient.invalidateQueries({ queryKey: ['categories'] });
+        }
         toast.success('Categoria atualizada com sucesso!');
       }
 
@@ -248,16 +260,16 @@ export function CategoriesTab() {
                 const IconComponent = getIconComponent(meta.icon);
 
                 return (
-                  <div key={parent.id} className="border border-zinc-800/80 rounded-xl bg-zinc-900/30 overflow-hidden">
-                    <div className="flex items-center justify-between p-4 hover:bg-zinc-800/25 transition-colors">
+                  <div key={parent.id} className="border border-border-subtle rounded-xl bg-bg-surface/50 overflow-hidden hover:border-brand/30 hover:bg-bg-surface/75 transition-all duration-300">
+                    <div className="flex items-center justify-between p-4 hover:bg-bg-elevated/20 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={cn("p-2 rounded-lg border flex items-center justify-center shrink-0", getColorClasses(meta.color))}>
                           <IconComponent className="w-4 h-4" />
                         </div>
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-bold text-zinc-100 text-sm tracking-tight truncate">{parent.name}</span>
+                          <span className="font-bold text-text-primary text-sm tracking-tight truncate">{parent.name}</span>
                           {!parent.userId && (
-                            <span className="text-[9px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-1.5 py-0.5 rounded select-none">
+                            <span className="text-[9px] font-semibold bg-bg-elevated text-text-secondary border border-border-subtle px-1.5 py-0.5 rounded select-none">
                               padrão
                             </span>
                           )}
@@ -268,84 +280,82 @@ export function CategoriesTab() {
                         <button
                           onClick={() => handleOpenNewCat(parent.id)}
                           title="Adicionar Subcategoria"
-                          className="p-1.5 hover:text-white text-zinc-450 hover:bg-zinc-800 rounded-lg transition-all"
+                          className="p-1.5 hover:text-text-primary text-text-muted hover:bg-bg-elevated rounded-lg transition-all"
                         >
-                          <FolderPlus className="w-4.5 h-4.5" />
+                          <FolderPlus className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => toggleParentExpand(parent.id)}
                           className={cn(
-                            "p-1.5 hover:text-white rounded-lg transition-all text-xs font-semibold flex items-center gap-1",
-                            isExpanded ? "text-violet-400 bg-violet-500/10" : "text-zinc-450 hover:bg-zinc-800"
+                            "p-1.5 rounded-lg transition-all text-xs font-semibold flex items-center gap-1.5",
+                            isExpanded ? "text-brand bg-brand/10" : "text-text-muted hover:text-text-primary hover:bg-bg-elevated"
                           )}
                         >
-                          {subcats.length} sub
+                          <span>{subcats.length} sub</span>
                         </button>
+                        
+                        <button
+                          onClick={() => handleOpenEditCat(parent)}
+                          title="Editar"
+                          className="p-1.5 hover:text-text-primary text-text-muted hover:bg-bg-elevated rounded-lg transition-all"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+
                         {parent.userId && (
-                          <>
-                            <button
-                              onClick={() => handleOpenEditCat(parent)}
-                              title="Editar"
-                              className="p-1.5 hover:text-white text-zinc-450 hover:bg-zinc-800 rounded-lg transition-all"
-                            >
-                              <Edit3 className="w-4.5 h-4.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCategory(parent.id)}
-                              title="Excluir"
-                              className="p-1.5 hover:text-red-400 text-zinc-450 hover:bg-red-500/10 rounded-lg transition-all"
-                            >
-                              <Trash2 className="w-4.5 h-4.5" />
-                            </button>
-                          </>
+                          <button
+                            onClick={() => handleDeleteCategory(parent.id)}
+                            title="Excluir"
+                            className="p-1.5 hover:text-danger text-text-muted hover:bg-danger/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         )}
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="ml-9 pl-4 border-l border-zinc-800/80 pb-3 pt-2 space-y-1 pr-4 bg-zinc-950/10">
+                      <div className="ml-9 pl-4 border-l border-border-subtle pb-3 pt-2 space-y-1.5 pr-4 bg-bg-base/30">
                         {subcats.map(sub => {
                           const subMeta = getCategoryMeta(sub.id, sub.name);
                           const SubIcon = getIconComponent(subMeta.icon);
 
                           return (
-                            <div key={sub.id} className="relative flex items-center justify-between text-xs py-2 pl-4 pr-3 hover:bg-zinc-800/25 rounded-lg group/sub text-zinc-350 transition-colors">
-                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 border-t border-zinc-850/60"></div>
+                            <div key={sub.id} className="relative flex items-center justify-between text-xs py-2.5 pl-4 pr-3 hover:bg-bg-elevated/40 rounded-lg group/sub text-text-secondary hover:text-text-primary transition-colors">
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 border-t border-border-subtle/50"></div>
                               
                               <div className="flex items-center gap-2.5 min-w-0 pl-1">
-                                <div className={cn("p-1 rounded border flex items-center justify-center shrink-0 bg-zinc-900/40 border-zinc-800", getColorClasses(subMeta.color))}>
-                                  <SubIcon className="w-3.5 h-3.5 opacity-80" />
+                                <div className={cn("p-1 rounded border flex items-center justify-center shrink-0 bg-bg-surface border-border-subtle", getColorClasses(subMeta.color))}>
+                                  <SubIcon className="w-3.5 h-3.5 opacity-85" />
                                 </div>
-                                <span className="truncate text-zinc-200">{sub.name}</span>
+                                <span className="truncate font-medium text-text-secondary group-hover/sub:text-text-primary transition-colors">{sub.name}</span>
                                 {!sub.userId && (
-                                  <span className="text-[8px] text-zinc-500 bg-zinc-900/60 px-1.5 py-0.5 rounded select-none">padrão</span>
+                                  <span className="text-[8px] text-text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border-subtle select-none">padrão</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover/sub:opacity-100 transition-opacity shrink-0">
+                              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/sub:opacity-100 transition-all duration-200 shrink-0">
+                                <button
+                                  onClick={() => handleOpenEditCat(sub)}
+                                  title="Editar Subcategoria"
+                                  className="p-1 hover:text-text-primary text-text-muted hover:bg-bg-elevated rounded transition-all"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
                                 {sub.userId && (
-                                  <>
-                                    <button
-                                      onClick={() => handleOpenEditCat(sub)}
-                                      title="Editar Subcategoria"
-                                      className="p-1 hover:text-white text-zinc-500 hover:bg-zinc-800 rounded transition-all"
-                                    >
-                                      <Edit3 className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteCategory(sub.id)}
-                                      title="Excluir Subcategoria"
-                                      className="p-1 hover:text-red-400 text-zinc-500 hover:bg-red-500/10 rounded transition-all"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </>
+                                  <button
+                                    onClick={() => handleDeleteCategory(sub.id)}
+                                    title="Excluir Subcategoria"
+                                    className="p-1 hover:text-danger text-text-muted hover:bg-danger/10 rounded transition-all"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 )}
                               </div>
                             </div>
                           );
                         })}
                         {subcats.length === 0 && (
-                          <div className="text-zinc-600 text-xs italic py-2 pl-4">Sem subcategorias vinculadas</div>
+                          <div className="text-text-muted text-xs italic py-2 pl-4">Sem subcategorias vinculadas</div>
                         )}
                       </div>
                     )}
@@ -356,23 +366,27 @@ export function CategoriesTab() {
           </div>
 
           <div className="auth-card p-6 space-y-6 self-start">
-            <h3 className="text-lg font-bold flex items-center gap-2">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-text-primary">
               <Info className="w-5 h-5 text-blue-400" />
               <span>Boas Práticas</span>
             </h3>
             
-            <div className="space-y-4 text-xs text-zinc-400 leading-relaxed">
+            <div className="space-y-4 text-xs text-text-secondary leading-relaxed">
               <p>
                 As categorias ajudam a estruturar e controlar os seus orçamentos do mês.
               </p>
-              <div className="p-3.5 bg-zinc-900/60 rounded-xl border border-zinc-800 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-zinc-400 rounded-full"></span>
-                  <strong>Badge padrão:</strong> Não podem ser editadas ou excluídas, pois fazem parte da estrutura nativa de relatórios.
+              <div className="p-3.5 bg-bg-base border border-border-subtle rounded-xl space-y-2.5">
+                <div className="flex items-start gap-2">
+                  <span className="w-2 h-2 mt-1.5 bg-text-muted rounded-full shrink-0"></span>
+                  <div>
+                    <strong>Categorias padrão:</strong> Não podem ser excluídas ou ter seus nomes alterados, mas suas cores e ícones podem ser personalizados livremente.
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
-                  <strong>Customizáveis:</strong> Podem ter ícones e cores configurados livremente para facilitar a identificação visual no painel.
+                <div className="flex items-start gap-2">
+                  <span className="w-2 h-2 mt-1.5 bg-brand rounded-full shrink-0"></span>
+                  <div>
+                    <strong>Categorias personalizadas:</strong> Podem ter seus nomes alterados, subcategorias criadas, ou serem excluídas.
+                  </div>
                 </div>
               </div>
               <p>
@@ -386,24 +400,33 @@ export function CategoriesTab() {
       {/* CATEGORY EDIT/CREATE MODAL */}
       {isCatModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 space-y-5">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <div className="bg-bg-surface border border-border-subtle w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 space-y-5">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
               <h3 className="text-lg font-bold text-white">
                 {catModalMode === 'create'
                   ? selectedParentId ? 'Nova Subcategoria' : 'Nova Categoria Pai'
-                  : 'Editar Categoria'
+                  : !editingCategory?.userId
+                    ? 'Editar Aparência (Categoria Padrão)'
+                    : 'Editar Categoria'
                 }
               </h3>
               <button
                 onClick={() => setIsCatModalOpen(false)}
-                className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-all"
+                className="p-1 hover:bg-bg-elevated rounded-lg text-text-muted hover:text-white transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {!editingCategory?.userId && catModalMode === 'edit' && (
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs rounded-xl flex items-start gap-2.5">
+                <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Esta é uma categoria padrão do sistema. Você pode alterar seu ícone e cor, mas seu nome não pode ser modificado.</span>
+              </div>
+            )}
+
             {categoryError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-danger/10 border border-danger/20 text-danger text-xs rounded-xl flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 <span>{categoryError}</span>
               </div>
@@ -417,11 +440,13 @@ export function CategoriesTab() {
                 required
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
+                disabled={catModalMode === 'edit' && !editingCategory?.userId}
+                hint={catModalMode === 'edit' && !editingCategory?.userId ? "Nome fixado para relatórios nativos." : undefined}
               />
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-350 uppercase tracking-wide block">Ícone Visual</label>
-                <div className="grid grid-cols-6 gap-2 p-3 bg-zinc-950/40 border border-zinc-850 rounded-xl max-h-[140px] overflow-y-auto pr-1">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide block">Ícone Visual</label>
+                <div className="grid grid-cols-6 gap-2 p-3 bg-bg-base/40 border border-border-subtle rounded-xl max-h-[140px] overflow-y-auto pr-1 scrollbar-thin">
                   {CATEGORY_ICONS.map(item => {
                     const IconComp = item.icon;
                     const isSelected = categoryIcon === item.name;
@@ -431,13 +456,13 @@ export function CategoriesTab() {
                         type="button"
                         onClick={() => setCategoryIcon(item.name)}
                         className={cn(
-                          "p-2 rounded-lg border flex items-center justify-center transition-all hover:bg-zinc-800 hover:text-white",
+                          "p-2 rounded-lg border flex items-center justify-center transition-all hover:bg-bg-elevated hover:text-text-primary",
                           isSelected
-                            ? "border-violet-500 bg-violet-650/20 text-violet-400"
-                            : "border-transparent text-zinc-400"
+                            ? "border-brand bg-brand/10 text-brand"
+                            : "border-transparent text-text-muted"
                         )}
                       >
-                        <IconComp className="w-4.5 h-4.5" />
+                        <IconComp className="w-4 h-4" />
                       </button>
                     );
                   })}
@@ -445,8 +470,8 @@ export function CategoriesTab() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-350 uppercase tracking-wide block">Cor da Categoria</label>
-                <div className="flex flex-wrap gap-2.5 p-3 bg-zinc-950/40 border border-zinc-850 rounded-xl">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide block">Cor da Categoria</label>
+                <div className="flex flex-wrap gap-2.5 p-3 bg-bg-base/40 border border-border-subtle rounded-xl">
                   {CATEGORY_COLORS.map(color => {
                     const isSelected = categoryColor === color.name;
                     return (
@@ -464,11 +489,11 @@ export function CategoriesTab() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/80">
+              <div className="flex justify-end gap-3 pt-3 border-t border-border-subtle">
                 <button
                   type="button"
                   onClick={() => setIsCatModalOpen(false)}
-                  className="bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-white font-medium rounded-xl py-2 px-4 transition-all text-sm"
+                  className="bg-transparent hover:bg-bg-elevated text-text-secondary hover:text-text-primary font-medium rounded-xl py-2 px-4 transition-all text-sm"
                 >
                   Cancelar
                 </button>

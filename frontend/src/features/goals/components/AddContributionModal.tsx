@@ -94,8 +94,7 @@ export function AddContributionModal({ isOpen, onClose, goalId }: AddContributio
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
           <Input
             label="Valor da Contribuição (R$)"
-            type="number"
-            step="0.01"
+            isCurrency={true}
             placeholder="0,00"
             error={errors.amount?.message}
             {...register('amount')}
