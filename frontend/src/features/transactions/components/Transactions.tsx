@@ -1119,8 +1119,7 @@ export function Transactions() {
                 </div>
 
                 <Input
-                  type="number"
-                  step="0.01"
+                  isCurrency={true}
                   label="Valor"
                   placeholder="0,00"
                   error={errorsTrans.amount?.message}

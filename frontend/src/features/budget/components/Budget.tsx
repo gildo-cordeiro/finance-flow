@@ -681,8 +681,7 @@ export function Budget() {
               </div>
 
               <Input
-                type="number"
-                step="0.01"
+                isCurrency={true}
                 label="Valor Planejado (R$)"
                 placeholder="0,00"
                 value={newBudgetAmount}

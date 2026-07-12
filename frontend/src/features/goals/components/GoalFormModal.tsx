@@ -148,8 +148,7 @@ export function GoalFormModal({ isOpen, onClose, editingGoal }: GoalFormModalPro
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Valor-Alvo (R$)"
-              type="number"
-              step="0.01"
+              isCurrency={true}
               placeholder="0,00"
               error={errors.targetAmount?.message}
               {...register('targetAmount')}
@@ -167,8 +166,7 @@ export function GoalFormModal({ isOpen, onClose, editingGoal }: GoalFormModalPro
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Valor Inicial (Opcional)"
-                type="number"
-                step="0.01"
+                isCurrency={true}
                 placeholder="0,00"
                 error={errors.initialAmount?.message}
                 {...register('initialAmount')}
