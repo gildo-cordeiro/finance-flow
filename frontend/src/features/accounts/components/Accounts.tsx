@@ -26,13 +26,13 @@ const bankAccountSchema = z.object({
   name: z.string().min(1, 'Apelido da conta é obrigatório'),
   bank: z.string().min(1, 'Banco / Instituição é obrigatório'),
   type: z.enum(['CHECKING', 'SAVINGS']),
-  balance: z.preprocess(parseCurrencyToNumber, z.number({ invalid_type_error: 'Saldo inválido' })),
+  balance: z.preprocess(parseCurrencyToNumber, z.number({ message: 'Saldo inválido' })),
 });
 
 const creditCardSchema = z.object({
   name: z.string().min(1, 'Apelido do cartão é obrigatório'),
   bank: z.string().min(1, 'Emissor / Bandeira é obrigatório'),
-  creditLimit: z.preprocess(parseCurrencyToNumber, z.number({ invalid_type_error: 'Limite inválido' }).min(1, 'Informe um limite válido')),
+  creditLimit: z.preprocess(parseCurrencyToNumber, z.number({ message: 'Limite inválido' }).min(1, 'Informe um limite válido')),
   closingDay: z.coerce.number().min(1, 'Entre 1 e 31').max(31, 'Entre 1 e 31'),
   dueDay: z.coerce.number().min(1, 'Entre 1 e 31').max(31, 'Entre 1 e 31'),
   associatedAccountId: z.string().optional().nullable(),
@@ -41,13 +41,13 @@ const creditCardSchema = z.object({
 const editBankSchema = z.object({
   name: z.string().min(1, 'Apelido é obrigatório'),
   bank: z.string().min(1, 'Banco é obrigatório'),
-  balance: z.preprocess(parseCurrencyToNumber, z.number({ invalid_type_error: 'Saldo inválido' })),
+  balance: z.preprocess(parseCurrencyToNumber, z.number({ message: 'Saldo inválido' })),
 });
 
 const editCardSchema = z.object({
   name: z.string().min(1, 'Apelido é obrigatório'),
   bank: z.string().min(1, 'Emissor é obrigatório'),
-  creditLimit: z.preprocess(parseCurrencyToNumber, z.number({ invalid_type_error: 'Limite inválido' }).min(1, 'Limite inválido')),
+  creditLimit: z.preprocess(parseCurrencyToNumber, z.number({ message: 'Limite inválido' }).min(1, 'Limite inválido')),
   closingDay: z.coerce.number().min(1).max(31),
   dueDay: z.coerce.number().min(1).max(31),
 });
