@@ -30,5 +30,5 @@ COPY --from=build /app/build/libs/*.jar app.jar
 # Expose port (Spring Boot default, or fallback to PORT env variable)
 EXPOSE 8080
 
-# Run the jar with dynamic port binding
-ENTRYPOINT ["java", "-Dserver.port=${PORT:8080}", "-jar", "app.jar"]
+# Run the jar with dynamic port binding and IPv4 preference
+ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-Dserver.port=${PORT:8080}", "-jar", "app.jar"]
