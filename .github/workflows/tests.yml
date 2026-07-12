@@ -78,3 +78,29 @@ jobs:
       - name: Run build validation
         run: npm run build
         working-directory: frontend
+
+  deploy-backend:
+    name: Deploy Backend (Docker)
+    needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    # Executa apenas se o push for na main (deploy contínuo)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger Deploy
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "🚀 Disparando deploy no Render via Webhook..."
+            curl -f "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          elif [ -n "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "🚀 Disparando deploy no Railway via CLI..."
+            npm i -g @railway/cli
+            railway up --detach
+          else
+            echo "⚠️ Nenhuma credencial de deploy configurada (RENDER_DEPLOY_HOOK_URL ou RAILWAY_TOKEN). O build passou, mas o deploy automático foi pulado."
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
