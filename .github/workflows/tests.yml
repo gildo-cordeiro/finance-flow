@@ -122,12 +122,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: frontend
 
       - name: Deploy to Vercel
         run: |
@@ -135,14 +129,8 @@ jobs:
             echo "🚀 Instalando Vercel CLI..."
             npm install --global vercel
             
-            echo "🔌 Puxando configurações da Vercel..."
-            vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-            
-            echo "🏗️ Construindo o projeto..."
-            vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-            
-            echo "🚢 Enviando deploy de produção..."
-            vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+            echo "🚢 Disparando deploy e build na nuvem da Vercel..."
+            vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
           else
             echo "⚠️ VERCEL_TOKEN não configurado. Pulando deploy do frontend."
           fi
@@ -150,5 +138,6 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 
 
