@@ -32,3 +32,15 @@ export const previousMonth = (month: string) => {
   prevDate.setMonth(date.getMonth() - 1);
   return format(startOfMonth(prevDate), 'yyyy-MM');
 };
+
+export const parseCurrencyToNumber = (value: unknown): number => {
+  if (value === undefined || value === null || value === '') return 0;
+  if (typeof value === 'number') return value;
+  
+  const cleaned = String(value)
+    .replace(/[^0-9,-]/g, '')
+    .replace(',', '.');
+    
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};

@@ -25,11 +25,11 @@ import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { formatCurrency, previousMonth } from '../../../utils/formatters';
+import { formatCurrency, previousMonth, parseCurrencyToNumber } from '../../../utils/formatters';
 
 const transactionSchema = z.object({
   type: z.enum(['EXPENSE', 'INCOME']),
-  amount: z.coerce.number().positive('O valor deve ser maior que zero'),
+  amount: z.preprocess(parseCurrencyToNumber, z.number().positive('O valor deve ser maior que zero')),
   description: z.string().min(1, 'A descrição é obrigatória'),
   accountId: z.string().min(1, 'A conta é obrigatória'),
   categoryId: z.string().min(1, 'A categoria é obrigatória'),

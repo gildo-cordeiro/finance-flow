@@ -10,14 +10,15 @@ import { useCouple } from '../../couple/hooks/useCouple';
 import { useCreateGoal, useUpdateGoal } from '../hooks/useGoals';
 import { Goal } from '../types';
 import { useToast } from '../../../context/ToastContext';
+import { parseCurrencyToNumber } from '../../../utils/formatters';
 
 const goalSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   description: z.string().optional(),
-  targetAmount: z.coerce.number().positive('O valor alvo deve ser maior que zero'),
+  targetAmount: z.preprocess(parseCurrencyToNumber, z.number().positive('O valor alvo deve ser maior que zero')),
   deadline: z.string().min(1, 'O prazo é obrigatório'),
   isShared: z.boolean().default(false),
-  initialAmount: z.coerce.number().min(0, 'O valor inicial não pode ser negativo').optional(),
+  initialAmount: z.preprocess(parseCurrencyToNumber, z.number().min(0, 'O valor inicial não pode ser negativo').optional()),
 });
 
 type GoalFormData = z.infer<typeof goalSchema>;

@@ -7,9 +7,10 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { useAddContribution } from '../hooks/useGoals';
 import { useToast } from '../../../context/ToastContext';
+import { parseCurrencyToNumber } from '../../../utils/formatters';
 
 const contributionSchema = z.object({
-  amount: z.coerce.number().positive('O valor deve ser maior que zero'),
+  amount: z.preprocess(parseCurrencyToNumber, z.number().positive('O valor deve ser maior que zero')),
   contributionDate: z.string().min(1, 'A data é obrigatória'),
   note: z.string().optional(),
 });
