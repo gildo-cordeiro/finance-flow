@@ -12,6 +12,7 @@ export function useCouple() {
   } = useQuery<CoupleStatusResponse, Error>({
     queryKey: ['coupleStatus'],
     queryFn: () => coupleApi.getStatus(),
+    enabled: !!localStorage.getItem('access_token'),
   });
 
   const invitePartnerMutation = useMutation({
