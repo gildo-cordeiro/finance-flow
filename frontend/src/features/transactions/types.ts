@@ -1,9 +1,14 @@
+export enum TransactionVisibility {
+  PERSONAL = 'PERSONAL',
+  SHARED = 'SHARED',
+}
+
 export interface Category {
   id: string;
   userId?: string | null;
   name: string;
   parentId?: string | null;
-  visibility?: 'PERSONAL' | 'SHARED';
+  visibility?: TransactionVisibility;
 }
 
 export interface CategoryPayload {
@@ -11,9 +16,17 @@ export interface CategoryPayload {
   parentId?: string | null;
 }
 
-export type TransactionType = 'INCOME' | 'EXPENSE';
-export type TransactionStatus = 'PLANNED' | 'PAID' | 'PENDING' | 'OVERDUE';
-export type TransactionVisibility = 'PERSONAL' | 'SHARED';
+export enum TransactionType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+}
+
+export enum TransactionStatus {
+  PLANNED = 'PLANNED',
+  PAID = 'PAID',
+  PENDING = 'PENDING',
+  OVERDUE = 'OVERDUE',
+}
 
 export interface Transaction {
   id: string;
