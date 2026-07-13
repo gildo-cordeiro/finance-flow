@@ -1,66 +1,22 @@
-import React, { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
 import { useTransactions, useTransactionSummary } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useToast } from '../../../context/ToastContext';
-import {
-  Plus, Calendar, AlertTriangle,
-  Trash2, Edit3, X, Info,
-  DollarSign, RefreshCw, Layers, ChevronDown,
-  ChevronLeft, ChevronRight
-} from 'lucide-react';
-import type { TransactionStatus, Transaction, TransactionPayload } from '../types';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
-import { MoneyValue } from '../../../components/ui/MoneyValue';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Transaction, TransactionPayload } from '../types';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
-import { cn } from '../../../lib/cn';
-import { EmptyState } from '../../../components/ui/EmptyState';
-import { formatCurrency, previousMonth, parseCurrencyToNumber } from '../../../utils/formatters';
+import { previousMonth } from '../../../utils/formatters';
+import { TransactionFormData, RepetitionType, RecurrenceRule } from '../schemas/transactionSchema';
 
-const transactionSchema = z.object({
-  type: z.enum(['EXPENSE', 'INCOME']),
-  amount: z.preprocess(parseCurrencyToNumber, z.number().positive('O valor deve ser maior que zero')),
-  description: z.string().min(1, 'A descrição é obrigatória'),
-  accountId: z.string().min(1, 'A conta é obrigatória'),
-  categoryId: z.string().min(1, 'A categoria é obrigatória'),
-  dueDate: z.string().min(1, 'A data de vencimento é obrigatória'),
-  competenceDate: z.string().optional().or(z.literal('')),
-  paymentDate: z.string().optional().or(z.literal('')),
-  status: z.enum(['PLANNED', 'PENDING', 'PAID', 'OVERDUE']),
-  visibility: z.enum(['PERSONAL', 'SHARED']),
-  repetitionType: z.enum(['SINGLE', 'INSTALLMENT', 'RECURRING']).default('SINGLE'),
-  totalInstallments: z.coerce.number().optional().nullable(),
-  isRecurring: z.boolean().optional(),
-  recurrenceRule: z.string().optional().nullable(),
-}).refine((data) => {
-  if (data.status === 'PAID') {
-    return !!data.paymentDate;
-  }
-  return true;
-}, {
-  message: 'A data de pagamento é obrigatória quando o status é PAGO',
-  path: ['paymentDate'],
-}).refine((data) => {
-  if (data.repetitionType === 'INSTALLMENT') {
-    return !!data.totalInstallments && data.totalInstallments > 1;
-  }
-  return true;
-}, {
-  message: 'O número de parcelas deve ser maior que 1',
-  path: ['totalInstallments'],
-});
-
-type TransactionFormData = z.infer<typeof transactionSchema>;
+// Subcomponents
+import { TransactionFilters } from './TransactionFilters';
+import { TransactionTable } from './TransactionTable';
+import { TransactionModal } from './TransactionModal';
+import { BulkActionModals } from './BulkActionModals';
 
 export function Transactions() {
   const { user } = useAuth();
@@ -72,12 +28,10 @@ export function Transactions() {
   const isCouple = viewContext === 'COUPLE';
   const partnerName = coupleStatus.partnerName || 'Parceiro(a)';
 
-
-
   // Filters State and URL Month
   const [searchParams, setSearchParams] = useSearchParams();
   const monthParam = searchParams.get('month');
-  
+
   // Default to current competence month
   const currentCompetenceMonth = () => {
     const d = new Date();
@@ -95,13 +49,20 @@ export function Transactions() {
   const [monthLimits, setMonthLimits] = useState<Record<string, number>>({});
   const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
 
+  // Modals state
+  const [isTransModalOpen, setIsTransModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<TransactionPayload | null>(null);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   // Hook for transactions
   const {
     transactions,
     isLoading: isTransLoading,
     error: transError,
     createTransaction,
-    isCreating: isTransCreating,
     updateTransaction,
     deleteTransaction,
   } = useTransactions(searchMonth, {
@@ -119,7 +80,7 @@ export function Transactions() {
   });
 
   // Collapse expanded row on outside click
-  React.useEffect(() => {
+  useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('.transactions-table-container')) {
@@ -130,125 +91,17 @@ export function Transactions() {
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  // Modal State for Transaction
-  const [isTransModalOpen, setIsTransModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [transFormError, setTransFormError] = useState<string | null>(null);
-
-  // Bulk actions states
-  const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
-  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<TransactionPayload | null>(null);
-  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-
-
-
-  const getTodayStr = () => {
-    const d = new Date();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${month}-${day}`;
-  };
-
-  // Transaction form configuration
-  const {
-    register: registerTrans,
-    handleSubmit: handleTransSubmit,
-    watch: watchTrans,
-    setValue: setValueTrans,
-    reset: resetTrans,
-    formState: { errors: errorsTrans },
-  } = useForm<TransactionFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(transactionSchema) as any,
-    defaultValues: {
-      type: 'EXPENSE',
-      amount: 0,
-      description: '',
-      accountId: '',
-      categoryId: '',
-      competenceDate: '',
-      dueDate: getTodayStr(),
-      paymentDate: '',
-      status: 'PENDING',
-      visibility: 'PERSONAL',
-      repetitionType: 'SINGLE',
-      totalInstallments: null,
-      isRecurring: false,
-      recurrenceRule: 'MONTHLY',
-    }
-  });
-
-  const watchedRepetitionType = watchTrans('repetitionType');
-  const watchedAccountId = watchTrans('accountId');
-  const watchedType = watchTrans('type');
-  const watchedVisibility = watchTrans('visibility');
-
-  // Derived helper for filtered lists (form transaction registration)
-  const filteredCategories = categories.filter(c => {
-    if (!c.userId) return true; // System categories
-    return c.visibility === watchedVisibility;
-  });
-
-  const rootCategories = filteredCategories.filter(c => !c.parentId);
-  const getSubcategories = (parentId: string) => filteredCategories.filter(c => c.parentId === parentId);
-
-  const watchedStatus = watchTrans('status');
-
-  const selectedAccount = accounts.find(a => a.id === watchedAccountId);
-
   const handleOpenNewTrans = () => {
     setEditingTransaction(null);
-    resetTrans({
-      type: 'EXPENSE',
-      amount: 0,
-      description: '',
-      accountId: accounts[0]?.id || '',
-      categoryId: '',
-      competenceDate: '',
-      dueDate: getTodayStr(),
-      paymentDate: '',
-      status: 'PENDING',
-      visibility: 'PERSONAL',
-      repetitionType: 'SINGLE',
-      totalInstallments: null,
-      isRecurring: false,
-      recurrenceRule: 'MONTHLY',
-    });
-    setTransFormError(null);
     setIsTransModalOpen(true);
   };
 
   const handleOpenEditTrans = (t: Transaction) => {
     setEditingTransaction(t);
-
-    let repetitionType: 'SINGLE' | 'INSTALLMENT' | 'RECURRING' = 'SINGLE';
-    if (t.installmentGroupId) repetitionType = 'INSTALLMENT';
-    else if (t.isRecurring) repetitionType = 'RECURRING';
-
-    resetTrans({
-      type: t.type,
-      amount: t.amount,
-      description: t.description,
-      accountId: t.accountId,
-      categoryId: t.categoryId,
-      competenceDate: t.competenceDate || '',
-      dueDate: t.dueDate,
-      paymentDate: t.paymentDate || '',
-      status: t.status,
-      visibility: t.visibility,
-      repetitionType,
-      totalInstallments: t.totalInstallments || null,
-      isRecurring: t.isRecurring,
-      recurrenceRule: t.recurrenceRule || 'MONTHLY',
-    });
-    setTransFormError(null);
     setIsTransModalOpen(true);
   };
 
   const handleTransFormSubmit = async (data: TransactionFormData) => {
-    setTransFormError(null);
-
     const payload: TransactionPayload = {
       accountId: data.accountId,
       categoryId: data.categoryId,
@@ -260,31 +113,25 @@ export function Transactions() {
       paymentDate: data.status === 'PAID' ? data.paymentDate || null : null,
       status: data.status,
       visibility: data.visibility,
-      totalInstallments: data.repetitionType === 'INSTALLMENT' ? Number(data.totalInstallments) : null,
-      isRecurring: data.repetitionType === 'RECURRING',
-      recurrenceRule: data.repetitionType === 'RECURRING' ? data.recurrenceRule || 'MONTHLY' : null,
+      totalInstallments: data.repetitionType === RepetitionType.INSTALLMENT ? Number(data.totalInstallments) : null,
+      isRecurring: data.repetitionType === RepetitionType.RECURRING,
+      recurrenceRule: data.repetitionType === RepetitionType.RECURRING ? data.recurrenceRule || RecurrenceRule.MONTHLY : null,
     };
 
-    try {
-      if (editingTransaction) {
-        if (editingTransaction.installmentGroupId || editingTransaction.recurrenceGroupId) {
-          setPendingUpdatePayload(payload);
-          setIsBulkUpdateModalOpen(true);
-        } else {
-          await updateTransaction(editingTransaction.id, payload, 'ONLY_THIS');
-          setIsTransModalOpen(false);
-          setEditingTransaction(null);
-          toast.success('Lançamento atualizado com sucesso!');
-        }
+    if (editingTransaction) {
+      if (editingTransaction.installmentGroupId || editingTransaction.recurrenceGroupId) {
+        setPendingUpdatePayload(payload);
+        setIsBulkUpdateModalOpen(true);
       } else {
-        await createTransaction(payload);
+        await updateTransaction(editingTransaction.id, payload, 'ONLY_THIS');
         setIsTransModalOpen(false);
-        toast.success('Lançamento adicionado com sucesso!');
+        setEditingTransaction(null);
+        toast.success('Lançamento atualizado com sucesso!');
       }
-    } catch (err) {
-      const error = err as Error;
-      setTransFormError(error.message || 'Erro ao salvar transação.');
-      toast.error(error.message || 'Erro ao salvar transação.');
+    } else {
+      await createTransaction(payload);
+      setIsTransModalOpen(false);
+      toast.success('Lançamento adicionado com sucesso!');
     }
   };
 
@@ -299,7 +146,6 @@ export function Transactions() {
       toast.success('Lançamentos recorrentes atualizados!');
     } catch (err) {
       const error = err as Error;
-      setTransFormError(error.message || 'Erro ao atualizar transações.');
       toast.error(error.message || 'Erro ao atualizar transações.');
       setIsBulkUpdateModalOpen(false);
     }
@@ -336,17 +182,8 @@ export function Transactions() {
     }
   };
 
-
-
-  // Helper selectors
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
-  // Generate month options (from 12 months ago to 3 months in the future)
-  const monthOptions = React.useMemo(() => {
+  // Helper date generators
+  const monthOptions = useMemo(() => {
     const options = [];
     const today = new Date();
     for (let i = -12; i <= 3; i++) {
@@ -376,7 +213,6 @@ export function Transactions() {
     return name.charAt(0).toUpperCase() + name.slice(1);
   };
 
-  // Month navigation helpers
   const handlePrevMonth = () => {
     if (searchMonth === 'ALL') return;
     const prev = previousMonth(searchMonth);
@@ -386,7 +222,7 @@ export function Transactions() {
   const handleNextMonth = () => {
     if (searchMonth === 'ALL') return;
     const [year, month] = searchMonth.split('-').map(Number);
-    const date = new Date(year, month, 1); // June is index 5, month index 6 is July
+    const date = new Date(year, month, 1);
     const next = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     setSearchParams({ month: next });
   };
@@ -395,8 +231,16 @@ export function Transactions() {
     setSearchParams({ month: val });
   };
 
-  // Generate active filter chips
-  const activeChips = React.useMemo(() => {
+  // Helper lists for filtering
+  const filteredCategoriesForChips = categories.filter(c => {
+    if (!c.userId) return true;
+    return c.visibility === 'PERSONAL' || c.visibility === 'SHARED';
+  });
+  const rootCategories = filteredCategoriesForChips.filter(c => !c.parentId);
+  const getSubcategories = (parentId: string) => filteredCategoriesForChips.filter(c => c.parentId === parentId);
+
+  // Active filter chips
+  const activeChips = useMemo(() => {
     const chips = [];
     if (filterAccountId) {
       const acc = accounts.find(a => a.id === filterAccountId);
@@ -445,11 +289,9 @@ export function Transactions() {
   };
 
   // Client-side filtering
-  const filteredTransactions = React.useMemo(() => {
+  const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      // Filter by Status
       if (filterStatus !== 'ALL' && t.status !== filterStatus) return false;
-      // Filter by Member (only relevant in Couple view)
       if (isCouple && filterMember !== 'ALL') {
         if (filterMember === 'OWN' && t.userId !== user?.id) return false;
         if (filterMember === 'PARTNER' && t.userId === user?.id) return false;
@@ -458,8 +300,8 @@ export function Transactions() {
     });
   }, [transactions, filterStatus, filterMember, isCouple, user?.id]);
 
-  // Group by Month (using competenceDate)
-  const groupedTransactions = React.useMemo(() => {
+  // Group by month
+  const groupedTransactions = useMemo(() => {
     return filteredTransactions.reduce<Record<string, Transaction[]>>((acc, t) => {
       const monthKey = t.competenceDate ? t.competenceDate.slice(0, 7) : 'sem-competencia';
       if (!acc[monthKey]) {
@@ -471,18 +313,15 @@ export function Transactions() {
   }, [filteredTransactions]);
 
   // Sorted month keys
-  const sortedMonthKeys = React.useMemo(() => {
+  const sortedMonthKeys = useMemo(() => {
     const currentMonthKey = currentCompetenceMonth();
     return Object.keys(groupedTransactions).sort((a, b) => {
       if (a === 'sem-competencia') return 1;
       if (b === 'sem-competencia') return -1;
-      
       const isFutureA = a > currentMonthKey;
       const isFutureB = b > currentMonthKey;
-
       if (isFutureA && !isFutureB) return 1;
       if (!isFutureA && isFutureB) return -1;
-
       if (isFutureA && isFutureB) {
         return a.localeCompare(b);
       }
@@ -490,13 +329,11 @@ export function Transactions() {
     });
   }, [groupedTransactions]);
 
-  // Month collapse states helper
   const isMonthExpanded = (monthKey: string) => {
     if (expandedMonths[monthKey] !== undefined) {
       return expandedMonths[monthKey];
     }
     if (searchMonth !== 'ALL') return true;
-    
     const today = new Date();
     const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     return monthKey === currentMonthKey;
@@ -509,7 +346,6 @@ export function Transactions() {
     }));
   };
 
-  // Month limits for pagination
   const getMonthLimit = (monthKey: string) => {
     return monthLimits[monthKey] || 20;
   };
@@ -525,7 +361,7 @@ export function Transactions() {
 
   return (
     <div className="gradient-bg min-h-screen text-white">
-      {/* Couple context banner — visible only in COUPLE mode */}
+      {/* Couple context banner */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
           <span className="text-violet-300 text-xs font-medium">
@@ -606,775 +442,77 @@ export function Transactions() {
         </div>
 
         <div className="space-y-6">
-          {/* Filters Box */}
-          <Card className="p-6 space-y-4">
-            <div className={cn(
-              "grid grid-cols-1 gap-4 items-end",
-              isCouple ? "sm:grid-cols-4" : "sm:grid-cols-3"
-            )}>
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Conta</label>
-                <select
-                  value={filterAccountId}
-                  onChange={(e) => setFilterAccountId(e.target.value)}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                >
-                  <option value="">Todas as contas</option>
-                  {accounts.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.bank})</option>
-                  ))}
-                </select>
-              </div>
+          {/* Filters Component */}
+          <TransactionFilters
+            filterAccountId={filterAccountId}
+            setFilterAccountId={setFilterAccountId}
+            filterCategoryId={filterCategoryId}
+            setFilterCategoryId={setFilterCategoryId}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            filterMember={filterMember}
+            setFilterMember={setFilterMember}
+            accounts={accounts}
+            rootCategories={rootCategories}
+            getSubcategories={getSubcategories}
+            isCouple={isCouple}
+            partnerName={partnerName}
+            activeChips={activeChips}
+            handleClearAllFilters={handleClearAllFilters}
+          />
 
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Categoria</label>
-                <select
-                  value={filterCategoryId}
-                  onChange={(e) => setFilterCategoryId(e.target.value)}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                >
-                  <option value="">Todas as categorias</option>
-                  {rootCategories.map(parent => (
-                    <React.Fragment key={parent.id}>
-                      <option value={parent.id} className="font-bold text-violet-400">{parent.name}</option>
-                      {getSubcategories(parent.id).map(sub => (
-                        <option key={sub.id} value={sub.id}>&nbsp;&nbsp;&nbsp;&nbsp;{sub.name}</option>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Status</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as 'ALL' | 'PAID' | 'PLANNED' | 'PENDING' | 'OVERDUE')}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                >
-                  <option value="ALL">Todos os status</option>
-                  <option value="PAID">Pago</option>
-                  <option value="PLANNED">Planejado</option>
-                  <option value="PENDING">Pendente</option>
-                  <option value="OVERDUE">Atrasado</option>
-                </select>
-              </div>
-
-              {isCouple && (
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Membro</label>
-                  <select
-                    value={filterMember}
-                    onChange={(e) => setFilterMember(e.target.value as 'ALL' | 'OWN' | 'PARTNER')}
-                    className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-500 text-zinc-100"
-                  >
-                    <option value="ALL">Todos os membros</option>
-                    <option value="OWN">Você</option>
-                    <option value="PARTNER">{partnerName}</option>
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Active Filter Chips */}
-            {activeChips.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-zinc-800/40">
-                <span className="text-xs text-zinc-400 font-medium mr-1">Filtros ativos:</span>
-                {activeChips.map(chip => (
-                  <div
-                    key={chip.id}
-                    className="bg-bg-elevated/40 border border-border-subtle rounded-lg px-2.5 py-1 flex items-center gap-2 text-xs text-zinc-300"
-                  >
-                    <span>{chip.label}</span>
-                    <button
-                      onClick={chip.onClear}
-                      className="text-zinc-550 hover:text-red-400 transition-colors p-0.5 rounded"
-                      title="Remover filtro"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={handleClearAllFilters}
-                  className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors ml-auto"
-                >
-                  Limpar todos
-                </button>
-              </div>
-            )}
-          </Card>
-
-          {/* Transactions List */}
+          {/* Transactions List Table */}
           <div className="space-y-4 transactions-table-container">
-            {isTransLoading ? (
-              <div className="flex justify-center items-center py-20 bg-bg-surface border border-border-subtle rounded-xl">
-                <div className="w-10 h-10 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin"></div>
-              </div>
-            ) : transError ? (
-              <div className="p-6 text-center text-red-400 space-y-2 bg-bg-surface border border-border-subtle rounded-xl">
-                <AlertTriangle className="w-10 h-10 mx-auto" />
-                <p>Erro ao carregar lançamentos.</p>
-                <p className="text-xs text-red-400/80">{transError.message}</p>
-              </div>
-            ) : filteredTransactions.length === 0 ? (
-              <div className="bg-bg-surface border border-border-subtle rounded-xl">
-                <EmptyState
-                  icon={<Calendar className="w-12 h-12 text-zinc-600" />}
-                  title="Nenhuma transação encontrada"
-                  description="Ajuste os filtros ou crie um novo lançamento."
-                  action={
-                    <Button onClick={handleOpenNewTrans} variant="primary" size="sm">
-                      Adicionar transação
-                    </Button>
-                  }
-                />
-              </div>
-            ) : searchMonth !== 'ALL' ? (
-              // Single month view - direct table rendering, not collapsible
-              <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden">
-                {isSummaryLoading ? (
-                  <div className="animate-pulse bg-zinc-850/60 h-14 w-full border-b border-border-subtle" />
-                ) : (
-                  <div className="bg-bg-surface border-b border-border-subtle p-4 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-violet-400" />
-                      <span className="font-semibold text-zinc-100 text-sm">Resumo de {getMonthName(searchMonth)}</span>
-                    </div>
-                    <div className="flex items-center gap-4 flex-wrap text-xs">
-                      <div className="text-zinc-400">
-                        Total: <span className="font-semibold text-zinc-200">{monthSummary?.totalCount || 0} {monthSummary?.totalCount === 1 ? 'lançamento' : 'lançamentos'}</span>
-                      </div>
-                      <div className="text-zinc-400">
-                        Entradas: <span className="font-bold text-success">+{formatCurrency(monthSummary?.income || 0)}</span>
-                      </div>
-                      <div className="text-zinc-400">
-                        Saídas: <span className="font-bold text-danger">-{formatCurrency(monthSummary?.expense || 0)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
-                        <th className="p-4">Competência</th>
-                        <th className="p-4">Descrição</th>
-                        <th className="p-4">Categoria</th>
-                        <th className="p-4">Conta</th>
-                        <th className="p-4 text-right">Valor</th>
-                        {isCouple && <th className="p-4">Membro</th>}
-                        <th className="p-4 text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/40 text-sm text-zinc-300">
-                      {filteredTransactions.slice(0, getMonthLimit(searchMonth)).map(t => {
-                        const acc = accounts.find(a => a.id === t.accountId);
-                        const cat = categories.find(c => c.id === t.categoryId);
-                        const isExpandedRow = expandedTransactionId === t.id;
-                        return (
-                          <React.Fragment key={t.id}>
-                            <tr
-                              onClick={() => setExpandedTransactionId(prev => prev === t.id ? null : t.id)}
-                              className="hover:bg-bg-elevated/10 transition-colors group cursor-pointer select-none"
-                            >
-                              <td className="p-4 text-zinc-400">
-                                {formatDate(t.competenceDate || t.dueDate)}
-                              </td>
-                              <td className="p-4 font-medium text-white">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span>{t.description}</span>
-                                  {t.installmentGroupId && (
-                                    <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
-                                  )}
-                                  {t.isRecurring && (
-                                    <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
-                                  )}
-                                  <Badge status={t.status} className="text-[10px] px-1.5 py-0" />
-                                </div>
-                              </td>
-                              <td className="p-4 text-zinc-400">
-                                {cat ? cat.name : (t.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
-                              </td>
-                              <td className="p-4 text-zinc-400">
-                                {acc ? acc.name : (t.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
-                              </td>
-                              <td className="p-4 text-right">
-                                <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
-                              </td>
-                              {isCouple && (
-                                <td className="p-4">
-                                  <span className={cn(
-                                    "text-[10px] font-bold px-1.5 py-0.5 rounded border select-none",
-                                    t.userId === user.id
-                                      ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
-                                      : "bg-pink-500/10 border-pink-500/20 text-pink-300"
-                                  )}>
-                                    {t.userId === user.id ? 'Você' : partnerName}
-                                  </span>
-                                </td>
-                              )}
-                              <td className="p-4 text-center">
-                                <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                                  {t.userId === user.id ? (
-                                    <>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleOpenEditTrans(t); }}
-                                        className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                        title="Editar"
-                                      >
-                                        <Edit3 className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteTrans(t); }}
-                                        className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
-                                        title="Excluir"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <span className="text-xs text-zinc-550 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                            {isExpandedRow && (
-                              <tr className="bg-bg-elevated/20 border-b border-zinc-800/40">
-                                <td colSpan={isCouple ? 7 : 6} className="p-4 text-xs text-zinc-400">
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-2">
-                                    <div>
-                                      <span className="font-semibold text-zinc-300">Vencimento:</span>{' '}
-                                      <span className="text-zinc-200">{formatDate(t.dueDate)}</span>
-                                    </div>
-                                    <div>
-                                      <span className="font-semibold text-zinc-300">Pagamento:</span>{' '}
-                                      <span className="text-zinc-200">{t.paymentDate ? formatDate(t.paymentDate) : 'Pendente / Não pago'}</span>
-                                    </div>
-                                    <div>
-                                      <span className="font-semibold text-zinc-300">Visibilidade:</span>{' '}
-                                      <span className="text-zinc-200">
-                                        {t.visibility === 'SHARED' ? 'Compartilhado (Casal)' : 'Pessoal (Privado)'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {t.recurrenceRule && (
-                                    <div className="text-zinc-400 mt-2 text-[11px]">
-                                      <span className="font-semibold text-zinc-300">Regra de recorrência:</span> {t.recurrenceRule === 'MONTHLY' ? 'Mensal' : t.recurrenceRule}
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination Indicator / Load More */}
-                {filteredTransactions.length > getMonthLimit(searchMonth) && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-zinc-800/40 text-xs text-zinc-400 bg-bg-surface/20">
-                    <span>
-                      Exibindo {Math.min(filteredTransactions.length, getMonthLimit(searchMonth))} de {filteredTransactions.length} transações em {getMonthLabelOnly(searchMonth)}
-                    </span>
-                    <button
-                      onClick={() => handleLoadMore(searchMonth)}
-                      className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors bg-bg-elevated/45 hover:bg-bg-elevated px-3 py-1.5 rounded-lg border border-border-subtle"
-                    >
-                      Ver mais
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // ALL months view - collapsible cards grouped by month
-              sortedMonthKeys.map(monthKey => {
-                const allMonthTxs = groupedTransactions[monthKey] || [];
-                const visibleLimit = getMonthLimit(monthKey);
-                const visibleTxs = allMonthTxs.slice(0, visibleLimit);
-                const isExpanded = isMonthExpanded(monthKey);
-
-                // Calculate net amount for the month
-                const monthNet = allMonthTxs.reduce((sum, t) => {
-                  return sum + (t.type === 'INCOME' ? t.amount : -t.amount);
-                }, 0);
-
-                return (
-                  <div key={monthKey} className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden">
-                    {/* Monthly Header */}
-                    <div
-                      onClick={() => toggleMonth(monthKey)}
-                      className="flex items-center justify-between p-4 bg-bg-surface hover:bg-bg-elevated/40 border-b border-border-subtle cursor-pointer transition-colors select-none"
-                    >
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-200", !isExpanded && "-rotate-90")} />
-                        <span className="font-semibold text-zinc-100">{getMonthName(monthKey)}</span>
-                        <span className="text-zinc-650 font-light">•</span>
-                        <span className="text-xs text-zinc-450">
-                          {allMonthTxs.length} {allMonthTxs.length === 1 ? 'transação' : 'transações'}
-                        </span>
-                        <span className="text-zinc-650 font-light">•</span>
-                        <span className={cn(
-                          "font-semibold text-xs",
-                          monthNet > 0 ? "text-success" : monthNet < 0 ? "text-danger" : "text-zinc-300"
-                        )}>
-                          {monthNet > 0 ? '+' : ''}{formatCurrency(monthNet)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Collapsable Content */}
-                    {isExpanded && (
-                      <div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
-                                <th className="p-4">Competência</th>
-                                <th className="p-4">Descrição</th>
-                                <th className="p-4">Categoria</th>
-                                <th className="p-4">Conta</th>
-                                <th className="p-4 text-right">Valor</th>
-                                {isCouple && <th className="p-4">Membro</th>}
-                                <th className="p-4 text-center">Ações</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-800/40 text-sm text-zinc-300">
-                              {visibleTxs.map(t => {
-                                const acc = accounts.find(a => a.id === t.accountId);
-                                const cat = categories.find(c => c.id === t.categoryId);
-                                const isExpandedRow = expandedTransactionId === t.id;
-                                return (
-                                  <React.Fragment key={t.id}>
-                                    <tr
-                                      onClick={() => setExpandedTransactionId(prev => prev === t.id ? null : t.id)}
-                                      className="hover:bg-bg-elevated/10 transition-colors group cursor-pointer select-none"
-                                    >
-                                      <td className="p-4 text-zinc-400">
-                                        {formatDate(t.competenceDate || t.dueDate)}
-                                      </td>
-                                      <td className="p-4 font-medium text-white">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <span>{t.description}</span>
-                                          {t.installmentGroupId && (
-                                            <span title="Lançamento Parcelado"><Layers className="w-3.5 h-3.5 text-blue-400" /></span>
-                                          )}
-                                          {t.isRecurring && (
-                                            <span title="Lançamento Recorrente"><RefreshCw className="w-3.5 h-3.5 text-emerald-400" /></span>
-                                          )}
-                                          <Badge status={t.status} className="text-[10px] px-1.5 py-0" />
-                                        </div>
-                                      </td>
-                                      <td className="p-4 text-zinc-400">
-                                        {cat ? cat.name : (t.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
-                                      </td>
-                                      <td className="p-4 text-zinc-400">
-                                        {acc ? acc.name : (t.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
-                                      </td>
-                                      <td className="p-4 text-right">
-                                        <MoneyValue amount={t.type === 'EXPENSE' ? -t.amount : t.amount} />
-                                      </td>
-                                      {isCouple && (
-                                        <td className="p-4">
-                                          <span className={cn(
-                                            "text-[10px] font-bold px-1.5 py-0.5 rounded border select-none",
-                                            t.userId === user.id
-                                              ? "bg-violet-500/10 border-violet-500/20 text-violet-300"
-                                              : "bg-pink-500/10 border-pink-500/20 text-pink-300"
-                                          )}>
-                                            {t.userId === user.id ? 'Você' : partnerName}
-                                          </span>
-                                        </td>
-                                      )}
-                                      <td className="p-4 text-center">
-                                        <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                                          {t.userId === user.id ? (
-                                            <>
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleOpenEditTrans(t); }}
-                                                className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                                title="Editar"
-                                              >
-                                                <Edit3 className="w-4 h-4" />
-                                              </button>
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteTrans(t); }}
-                                                className="p-1 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
-                                                title="Excluir"
-                                              >
-                                                <Trash2 className="w-4 h-4" />
-                                              </button>
-                                            </>
-                                          ) : (
-                                            <span className="text-xs text-zinc-550 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                    {isExpandedRow && (
-                                      <tr className="bg-bg-elevated/20 border-b border-zinc-800/40">
-                                        <td colSpan={isCouple ? 7 : 6} className="p-4 text-xs text-zinc-400">
-                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-2">
-                                            <div>
-                                              <span className="font-semibold text-zinc-300">Vencimento:</span>{' '}
-                                              <span className="text-zinc-200">{formatDate(t.dueDate)}</span>
-                                            </div>
-                                            <div>
-                                              <span className="font-semibold text-zinc-300">Pagamento:</span>{' '}
-                                              <span className="text-zinc-200">{t.paymentDate ? formatDate(t.paymentDate) : 'Pendente / Não pago'}</span>
-                                            </div>
-                                            <div>
-                                              <span className="font-semibold text-zinc-300">Visibilidade:</span>{' '}
-                                              <span className="text-zinc-200">
-                                                {t.visibility === 'SHARED' ? 'Compartilhado (Casal)' : 'Pessoal (Privado)'}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          {t.recurrenceRule && (
-                                            <div className="text-zinc-400 mt-2 text-[11px]">
-                                              <span className="font-semibold text-zinc-300">Regra de recorrência:</span> {t.recurrenceRule === 'MONTHLY' ? 'Mensal' : t.recurrenceRule}
-                                            </div>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    )}
-                                  </React.Fragment>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Pagination Indicator / Load More */}
-                        {allMonthTxs.length > 20 && (
-                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-zinc-800/40 text-xs text-zinc-400 bg-bg-surface/20">
-                            <span>
-                              Exibindo {visibleTxs.length} de {allMonthTxs.length} transações em {getMonthLabelOnly(monthKey)}
-                            </span>
-                            {visibleTxs.length < allMonthTxs.length && (
-                              <button
-                                onClick={() => handleLoadMore(monthKey)}
-                                className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors bg-bg-elevated/45 hover:bg-bg-elevated px-3 py-1.5 rounded-lg border border-border-subtle"
-                              >
-                                Ver mais
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+            <TransactionTable
+              accounts={accounts}
+              categories={categories}
+              user={user}
+              isCouple={isCouple}
+              partnerName={partnerName}
+              searchMonth={searchMonth}
+              isTransLoading={isTransLoading}
+              transError={transError as Error | null}
+              isSummaryLoading={isSummaryLoading}
+              monthSummary={monthSummary}
+              filteredTransactions={filteredTransactions}
+              groupedTransactions={groupedTransactions}
+              sortedMonthKeys={sortedMonthKeys}
+              expandedTransactionId={expandedTransactionId}
+              setExpandedTransactionId={setExpandedTransactionId}
+              toggleMonth={toggleMonth}
+              isMonthExpanded={isMonthExpanded}
+              getMonthLimit={getMonthLimit}
+              handleLoadMore={handleLoadMore}
+              handleOpenNewTrans={handleOpenNewTrans}
+              onEdit={handleOpenEditTrans}
+              onDelete={handleDeleteTrans}
+              getMonthName={getMonthName}
+              getMonthLabelOnly={getMonthLabelOnly}
+            />
           </div>
         </div>
-
       </main>
 
-      {/* Manual Transaction Modal */}
-      {isTransModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="auth-card w-full max-w-lg p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-violet-400" />
-                Registrar Lançamento Manual
-              </h2>
-              <button onClick={() => setIsTransModalOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Manual Transaction Form Modal */}
+      <TransactionModal
+        isOpen={isTransModalOpen}
+        onClose={() => setIsTransModalOpen(false)}
+        editingTransaction={editingTransaction}
+        accounts={accounts}
+        categories={categories}
+        onSubmit={handleTransFormSubmit}
+        isSubmitting={false}
+      />
 
-            <form onSubmit={handleTransSubmit(handleTransFormSubmit)} className="space-y-4">
-              {transFormError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{transFormError}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Tipo de Lançamento</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setValueTrans('type', 'EXPENSE')}
-                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${watchedType === 'EXPENSE' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
-                    >
-                      Despesa
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValueTrans('type', 'INCOME')}
-                      className={`py-2 text-sm font-semibold rounded-xl border transition-all ${watchedType === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
-                    >
-                      Receita
-                    </button>
-                  </div>
-                </div>
-
-                <Input
-                  isCurrency={true}
-                  label="Valor"
-                  placeholder="0,00"
-                  error={errorsTrans.amount?.message}
-                  {...registerTrans('amount')}
-                />
-              </div>
-
-              <Input
-                type="text"
-                label="Descrição"
-                placeholder="Ex: Supermercado do mês"
-                error={errorsTrans.description?.message}
-                {...registerTrans('description')}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label="Conta Origem"
-                  error={errorsTrans.accountId?.message}
-                  {...registerTrans('accountId')}
-                >
-                  <option value="">Selecione...</option>
-                  {accounts.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.bank})</option>
-                  ))}
-                </Select>
-
-                <Select
-                  label="Categoria"
-                  error={errorsTrans.categoryId?.message}
-                  {...registerTrans('categoryId')}
-                >
-                  <option value="">Selecione...</option>
-                  {rootCategories.map(parent => (
-                    <React.Fragment key={parent.id}>
-                      <option value={parent.id} className="font-bold text-violet-400" disabled>{parent.name}</option>
-                      {getSubcategories(parent.id).map(sub => (
-                        <option key={sub.id} value={sub.id}>&nbsp;&nbsp;&nbsp;&nbsp;{sub.name}</option>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </Select>
-              </div>
-
-              {selectedAccount?.type === 'CREDIT_CARD' && (
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs rounded-xl flex items-start gap-2">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold block mb-0.5">Gestão Inteligente de Fatura Ativa</span>
-                    O sistema calculará a competência baseando-se no fechamento (dia {selectedAccount.closingDay}). O vencimento e o pagamento deste lançamento serão definidos automaticamente para o dia de vencimento da fatura correspondente (dia {selectedAccount.dueDay}), garantindo a precisão do seu Fluxo de Caixa.
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-3 gap-4">
-                <Input
-                  type="date"
-                  label="Vencimento"
-                  error={errorsTrans.dueDate?.message}
-                  {...registerTrans('dueDate')}
-                />
-
-                <Input
-                  type="date"
-                  label="Competência"
-                  error={errorsTrans.competenceDate?.message}
-                  {...registerTrans('competenceDate')}
-                />
-
-                <Input
-                  type="date"
-                  label="Data Pagamento"
-                  error={errorsTrans.paymentDate?.message}
-                  disabled={watchedStatus !== 'PAID'}
-                  {...registerTrans('paymentDate')}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label="Repetição"
-                  error={errorsTrans.repetitionType?.message}
-                  disabled={!!editingTransaction}
-                  {...registerTrans('repetitionType')}
-                >
-                  <option value="SINGLE">Único</option>
-                  <option value="INSTALLMENT">Parcelado</option>
-                  <option value="RECURRING">Fixo Mensal</option>
-                </Select>
-
-                {watchedRepetitionType === 'INSTALLMENT' && (
-                  <Input
-                    type="number"
-                    label="Nº de Parcelas"
-                    placeholder="Ex: 3"
-                    disabled={!!editingTransaction}
-                    error={errorsTrans.totalInstallments?.message}
-                    {...registerTrans('totalInstallments')}
-                  />
-                )}
-
-                {watchedRepetitionType === 'RECURRING' && (
-                  <Select
-                    label="Frequência"
-                    disabled={!!editingTransaction}
-                    error={errorsTrans.recurrenceRule?.message}
-                    {...registerTrans('recurrenceRule')}
-                  >
-                    <option value="MONTHLY">Mensal</option>
-                  </Select>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label="Status"
-                  error={errorsTrans.status?.message}
-                  value={watchedStatus}
-                  onChange={(e) => {
-                    const newStatus = e.target.value as TransactionStatus;
-                    setValueTrans('status', newStatus);
-                    if (newStatus !== 'PAID') {
-                      setValueTrans('paymentDate', '');
-                    } else {
-                      setValueTrans('paymentDate', getTodayStr());
-                    }
-                  }}
-                >
-                  <option value="PLANNED">Planejado</option>
-                  <option value="PENDING">Pendente</option>
-                  <option value="PAID">Pago</option>
-                  <option value="OVERDUE">Atrasado</option>
-                </Select>
-
-                <Select
-                  label="Visibilidade"
-                  error={errorsTrans.visibility?.message}
-                  {...registerTrans('visibility')}
-                >
-                  <option value="PERSONAL">Pessoal (Privado)</option>
-                  <option value="SHARED">Compartilhado (Casal)</option>
-                </Select>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsTransModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <Button
-                  type="submit"
-                  loading={isTransCreating}
-                >
-                  Salvar Lançamento
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* Bulk Update Modal */}
-      {isBulkUpdateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="auth-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Info className="w-5 h-5 text-violet-400" />
-                Editar Lançamento Recorrente
-              </h2>
-              <button onClick={() => setIsBulkUpdateModalOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-sm text-zinc-300">
-              Este lançamento faz parte de um grupo (parcelamento ou recorrência). Deseja atualizar apenas este lançamento ou todos os lançamentos do grupo?
-            </p>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => handleConfirmBulkUpdate('ONLY_THIS')}
-                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
-              >
-                Atualizar apenas este
-              </button>
-              <button
-                type="button"
-                onClick={() => handleConfirmBulkUpdate('ALL')}
-                className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-sm font-semibold rounded-xl shadow-lg shadow-violet-500/25 transition-all"
-              >
-                Atualizar toda a série
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsBulkUpdateModalOpen(false)}
-                className="w-full py-2.5 text-zinc-400 hover:text-white text-sm font-semibold transition-all"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Delete Modal */}
-      {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="auth-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2 text-red-400">
-                <AlertTriangle className="w-5 h-5" />
-                Excluir Lançamento Recorrente
-              </h2>
-              <button onClick={() => setIsBulkDeleteModalOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-sm text-zinc-300">
-              Este lançamento faz parte de um grupo (parcelamento ou recorrência). Deseja excluir apenas este lançamento ou todos os lançamentos do grupo?
-            </p>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => handleConfirmBulkDelete('ONLY_THIS')}
-                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
-              >
-                Excluir apenas este
-              </button>
-              <button
-                type="button"
-                onClick={() => handleConfirmBulkDelete('ALL')}
-                className="w-full py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-sm font-semibold rounded-xl shadow-lg shadow-red-500/25 transition-all"
-              >
-                Excluir toda a série
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsBulkDeleteModalOpen(false)}
-                className="w-full py-2.5 text-zinc-400 hover:text-white text-sm font-semibold transition-all"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Secondary confirmation dialogs for bulk update/delete */}
+      <BulkActionModals
+        isBulkUpdateOpen={isBulkUpdateModalOpen}
+        onBulkUpdateClose={() => setIsBulkUpdateModalOpen(false)}
+        onConfirmBulkUpdate={handleConfirmBulkUpdate}
+        isBulkDeleteOpen={isBulkDeleteModalOpen}
+        onBulkDeleteClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirmBulkDelete={handleConfirmBulkDelete}
+      />
     </div>
   );
 }
