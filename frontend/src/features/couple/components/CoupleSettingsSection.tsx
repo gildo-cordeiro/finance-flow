@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useCouple } from '../hooks/useCouple';
-import { Heart, Mail, Clock, UserCheck, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
-import { Input } from '../../../components/ui/Input';
-import { Button } from '../../../components/ui/Button';
+import { Heart, UserCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { InvitePartnerForm } from './InvitePartnerForm';
+import { PendingInviteCard } from './PendingInviteCard';
+import { ActiveCoupleCard } from './ActiveCoupleCard';
 
 export function CoupleSettingsSection() {
   const {
@@ -89,7 +89,9 @@ export function CoupleSettingsSection() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">Módulo de Casal</h2>
-          <p className="text-xs text-zinc-400 mt-0.5">Gerencie o compartilhamento de suas finanças de forma segura</p>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Gerencie o compartilhamento de suas finanças de forma segura
+          </p>
         </div>
       </div>
 
@@ -109,113 +111,39 @@ export function CoupleSettingsSection() {
 
       {/* SEM VÍNCULO */}
       {coupleStatus.status === 'NONE' && (
-        <form onSubmit={handleSendInvite} className="space-y-4">
-          <p className="text-sm text-zinc-300">
-            Você ainda não possui um parceiro vinculado. Digite o e-mail do seu parceiro abaixo para enviar um convite e iniciar a gestão financeira conjunta.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
-            <div className="flex-1 w-full">
-              <Input
-                type="email"
-                label="E-mail do Parceiro"
-                placeholder="parceiro@email.com"
-                value={partnerEmail}
-                onChange={(e) => setPartnerEmail(e.target.value)}
-                disabled={isInviting}
-                leftIcon={<Mail className="w-5 h-5 text-zinc-500" />}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              loading={isInviting}
-              className="w-full sm:w-auto h-[42px] px-6"
-            >
-              Enviar convite
-            </Button>
-          </div>
-        </form>
+        <InvitePartnerForm
+          partnerEmail={partnerEmail}
+          onPartnerEmailChange={setPartnerEmail}
+          isInviting={isInviting}
+          onSendInvite={handleSendInvite}
+        />
       )}
 
       {/* PENDENTE */}
       {coupleStatus.status === 'PENDING' && (
-        <div className="space-y-4">
-          {coupleStatus.isSender ? (
-            <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-200">Convite Pendente</h3>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Você enviou um convite para <span className="text-violet-400 font-medium">{coupleStatus.partnerEmail}</span>.
-                    Aguardando aceitação dele(a).
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="danger"
-                onClick={handleCancelInvite}
-                loading={isDeclining}
-                className="w-full sm:w-auto text-xs bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 px-4 py-2 h-auto"
-              >
-                Cancelar convite
-              </Button>
-            </div>
-          ) : (
-            <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-200">Convite Recebido</h3>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    <span className="text-violet-400 font-medium">{coupleStatus.partnerName}</span> (<span className="text-zinc-400">{coupleStatus.partnerEmail}</span>) te convidou para fazer parte de um casal.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Link
-                  to={`/couple/accept?token=${coupleStatus.inviteToken}`}
-                  className="w-full sm:w-auto text-center bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-lg px-4 py-2 transition-all shadow-md shadow-violet-600/10"
-                >
-                  Ver convite
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
+        <PendingInviteCard
+          isSender={!!coupleStatus.isSender}
+          partnerEmail={coupleStatus.partnerEmail || null}
+          partnerName={coupleStatus.partnerName || null}
+          inviteToken={coupleStatus.inviteToken || null}
+          onCancelInvite={handleCancelInvite}
+          isDeclining={isDeclining}
+        />
       )}
 
       {/* ATIVO */}
       {coupleStatus.status === 'ACTIVE' && (
-        <div className="space-y-4">
-          <p className="text-sm text-zinc-300">
-            Você está vinculado atualmente a um parceiro. A visão de casal está ativada no topo do painel principal.
-          </p>
-          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center border border-pink-500/20 text-pink-400 font-semibold text-lg uppercase shadow-inner">
-                {coupleStatus.partnerName?.charAt(0) || 'P'}
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-100">{coupleStatus.partnerName}</h3>
-                <p className="text-xs text-zinc-400 mt-0.5">{coupleStatus.partnerEmail}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowConfirmModal(true)}
-              className="w-full sm:w-auto text-xs flex items-center justify-center gap-2 border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold rounded-xl px-4 py-2.5 transition-all"
-            >
-              <Trash2 className="w-4 h-4" />
-              Desvincular
-            </button>
-          </div>
-        </div>
+        <ActiveCoupleCard
+          partnerName={coupleStatus.partnerName || null}
+          partnerEmail={coupleStatus.partnerEmail || null}
+          onDissolveClick={() => setShowConfirmModal(true)}
+        />
       )}
 
       {/* CONFIRMATION MODAL */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 animate-all">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
                 <AlertTriangle className="w-6 h-6" />
@@ -223,21 +151,24 @@ export function CoupleSettingsSection() {
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight">Desvincular Parceiro?</h3>
                 <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
-                  Esta ação é <span className="text-red-400 font-semibold uppercase">irreversível</span>. O acesso cruzado aos dados financeiros de vocês será revogado imediatamente. O histórico de transações pessoais e compartilhadas permanecerá salvo em suas contas, mas não poderá mais ser visto de forma consolidada.
+                  Esta ação é <span className="text-red-400 font-semibold uppercase">irreversível</span>. O
+                  acesso cruzado aos dados financeiros de vocês será revogado imediatamente. O histórico de
+                  transações pessoais e compartilhadas permanecerá salvo em suas contas, mas não poderá mais
+                  ser visto de forma consolidada.
                 </p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 mt-6 border-t border-zinc-800/80 pt-4">
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-white font-medium rounded-xl py-2 px-4 transition-all text-sm"
+                className="bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-white font-medium rounded-xl py-2 px-4 transition-all text-sm cursor-pointer"
               >
                 Voltar
               </button>
               <button
                 onClick={handleDissolveCouple}
                 disabled={isDissolving}
-                className="bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold rounded-xl py-2 px-5 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-600/10"
+                className="bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold rounded-xl py-2 px-5 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-600/10 cursor-pointer disabled:opacity-50"
               >
                 {isDissolving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Confirmar e Desvincular
