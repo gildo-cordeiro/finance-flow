@@ -97,7 +97,6 @@ export function TransactionModal({
   const isNormalExpense = currentFlow === TransactionFlow.EXPENSE_NORMAL;
 
 
-
   // Filter root categories based on current flow
   const filteredCategories = categories.filter(c => {
     if (!c.userId) return true;
