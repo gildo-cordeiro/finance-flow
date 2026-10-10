@@ -409,7 +409,7 @@ export function Transactions() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-305">
+              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-300">
                 <span>Busca Avançada</span>
               </div>
             )}
@@ -424,7 +424,7 @@ export function Transactions() {
             ) : (
               <button
                 onClick={() => handleMonthChange(currentCompetenceMonth())}
-                className="bg-violet-650/10 hover:bg-violet-650/20 border border-violet-500/20 text-violet-400 rounded-xl px-4 py-2 text-sm font-semibold transition-all"
+                className="bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/20 text-violet-400 rounded-xl px-4 py-2 text-sm font-semibold transition-all"
               >
                 Voltar para mês atual
               </button>

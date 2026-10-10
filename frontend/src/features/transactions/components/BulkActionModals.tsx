@@ -41,7 +41,7 @@ export function BulkActionModals({
               <button
                 type="button"
                 onClick={() => onConfirmBulkUpdate('ONLY_THIS')}
-                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
+                className="w-full py-2.5 bg-bg-elevated hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
               >
                 Atualizar apenas este
               </button>
@@ -86,7 +86,7 @@ export function BulkActionModals({
               <button
                 type="button"
                 onClick={() => onConfirmBulkDelete('ONLY_THIS')}
-                className="w-full py-2.5 bg-zinc-850 hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
+                className="w-full py-2.5 bg-bg-elevated hover:bg-zinc-800 active:bg-zinc-900 border border-zinc-700 text-sm font-semibold rounded-xl transition-all"
               >
                 Excluir apenas este
               </button>
