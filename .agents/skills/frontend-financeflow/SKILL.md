@@ -36,16 +36,17 @@ O FinanceFlow usa um tema escuro sofisticado. Todos os componentes devem seguir 
 | Perigo | `text-danger` / `bg-danger` | `#EF4444` | OVERDUE, despesas, negativos, acima do limite |
 | Atenção | `text-warning` / `bg-warning` | `#F59E0B` | PENDING, alertas, sem limite definido |
 | Neutro informativo | `text-info` / `bg-info` | `#3B82F6` | PLANNED, informações neutras |
-| Texto primário | `text-text-primary` | `#F1F5F9` | Títulos, valores principais |
-| Texto secundário | `text-text-secondary` | `#94A3B8` | Labels secundários, descrições |
-| Texto muted | `text-text-muted` | `#4B5563` | Sublabels, placeholders, hints, labels de card uppercase |
+| Texto primário | `text-text-primary` | `#F4F5FA` | Títulos, valores principais |
+| Texto de label / secundário | `text-text-label` | `#C4C8D8` | Rótulos de formulário e de card, descrições |
+| Alias legado | `text-text-secondary` | `#C4C8D8` | Mesmo valor de `text-text-label`; não usar em código novo |
+| Texto muted | `text-text-muted` | `#9AA0B4` | Sublabels, placeholders, hints (contraste mínimo 4.5:1 sobre `bg-bg-surface`) |
 
 ### Tipografia
 
 | Token | Tamanho / Estilo | Uso |
 |---|---|---|
 | `text-value-xl` | 28px, LineHeight 1.2, Bold (700) | Valores monetários grandes |
-| `text-label-xs` | 11px, LineHeight 1.4, Medium (500), tracking 0.08em | Labels uppercase tracking |
+| `text-label-xs` | 11px, LineHeight 1.4, Medium (500), tracking 0.08em | **Legado — não usar em código novo** (abaixo do mínimo de 12px) |
 | `text-section` | 18px, LineHeight 1.4, SemiBold (600) | Títulos de seção |
 | `text-body` | 14px, LineHeight 1.6, Regular (400) | Corpo, tabelas, parágrafos |
 | `text-hint` | 12px, LineHeight 1.5, Regular (400) | Sublabels, hints secundários |
@@ -55,7 +56,7 @@ O FinanceFlow usa um tema escuro sofisticado. Todos os componentes devem seguir 
 - **Nunca usar preto absoluto `#000` como fundo** — usar sempre `bg-bg-base`.
 - **Nunca usar shadow em cards** — usar sempre `border border-border-subtle`.
 - **Valores monetários sempre com `<MoneyValue>`** — nunca cor hardcoded ou formatação inline.
-- **Labels de card sempre uppercase** — usar `<SectionLabel>`.
+- **Labels de card via `<SectionLabel>`** — 13px, `font-semibold`, `text-text-label`, sem caixa alta. Texto nunca abaixo de 12px.
 - **ProgressBar sempre com os 3 estados** — nunca omitir o estado "sem limite".
 
 ---
@@ -136,7 +137,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, className, ...props }, ref) => (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+        <label className="text-[13px] font-semibold text-text-label">
           {label}
         </label>
       )}
@@ -305,7 +306,7 @@ interface SectionLabelProps extends HTMLAttributes<HTMLSpanElement> {}
 
 export const SectionLabel = forwardRef<HTMLSpanElement, SectionLabelProps>(
   ({ className, children, ...props }, ref) => (
-    <span ref={ref} className={cn('text-label-xs text-text-muted uppercase tracking-widest', className)} {...props}>
+    <span ref={ref} className={cn('text-[13px] font-semibold text-text-label', className)} {...props}>
       {children}
     </span>
   )
@@ -362,7 +363,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
       )}
       <h3 className="text-sm font-semibold text-zinc-300">{title}</h3>
       {description && (
-        <p className="mt-1 text-xs text-zinc-500 max-w-xs">{description}</p>
+        <p className="mt-1 text-xs text-text-muted max-w-xs">{description}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>
