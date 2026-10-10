@@ -1,5 +1,7 @@
 # Kafka Patterns — Boas Práticas
 
+> **Status: material de referência. Kafka NÃO faz parte da stack atual** (não há dependência de Kafka no `build.gradle` nem no `docker-compose`). Não introduza Kafka sem uma decisão registrada em ADR.
+
 ## Producer
 
 ### Configurações essenciais

@@ -24,7 +24,7 @@ Guia de referência para produzir código de alta qualidade, legível, testável
 - **Segurança:** Spring Security 6 + JWT (stateless) com rotação de refresh token (RTR)
 - **Persistência:** PostgreSQL (Supabase) + Spring Data JPA / Hibernate
 - **Migrations:** Flyway (arquivos imutáveis após deploy)
-- **Cache:** Redis (Upstash) com TTL explícito
+- **Cache:** Redis (Upstash) com TTL explícito — *planejado, ainda não implementado (sem dependência de cache no `build.gradle`)*
 
 ### Frontend (SPA)
 - **Framework UI:** React 18 + Vite + TypeScript (strict mode)
@@ -563,7 +563,7 @@ it('should return error state when API returns 422', async () => {
 - Identifique o gargalo real: I/O? CPU? Memória? Lock contention?
 - Prefira operações em batch para DB (evite N+1 — use `FETCH JOIN` ou `@EntityGraph`)
 - Use índices corretos no banco; analise query plan antes de ir para produção
-- Cache Redis com TTL explícito e invalidação proativa — nunca cache sem estratégia de eviction
+- Cache Redis (quando for implementado; hoje é planejado) com TTL explícito e invalidação proativa — nunca cache sem estratégia de eviction
 
 ### Segurança
 
@@ -621,7 +621,7 @@ Para contextos específicos, consulte:
 - `references/java-spring.md` — Regras completas Java sem Lombok, Spring Boot, JPA, Security, testes
 - `references/typescript-react-tailwind.md` — TypeScript strict, React patterns, Tailwind, forms, data fetching
 - `references/design-patterns.md` — Catálogo de padrões (Strategy, Repository, Factory, etc.)
-- `references/kafka-patterns.md` — Boas práticas para producers/consumers Kafka
+- `references/kafka-patterns.md` — Boas práticas para producers/consumers Kafka (**referência: Kafka não está na stack atual**)
 - `references/api-design.md` — REST, contratos, paginação, Spec Driven Development
 
 ---

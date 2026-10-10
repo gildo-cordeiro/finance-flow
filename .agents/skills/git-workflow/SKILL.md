@@ -29,8 +29,8 @@ Esta skill padroniza a criação de branches, commits e Pull Requests no Finance
 
 **Regras:**
 - Nunca use espaços ou caracteres especiais — apenas letras, números e hífens.
-- Branches do tipo `hotfix` partem de `main`; todas as outras partem de `develop`.
-- Nunca faça push direto em `main` ou `develop` — sempre via Pull Request.
+- Todas as branches partem de `main` (o repositório **não possui** branch `develop`).
+- Nunca faça push direto em `main` — sempre via Pull Request.
 
 ## 2. Conventional Commits
 
@@ -102,13 +102,13 @@ Ao sugerir ou criar a descrição de um PR, use exatamente este formato:
 ## 4. Fluxo Completo de uma Feature
 
 ```
-1. git checkout develop && git pull origin develop
+1. git checkout main && git pull origin main
 2. git checkout -b feat/nome-da-feature
 3. [implementa, commita em pequenos incrementos]
 4. git push origin feat/nome-da-feature
-5. Abre PR: develop ← feat/nome-da-feature
+5. Abre PR: main ← feat/nome-da-feature
 6. Code review + ajustes
-7. Merge via squash (1 commit limpo na develop) ou merge commit (preserva histórico)
+7. Merge via squash (1 commit limpo na main) ou merge commit (preserva histórico)
 8. git branch -d feat/nome-da-feature (limpa local)
 ```
 
@@ -119,7 +119,6 @@ Ao sugerir ou criar a descrição de um PR, use exatamente este formato:
 2. git checkout -b hotfix/descricao-curta
 3. [corrige, testa, commita]
 4. Abre PR: main ← hotfix/descricao-curta    (merge urgente)
-5. Após merge em main, abre PR: develop ← main (sincroniza)
 ```
 
 ## 6. Automação via GitHub MCP
