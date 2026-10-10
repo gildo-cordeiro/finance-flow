@@ -20,9 +20,10 @@ A paleta de cores do FinanceFlow é projetada para oferecer uma experiência de 
 | `text-danger` / `bg-danger` | `#EF4444` | Semântica de Perigo (Vermelho) — Transações atrasadas (`OVERDUE`), despesas, valores negativos, e limites de orçamento estourados. |
 | `text-warning` / `bg-warning` | `#F59E0B` | Semântica de Atenção (Âmbar) — Transações pendentes (`PENDING`), alertas, e limites de orçamento não configurados ("Sem limite"). |
 | `text-info` / `bg-info` | `#3B82F6` | Semântica Informativa Neutra (Azul) — Transações planejadas (`PLANNED`). |
-| `text-text-primary` | `#F1F5F9` | Texto principal (quase branco) para títulos e valores de destaque. |
-| `text-text-secondary` | `#94A3B8` | Texto secundário (cinza claro) para descrições, subtítulos e textos auxiliares. |
-| `text-text-muted` | `#4B5563` | Texto silenciado (cinza escuro) para dicas, placeholders e labels menores. |
+| `text-text-primary` | `#F4F5FA` | Texto principal (quase branco) para títulos e valores de destaque. |
+| `text-text-label` | `#C4C8D8` | Rótulos de formulário e de card, descrições e textos auxiliares. |
+| `text-text-secondary` | `#C4C8D8` | **Alias legado** de `text-text-label` (mantido por compatibilidade). Em código novo, use `text-text-label`. |
+| `text-text-muted` | `#9AA0B4` | Texto silenciado para dicas, placeholders e metadados. Contraste mínimo de 4.5:1 sobre `bg-bg-surface`. |
 
 ---
 
@@ -33,10 +34,12 @@ A tipografia utiliza a fonte **Outfit** (ou **Inter** como fallback) para garant
 | Token de Classe | Definição Tailwind | Casos de Uso |
 |---|---|---|
 | `text-value-xl` | `['28px', { lineHeight: '1.2', fontWeight: '700' }]` | Valores monetários principais e grandes. |
-| `text-label-xs` | `['11px', { lineHeight: '1.4', fontWeight: '500', letterSpacing: '0.08em' }]` | Mini títulos, metadados uppercase tracking. |
+| `text-label-xs` | `['11px', { lineHeight: '1.4', fontWeight: '500', letterSpacing: '0.08em' }]` | **Legado — não usar em código novo** (11px está abaixo do mínimo de 12px). |
 | `text-section` | `['18px', { lineHeight: '1.4', fontWeight: '600' }]` | Títulos de seções ou cabeçalhos de tabelas. |
 | `text-body` | `['14px', { lineHeight: '1.6', fontWeight: '400' }]` | Texto corrido, conteúdo de tabelas e inputs. |
 | `text-hint` | `['12px', { lineHeight: '1.5', fontWeight: '400' }]` | Notas secundárias e sub-labels. |
+
+**Tamanho mínimo de texto: 12px** (`text-hint` ou `text-xs`). Não use `text-[8px]`, `text-[9px]`, `text-[10px]` nem `text-[11px]`.
 
 ---
 
@@ -94,11 +97,11 @@ import { MoneyValue } from '@/components/ui/MoneyValue';
 
 ### SectionLabel
 
-Mini label para títulos uppercase padronizados.
+Mini label padronizado para títulos de cards e campos (13px, `font-semibold`, `text-text-label`, sem caixa alta).
 ```tsx
 import { SectionLabel } from '@/components/ui/SectionLabel';
 
-<SectionLabel>RECEITAS DO MÊS</SectionLabel>
+<SectionLabel>Receitas do mês</SectionLabel>
 ```
 
 ---
@@ -111,4 +114,5 @@ Ao construir ou modificar telas do FinanceFlow, observe rigorosamente as seguint
 2. **Sem Sombras Desnecessárias**: Cards nunca devem utilizar classes de sombra (`shadow-xl`, etc.). O design é minimalista e flat dark, delimitado por `border border-border-subtle`.
 3. **Uso de MoneyValue**: Nunca formate valores monetários diretamente usando tags `<span>` ou aplicando cores hardcoded. Utilize sempre o componente `<MoneyValue>`.
 4. **Sem Limite Definido**: Sempre inclua um estado visual claro para limites de orçamento ausentes através da barra tracejada no `<ProgressBar>`.
-5. **Labels de Cards**: Todos os mini-títulos de cards devem seguir a classe `text-label-xs text-text-muted uppercase tracking-widest` fornecida por `<SectionLabel>`.
+5. **Labels de Cards**: Todos os mini-títulos de cards devem usar `<SectionLabel>` (13px, `font-semibold`, `text-text-label`), em sentence case, sem `uppercase` nem `tracking-widest`.
+6. **Texto secundário**: use `text-text-label` (descrições e rótulos) e `text-text-muted` (dicas e placeholders). `text-text-secondary` é um alias legado; não use em código novo.
