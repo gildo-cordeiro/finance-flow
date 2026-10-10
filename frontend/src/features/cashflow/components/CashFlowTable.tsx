@@ -7,7 +7,6 @@ interface CashFlowTableProps {
   dailyPoints: CashFlowDailyPoint[];
   weeklyData: Array<{ date: string; income: number; expense: number; lastBalance: number }>;
   monthlyData: Array<{ date: string; income: number; expense: number; lastBalance: number }>;
-  currency: string;
   formatDateDisplay: (dateStr: string) => string;
 }
 
@@ -15,7 +14,6 @@ export function CashFlowTable({
   dailyPoints,
   weeklyData,
   monthlyData,
-  currency,
   formatDateDisplay,
 }: CashFlowTableProps) {
   const [tableGroup, setTableGroup] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -88,7 +86,7 @@ export function CashFlowTable({
                   income={point.income}
                   expense={point.expense}
                   balance={point.consolidatedBalance}
-                  currency={currency}
+                  
                 />
               ))}
 
@@ -101,7 +99,7 @@ export function CashFlowTable({
                   income={week.income}
                   expense={week.expense}
                   balance={week.lastBalance}
-                  currency={currency}
+                  
                 />
               ))}
 
@@ -114,7 +112,7 @@ export function CashFlowTable({
                   income={month.income}
                   expense={month.expense}
                   balance={month.lastBalance}
-                  currency={currency}
+                  
                 />
               ))}
           </tbody>

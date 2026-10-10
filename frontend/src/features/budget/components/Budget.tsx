@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useBudget } from '../hooks/useBudget';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useToast } from '../../../context/ToastContext';
-import { ChevronLeft, ChevronRight, Copy, Plus, AlertTriangle } from 'lucide-react';
+import { Copy, Plus, AlertTriangle } from 'lucide-react';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { BudgetSummary } from './BudgetSummary';
 import { BudgetRow } from './BudgetRow';
 import { BudgetModal } from './BudgetModal';
+import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 
 export function Budget() {
   const { user } = useAuth();
@@ -48,31 +49,6 @@ export function Budget() {
   const [isNewBudgetModalOpen, setIsNewBudgetModalOpen] = useState(false);
 
   if (!user) return null;
-
-  // Month navigation helpers
-  const handlePrevMonth = () => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const date = new Date(year, month - 2, 1);
-    const newYear = date.getFullYear();
-    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
-    setCurrentMonth(`${newYear}-${newMonth}`);
-    setEditingCategoryId(null);
-  };
-
-  const handleNextMonth = () => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const date = new Date(year, month, 1);
-    const newYear = date.getFullYear();
-    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
-    setCurrentMonth(`${newYear}-${newMonth}`);
-    setEditingCategoryId(null);
-  };
-
-  const formatMonthLabel = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(Number(year), Number(month) - 1, 1);
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -187,25 +163,13 @@ export function Budget() {
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Month Selector */}
-            <div className="flex items-center bg-bg-surface border border-border-subtle rounded-xl p-1 shrink-0">
-              <button
-                onClick={handlePrevMonth}
-                className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer"
-                title="Mês Anterior"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="text-sm font-semibold capitalize min-w-[125px] text-center text-text-primary px-2">
-                {formatMonthLabel(currentMonth)}
-              </span>
-              <button
-                onClick={handleNextMonth}
-                className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer"
-                title="Próximo Mês"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+            <PeriodSelector
+              value={currentMonth}
+              onChange={(val) => {
+                setCurrentMonth(val);
+                setEditingCategoryId(null);
+              }}
+            />
 
             <button
               onClick={handleCopy}

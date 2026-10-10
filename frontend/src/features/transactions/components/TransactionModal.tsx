@@ -304,19 +304,19 @@ export function TransactionModal({
           {/* Banner visual dinâmico do fluxo de transação */}
           {isIncome && (
             <div className="flex items-center gap-2.5 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs">
-              <span className="font-semibold px-2 py-0.5 bg-emerald-500 text-black rounded-lg text-[9px] uppercase tracking-wider shrink-0 font-bold">Receita</span>
+              <span className="font-semibold px-2 py-0.5 bg-emerald-500 text-black rounded-lg text-xs uppercase tracking-wider shrink-0 font-bold">Receita</span>
               <span>Fluxo de entrada financeira: o valor será creditado no saldo da conta informada.</span>
             </div>
           )}
           {isNormalExpense && (
             <div className="flex items-center gap-2.5 px-3 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs">
-              <span className="font-semibold px-2 py-0.5 bg-red-500 text-white rounded-lg text-[9px] uppercase tracking-wider shrink-0 font-bold">Despesa</span>
+              <span className="font-semibold px-2 py-0.5 bg-red-500 text-white rounded-lg text-xs uppercase tracking-wider shrink-0 font-bold">Despesa</span>
               <span>Fluxo de saída financeira: o valor será debitado do saldo da conta corrente ou poupança.</span>
             </div>
           )}
           {isCreditCardExpense && (
             <div className="flex items-center gap-2.5 px-3 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-xl text-xs">
-              <span className="font-semibold px-2 py-0.5 bg-violet-500 text-white rounded-lg text-[9px] uppercase tracking-wider shrink-0 font-bold">Cartão</span>
+              <span className="font-semibold px-2 py-0.5 bg-violet-500 text-white rounded-lg text-xs uppercase tracking-wider shrink-0 font-bold">Cartão</span>
               <span>Lançamento na fatura do cartão: o valor irá consumir o limite do cartão e será pago no vencimento da fatura.</span>
             </div>
           )}

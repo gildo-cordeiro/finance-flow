@@ -28,6 +28,8 @@ interface TransactionTableProps {
   getMonthLimit: (monthKey: string) => number;
   handleLoadMore: (monthKey: string) => void;
   handleOpenNewTrans: () => void;
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
   onEdit: (t: Transaction) => void;
   onDelete: (t: Transaction) => void;
   getMonthName: (monthKey: string) => string;
@@ -55,6 +57,8 @@ export function TransactionTable({
   getMonthLimit,
   handleLoadMore,
   handleOpenNewTrans,
+  hasActiveFilters,
+  onClearFilters,
   onEdit,
   onDelete,
   getMonthName,
@@ -83,12 +87,17 @@ export function TransactionTable({
       <div className="bg-bg-surface border border-border-subtle rounded-xl">
         <EmptyState
           icon={<Calendar className="w-12 h-12 text-zinc-600" />}
-          title="Nenhuma transação encontrada"
-          description="Ajuste os filtros ou crie um novo lançamento."
+          title="Nenhum lançamento encontrado"
           action={
-            <Button onClick={handleOpenNewTrans} variant="primary" size="sm">
-              Adicionar transação
-            </Button>
+            hasActiveFilters ? (
+              <Button onClick={onClearFilters} variant="secondary" size="sm">
+                Limpar filtros
+              </Button>
+            ) : (
+              <Button onClick={handleOpenNewTrans} variant="primary" size="sm">
+                Novo lançamento
+              </Button>
+            )
           }
         />
       </div>
@@ -197,11 +206,11 @@ export function TransactionTable({
               <div className="flex items-center gap-3 flex-wrap">
                 <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-200", !isExpanded && "-rotate-90")} />
                 <span className="font-semibold text-zinc-100">{getMonthName(monthKey)}</span>
-                <span className="text-zinc-650 font-light">•</span>
-                <span className="text-xs text-zinc-450">
+                <span className="text-text-muted font-light">•</span>
+                <span className="text-xs text-text-muted">
                   {allMonthTxs.length} {allMonthTxs.length === 1 ? 'transação' : 'transações'}
                 </span>
-                <span className="text-zinc-650 font-light">•</span>
+                <span className="text-text-muted font-light">•</span>
                 <span className={cn(
                   "font-semibold text-xs",
                   monthNet > 0 ? "text-success" : monthNet < 0 ? "text-danger" : "text-zinc-300"

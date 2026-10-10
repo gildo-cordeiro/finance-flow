@@ -160,7 +160,7 @@ export function ProfileForm() {
         </div>
         <div className="flex flex-col items-center sm:items-start gap-2">
           <h4 className="text-sm font-semibold text-zinc-200">Foto de Perfil</h4>
-          <p className="text-xs text-zinc-500">Recomendado: PNG ou JPG quadrada, de até 1MB.</p>
+          <p className="text-xs text-text-muted">Recomendado: PNG ou JPG quadrada, de até 1MB.</p>
           <div className="flex gap-2.5 mt-1 select-none">
             <label className="text-xs font-semibold bg-bg-elevated hover:bg-zinc-800 text-zinc-200 border border-zinc-700/30 px-3.5 py-2 rounded-xl cursor-pointer transition-all hover:text-white">
               Escolher imagem

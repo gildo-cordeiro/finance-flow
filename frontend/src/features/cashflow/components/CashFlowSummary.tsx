@@ -1,5 +1,6 @@
 import { ArrowUpRight, ArrowDownRight, Activity, TrendingDown } from 'lucide-react';
 import { cn } from '../../../lib/cn';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 interface CashFlowSummaryProps {
   summaryStats: {
@@ -28,9 +29,12 @@ export function CashFlowSummary({ summaryStats, largestExpense, currency }: Cash
       <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 flex items-center justify-between">
         <div className="space-y-1">
           <span className="text-text-secondary text-xs font-medium">Receitas do Mês</span>
-          <h3 className="text-2xl font-bold tracking-tight text-success">
-            + {formatCurrency(summaryStats.totalIncome)}
-          </h3>
+          <MoneyValue
+            amount={summaryStats.totalIncome}
+            variant="income"
+            showSign={false}
+            className="text-2xl font-bold tracking-tight"
+          />
         </div>
         <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success">
           <ArrowUpRight className="w-5 h-5" />
@@ -41,9 +45,12 @@ export function CashFlowSummary({ summaryStats, largestExpense, currency }: Cash
       <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 flex items-center justify-between">
         <div className="space-y-1">
           <span className="text-text-secondary text-xs font-medium">Despesas do Mês</span>
-          <h3 className="text-2xl font-bold tracking-tight text-danger">
-            - {formatCurrency(summaryStats.totalExpense)}
-          </h3>
+          <MoneyValue
+            amount={summaryStats.totalExpense}
+            variant="expense"
+            showSign={false}
+            className="text-2xl font-bold tracking-tight"
+          />
         </div>
         <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center text-danger">
           <ArrowDownRight className="w-5 h-5" />
@@ -54,15 +61,11 @@ export function CashFlowSummary({ summaryStats, largestExpense, currency }: Cash
       <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 flex items-center justify-between">
         <div className="space-y-1">
           <span className="text-text-secondary text-xs font-medium">Saldo do Mês</span>
-          <h3
-            className={cn(
-              'text-2xl font-bold tracking-tight',
-              summaryStats.balance >= 0 ? 'text-success' : 'text-danger'
-            )}
-          >
-            {summaryStats.balance >= 0 ? '+' : ''}
-            {formatCurrency(summaryStats.balance)}
-          </h3>
+          <MoneyValue
+            amount={summaryStats.balance}
+            variant="auto"
+            className="text-2xl font-bold tracking-tight"
+          />
         </div>
         <div
           className={cn(

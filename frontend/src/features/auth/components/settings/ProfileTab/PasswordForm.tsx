@@ -61,7 +61,7 @@ export function PasswordForm() {
           <Key className="w-5 h-5 text-violet-400" />
           <span>Alterar Senha</span>
         </h3>
-        <p className="text-zinc-500 text-xs mt-1">
+        <p className="text-text-muted text-xs mt-1">
           Mantenha sua conta segura alterando sua senha de acesso periodicamente
         </p>
       </div>

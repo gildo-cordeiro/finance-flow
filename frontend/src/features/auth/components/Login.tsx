@@ -109,7 +109,7 @@ export function Login() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-zinc-500">
+        <div className="mt-8 text-center text-sm text-text-muted">
           Não tem uma conta?{' '}
           <Link to="/register" className="text-violet-400 hover:text-violet-300 transition-colors font-medium">
             Cadastre-se

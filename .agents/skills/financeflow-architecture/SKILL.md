@@ -25,7 +25,7 @@ codificação do FinanceFlow.
 | Segurança | Spring Security 6 + JWT | Stateless, refresh token rotation (RTR) |
 | Persistência | Spring Data JPA + Hibernate | PostgreSQL via Supabase |
 | Migrations | Flyway | Imutáveis após deploy |
-| Cache | Redis | Upstash (serverless Redis) |
+| Cache | Redis (**planejado**) | Upstash (serverless Redis) — ainda não implementado: o `build.gradle` não tem dependência de cache/Redis |
 
 ### Frontend (React 18 + Vite + TypeScript)
 
@@ -206,7 +206,9 @@ src/main/resources/db/migration/
 3. Use `IF NOT EXISTS` para tornar scripts robustos.
 4. Views e procedures reutilizáveis: prefixo `R__` (repetível).
 
-## 7. Cache Redis (Upstash)
+## 7. Cache Redis (Upstash) — PLANEJADO
+
+> **Status: planejado, não implementado.** O `build.gradle` não possui dependência de cache nem de Redis (apenas o `docker-compose` sobe um Redis). Não crie `@EnableCaching`, `CacheConfig` nem `@Cacheable` sem uma issue explícita. O código abaixo é referência para quando o cache for implementado.
 
 ```java
 // Habilitar no config

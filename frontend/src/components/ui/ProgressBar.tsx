@@ -68,7 +68,7 @@ export function ProgressBar({ value, max, className }: ProgressBarProps) {
           {formattedValue} / {formattedMax}
         </span>
         {isOverLimit && (
-          <span className="text-[9px] bg-danger/10 text-danger border border-danger/20 rounded px-1 font-bold animate-pulse select-none">
+          <span className="text-xs bg-danger/10 text-danger border border-danger/20 rounded px-1 font-bold animate-pulse select-none">
             Estourado
           </span>
         )}

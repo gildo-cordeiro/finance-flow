@@ -1,5 +1,6 @@
 import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
 import { cn } from '../../../lib/cn';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 interface BudgetSummaryProps {
   totalPlanned: number;
@@ -55,13 +56,7 @@ export function BudgetSummary({
         </div>
         <div>
           <h3 className="text-text-label text-[13px] font-semibold">Saldo Restante</h3>
-          <p
-            className={`text-2xl font-bold mt-1 ${
-              totalRemaining >= 0 ? 'text-emerald-400' : 'text-red-400'
-            }`}
-          >
-            {formatCurrency(totalRemaining)}
-          </p>
+          <MoneyValue amount={totalRemaining} variant="auto" className="text-2xl font-bold mt-1 block" />
         </div>
       </div>
 

@@ -184,7 +184,7 @@ export function Register() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center text-sm text-zinc-500">
+            <div className="mt-8 text-center text-sm text-text-muted">
               Já possui conta?{' '}
               <Link to="/login" className="text-violet-400 hover:text-violet-300 transition-colors font-medium">
                 Faça Login

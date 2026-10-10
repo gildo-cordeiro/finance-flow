@@ -20,6 +20,7 @@ export default {
         'info':     '#3B82F6',
         'text-primary':   '#F4F5FA',
         'text-label':     '#C4C8D8',
+        'text-secondary': '#C4C8D8', // alias legado de text-label: removido no #83, mas ainda usado em ~112 lugares
         'text-muted':     '#9AA0B4',
 
         // We'll define a sleek dark/light palette according to rich design requirements

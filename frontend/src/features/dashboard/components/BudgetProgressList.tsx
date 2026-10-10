@@ -1,6 +1,9 @@
 import { Card } from '../../../components/ui/Card';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { MoneyValue } from '../../../components/ui/MoneyValue';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Button } from '../../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 import type { DashboardSummary } from '../types';
 
 interface BudgetProgressListProps {
@@ -11,6 +14,7 @@ export function BudgetProgressList({ summary }: BudgetProgressListProps) {
   const planned = summary.budgetPlanned || 0;
   const realized = summary.budgetRealized || 0;
   const hasBudget = planned > 0;
+  const navigate = useNavigate();
 
   return (
     <Card className="p-6 flex flex-col justify-between h-96">
@@ -21,9 +25,16 @@ export function BudgetProgressList({ summary }: BudgetProgressListProps) {
 
       <div className="flex-1 flex flex-col justify-center space-y-6 mt-4">
         {!hasBudget ? (
-          <div className="text-center text-zinc-500 text-sm space-y-3">
-            <p>Nenhum orçamento configurado para este mês.</p>
-          </div>
+          <EmptyState
+            title="Nenhum limite definido"
+            description="Defina limites por categoria para acompanhar seus gastos."
+            compact
+            action={
+              <Button onClick={() => navigate('/budget')} variant="primary" size="sm">
+                Definir limites
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-5 w-full">
             <div className="flex justify-between items-end border-b border-border-subtle/50 pb-3">

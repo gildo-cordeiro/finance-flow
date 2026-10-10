@@ -5,11 +5,11 @@ import { useAccounts } from '../../accounts/hooks/useAccounts';
 import { useTransactions, useTransactionSummary } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useToast } from '../../../context/ToastContext';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { Transaction, TransactionPayload } from '../types';
 import { useView } from '../../../context/ViewContext';
 import { useCouple } from '../../couple/hooks/useCouple';
-import { previousMonth } from '../../../utils/formatters';
+
 import { TransactionFormData, RepetitionType, RecurrenceRule } from '../schemas/transactionSchema';
 
 // Subcomponents
@@ -17,6 +17,7 @@ import { TransactionFilters } from './TransactionFilters';
 import { TransactionTable } from './TransactionTable';
 import { TransactionModal } from './TransactionModal';
 import { BulkActionModals } from './BulkActionModals';
+import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 
 export function Transactions() {
   const { user } = useAuth();
@@ -182,20 +183,6 @@ export function Transactions() {
     }
   };
 
-  // Helper date generators
-  const monthOptions = useMemo(() => {
-    const options = [];
-    const today = new Date();
-    for (let i = -12; i <= 3; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
-      options.push({ value, label: capitalizedLabel });
-    }
-    return options;
-  }, []);
-
   const getMonthName = (monthKey: string) => {
     if (monthKey === 'sem-competencia') return 'Sem Competência';
     const [year, month] = monthKey.split('-');
@@ -211,20 +198,6 @@ export function Transactions() {
     const date = new Date(Number(year), Number(month) - 1, 1);
     const name = date.toLocaleDateString('pt-BR', { month: 'long' });
     return name.charAt(0).toUpperCase() + name.slice(1);
-  };
-
-  const handlePrevMonth = () => {
-    if (searchMonth === 'ALL') return;
-    const prev = previousMonth(searchMonth);
-    setSearchParams({ month: prev });
-  };
-
-  const handleNextMonth = () => {
-    if (searchMonth === 'ALL') return;
-    const [year, month] = searchMonth.split('-').map(Number);
-    const date = new Date(year, month, 1);
-    const next = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    setSearchParams({ month: next });
   };
 
   const handleMonthChange = (val: string) => {
@@ -381,33 +354,10 @@ export function Transactions() {
 
           <div className="flex items-center gap-3 flex-wrap">
             {searchMonth !== 'ALL' ? (
-              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-2 py-1 shadow-sm">
-                <button
-                  onClick={handlePrevMonth}
-                  className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
-                  title="Mês anterior"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <select
-                  value={searchMonth}
-                  onChange={(e) => handleMonthChange(e.target.value)}
-                  className="bg-transparent border-none text-zinc-100 font-semibold text-sm focus:outline-none focus:ring-0 cursor-pointer py-1 pl-2 pr-8"
-                >
-                  {monthOptions.map(opt => (
-                    <option key={opt.value} value={opt.value} className="bg-bg-surface text-zinc-100">{opt.label}</option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={handleNextMonth}
-                  className="p-1.5 hover:bg-bg-elevated rounded-lg text-zinc-400 hover:text-white transition-colors"
-                  title="Próximo mês"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+              <PeriodSelector
+                value={searchMonth}
+                onChange={handleMonthChange}
+              />
             ) : (
               <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-300">
                 <span>Busca Avançada</span>
@@ -424,7 +374,7 @@ export function Transactions() {
             ) : (
               <button
                 onClick={() => handleMonthChange(currentCompetenceMonth())}
-                className="bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/20 text-violet-400 rounded-xl px-4 py-2 text-sm font-semibold transition-all"
+                className="bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand rounded-xl px-4 py-2 text-sm font-semibold transition-all"
               >
                 Voltar para mês atual
               </button>
@@ -484,6 +434,8 @@ export function Transactions() {
               getMonthLimit={getMonthLimit}
               handleLoadMore={handleLoadMore}
               handleOpenNewTrans={handleOpenNewTrans}
+              hasActiveFilters={activeChips.length > 0}
+              onClearFilters={handleClearAllFilters}
               onEdit={handleOpenEditTrans}
               onDelete={handleDeleteTrans}
               getMonthName={getMonthName}
