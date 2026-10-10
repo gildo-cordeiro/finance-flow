@@ -549,7 +549,6 @@ export function CashFlow() {
                 dailyPoints={projection?.dailyPoints || []}
                 weeklyData={weeklyData}
                 monthlyData={monthlyData}
-                currency={user.currency}
                 formatDateDisplay={formatDateDisplay}
               />
             )}
