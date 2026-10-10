@@ -294,7 +294,7 @@ export function CashFlow() {
                         {tx.description}
                       </p>
                       {isCouple && (
-                        <p className="text-[9px] text-text-muted">
+                        <p className="text-xs text-text-muted">
                           Dono: {tx.userId === user?.id ? 'Você' : partnerName}
                         </p>
                       )}

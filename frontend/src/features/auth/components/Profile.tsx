@@ -82,7 +82,7 @@ export function Profile() {
           <ArrowLeft className="w-4 h-4" />
           Voltar ao Painel
         </button>
-        <span className="text-zinc-500 text-xs">ID: {user?.id}</span>
+        <span className="text-text-muted text-xs">ID: {user?.id}</span>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-12">

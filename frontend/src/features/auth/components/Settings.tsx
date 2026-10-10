@@ -33,7 +33,7 @@ export function Settings() {
           Voltar ao Painel
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-500 text-xs select-none">ID do Usuário: {user?.id}</span>
+          <span className="text-text-muted text-xs select-none">ID do Usuário: {user?.id}</span>
         </div>
       </header>
 

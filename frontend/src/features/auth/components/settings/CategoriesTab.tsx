@@ -222,7 +222,7 @@ export function CategoriesTab() {
         <div className="auth-card p-12 text-center">
           <Tag className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
           <h3 className="font-bold text-zinc-300">Nenhuma categoria cadastrada</h3>
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="text-text-muted text-sm mt-1">
             Crie sua primeira categoria para começar a organizar seus lançamentos.
           </p>
         </div>
