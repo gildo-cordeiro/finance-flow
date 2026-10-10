@@ -9,12 +9,13 @@ import { useAccounts } from '../../accounts/hooks/useAccounts';
 import { useTransactions } from '../../transactions/hooks/useTransactions';
 import { useCategories } from '../../transactions/hooks/useCategories';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, Heart } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Heart } from 'lucide-react';
 import { KpiCards } from './KpiCards';
 import { CashFlowChart } from './CashFlowChart';
 import { RecentTransactions } from './RecentTransactions';
 import { CategoryExpensesChart } from './CategoryExpensesChart';
 import { BudgetProgressList } from './BudgetProgressList';
+import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 
 const DashboardSkeleton = () => (
   <div className="space-y-8 animate-pulse">
@@ -165,30 +166,6 @@ export function Dashboard() {
 
   if (!user) return null;
 
-  // Month navigation handlers
-  const handlePrevMonth = () => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const date = new Date(year, month - 2, 1);
-    setCurrentMonth(date.toISOString().substring(0, 7));
-  };
-
-  const handleNextMonth = () => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const date = new Date(year, month, 1);
-    setCurrentMonth(date.toISOString().substring(0, 7));
-  };
-
-  const handleCurrentMonth = () => {
-    setCurrentMonth(new Date().toISOString().substring(0, 7));
-  };
-
-  const formatMonthName = (monthStr: string) => {
-    const [year, month] = monthStr.split('-').map(Number);
-    const date = new Date(year, month - 1, 1);
-    const formatted = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    return formatted.replace(/^\w/, (c) => c.toUpperCase());
-  };
-
   // 7. Calculations
   // Total Balance (soma das contas)
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -311,31 +288,10 @@ export function Dashboard() {
           </div>
 
           {/* Month selector UI */}
-          <div className="flex items-center gap-2 self-start sm:self-auto bg-zinc-900/60 p-1.5 rounded-xl border border-zinc-800/80 glassmorphism">
-            <button
-              onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors"
-              title="Mês Anterior"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="px-3 py-1 font-semibold text-sm min-w-[130px] text-center text-zinc-100">
-              {formatMonthName(currentMonth)}
-            </span>
-            <button
-              onClick={handleNextMonth}
-              className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors"
-              title="Próximo Mês"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleCurrentMonth}
-              className="px-2.5 py-1 text-xs bg-violet-600/10 hover:bg-violet-600/20 text-violet-400 hover:text-violet-300 font-medium rounded-lg transition-colors ml-1"
-            >
-              Hoje
-            </button>
-          </div>
+          <PeriodSelector
+            value={currentMonth}
+            onChange={setCurrentMonth}
+          />
         </div>
 
         {/* Loading and error states */}

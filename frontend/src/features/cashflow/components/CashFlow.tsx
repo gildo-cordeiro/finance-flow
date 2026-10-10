@@ -19,9 +19,8 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import { format, parse, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { CashFlowFilters } from './CashFlowFilters';
+import { format, parse, startOfMonth, endOfMonth } from 'date-fns';
+import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 import { CashFlowSummary } from './CashFlowSummary';
 import { CashFlowTable } from './CashFlowTable';
 
@@ -84,23 +83,7 @@ export function CashFlow() {
     return dateStr;
   };
 
-  const handlePrevMonth = () => {
-    setSelectedMonth(format(subMonths(currentDate, 1), 'yyyy-MM'));
-  };
 
-  const handleNextMonth = () => {
-    setSelectedMonth(format(addMonths(currentDate, 1), 'yyyy-MM'));
-  };
-
-  const handleCurrentMonth = () => {
-    setSelectedMonth(format(new Date(), 'yyyy-MM'));
-  };
-
-  // Format month and year capitalized (e.g. "Junho de 2026")
-  const displayMonthYear = useMemo(() => {
-    const formatted = format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  }, [currentDate]);
 
   // Helper to group daily points by week (aggregates data in selected month)
   const weeklyData = useMemo(() => {
@@ -347,13 +330,9 @@ export function CashFlow() {
           </div>
 
           {/* Month Navigation & Period Selector */}
-          <CashFlowFilters
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-            onCurrentMonth={handleCurrentMonth}
-            displayMonthYear={displayMonthYear}
+          <PeriodSelector
+            value={selectedMonth}
+            onChange={setSelectedMonth}
           />
         </div>
 
