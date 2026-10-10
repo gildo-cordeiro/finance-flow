@@ -621,7 +621,6 @@ Para contextos específicos, consulte:
 - `references/java-spring.md` — Regras completas Java sem Lombok, Spring Boot, JPA, Security, testes
 - `references/typescript-react-tailwind.md` — TypeScript strict, React patterns, Tailwind, forms, data fetching
 - `references/design-patterns.md` — Catálogo de padrões (Strategy, Repository, Factory, etc.)
-- `references/kafka-patterns.md` — Boas práticas para producers/consumers Kafka (**referência: Kafka não está na stack atual**)
 - `references/api-design.md` — REST, contratos, paginação, Spec Driven Development
 
 ---

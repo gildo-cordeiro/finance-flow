@@ -130,7 +130,7 @@ class CreateOrderCommand(
 
 #### Saga Pattern (para microserviços)
 **Use quando:** Transação distribuída entre múltiplos serviços.
-- **Choreography**: cada serviço publica eventos e reage a eventos de outros (Kafka)
+- **Choreography**: cada serviço publica eventos e reage a eventos de outros
 - **Orchestration**: um orquestrador central coordena os passos
 
 ```
