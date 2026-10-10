@@ -48,7 +48,7 @@ export function Settings() {
               "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 whitespace-nowrap md:whitespace-normal border-l-2 md:border-l-4",
               activeSection === 'profile'
                 ? "bg-violet-500/10 border-violet-500 text-violet-400 font-bold"
-                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-bg-elevated"
             )}
           >
             <User className="w-4.5 h-4.5" />
@@ -61,7 +61,7 @@ export function Settings() {
               "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 whitespace-nowrap md:whitespace-normal border-l-2 md:border-l-4",
               activeSection === 'categories'
                 ? "bg-violet-500/10 border-violet-500 text-violet-400 font-bold"
-                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-bg-elevated"
             )}
           >
             <Tag className="w-4.5 h-4.5" />
@@ -74,7 +74,7 @@ export function Settings() {
               "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 whitespace-nowrap md:whitespace-normal border-l-2 md:border-l-4",
               activeSection === 'couple'
                 ? "bg-violet-500/10 border-violet-500 text-violet-400 font-bold"
-                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-bg-elevated"
             )}
           >
             <Heart className="w-4.5 h-4.5" />
@@ -87,7 +87,7 @@ export function Settings() {
               "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 whitespace-nowrap md:whitespace-normal border-l-2 md:border-l-4",
               activeSection === 'open-finance'
                 ? "bg-violet-500/10 border-violet-500 text-violet-400 font-bold"
-                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-bg-elevated"
             )}
           >
             <RefreshCw className="w-4.5 h-4.5 animate-spin-slow" />
@@ -100,7 +100,7 @@ export function Settings() {
               "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 whitespace-nowrap md:whitespace-normal border-l-2 md:border-l-4",
               activeSection === 'danger-zone'
                 ? "bg-red-500/10 border-red-500 text-red-400 font-bold"
-                : "border-transparent text-zinc-400 hover:text-red-455 hover:bg-zinc-850"
+                : "border-transparent text-zinc-400 hover:text-red-400 hover:bg-bg-elevated"
             )}
           >
             <ShieldAlert className="w-4.5 h-4.5" />

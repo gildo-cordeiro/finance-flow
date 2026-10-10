@@ -93,7 +93,7 @@ export function DangerZoneTab() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-red-500/10 pb-6">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Download className="w-4 h-4 text-zinc-350" />
+              <Download className="w-4 h-4 text-zinc-300" />
               <span>Exportar Dados Pessoais</span>
             </h3>
             <p className="text-xs text-zinc-400 mt-1">Faça o download de um arquivo JSON estruturado contendo suas categorias e configurações de conta.</p>
@@ -110,18 +110,18 @@ export function DangerZoneTab() {
         {/* Action 2: Delete Account */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-red-455 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-red-400 flex items-center gap-2">
               <ShieldAlert className="w-4.5 h-4.5 text-red-400" />
               <span>Excluir Minha Conta</span>
             </h3>
             <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              A exclusão de conta é <span className="text-red-450 font-bold uppercase">definitiva e irreversível</span>. Todos os seus dados de perfil, lançamentos manuais, categorias personalizadas e conexões de Open Finance serão excluídos para sempre de nossos servidores.
+              A exclusão de conta é <span className="text-red-400 font-bold uppercase">definitiva e irreversível</span>. Todos os seus dados de perfil, lançamentos manuais, categorias personalizadas e conexões de Open Finance serão excluídos para sempre de nossos servidores.
             </p>
           </div>
 
           <div className="space-y-3 pt-2">
             <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wide block">
-              Digite <span className="text-red-455 font-bold">CONFIRMAR</span> para prosseguir com a exclusão:
+              Digite <span className="text-red-400 font-bold">CONFIRMAR</span> para prosseguir com a exclusão:
             </label>
             <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
               <div className="flex-1 w-full">
@@ -137,7 +137,7 @@ export function DangerZoneTab() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={confirmDeleteText !== 'CONFIRMAR' || isDeletingAccount}
-                className="w-full sm:w-auto text-xs font-bold py-2.5 px-6 rounded-xl bg-red-650 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-all shrink-0 flex items-center justify-center gap-2 shadow-lg shadow-red-700/10 border-0"
+                className="w-full sm:w-auto text-xs font-bold py-2.5 px-6 rounded-xl bg-red-700 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-all shrink-0 flex items-center justify-center gap-2 shadow-lg shadow-red-700/10 border-0"
               >
                 {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Excluir Conta Permanentemente

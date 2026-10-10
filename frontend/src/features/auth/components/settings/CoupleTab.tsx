@@ -112,7 +112,7 @@ export function CoupleTab() {
             <div className="space-y-6">
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span className="text-sm text-emerald-450 font-medium">Parceiro conectado com sucesso. O compartilhamento está ativo.</span>
+                <span className="text-sm text-emerald-400 font-medium">Parceiro conectado com sucesso. O compartilhamento está ativo.</span>
               </div>
 
               <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -238,7 +238,7 @@ export function CoupleTab() {
               <button
                 onClick={handleDissolveCouple}
                 disabled={isDissolving}
-                className="bg-red-650 hover:bg-red-600 text-white font-semibold rounded-xl py-2 px-5 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-700/10 border-0"
+                className="bg-red-700 hover:bg-red-600 text-white font-semibold rounded-xl py-2 px-5 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-700/10 border-0"
               >
                 {isDissolving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Confirmar e Desvincular

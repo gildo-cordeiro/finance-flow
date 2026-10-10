@@ -359,7 +359,7 @@ export function Transactions() {
                 onChange={handleMonthChange}
               />
             ) : (
-              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-305">
+              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-300">
                 <span>Busca Avançada</span>
               </div>
             )}

@@ -162,7 +162,7 @@ export function ProfileForm() {
           <h4 className="text-sm font-semibold text-zinc-200">Foto de Perfil</h4>
           <p className="text-xs text-text-muted">Recomendado: PNG ou JPG quadrada, de até 1MB.</p>
           <div className="flex gap-2.5 mt-1 select-none">
-            <label className="text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/30 px-3.5 py-2 rounded-xl cursor-pointer transition-all hover:text-white">
+            <label className="text-xs font-semibold bg-bg-elevated hover:bg-zinc-800 text-zinc-200 border border-zinc-700/30 px-3.5 py-2 rounded-xl cursor-pointer transition-all hover:text-white">
               Escolher imagem
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             </label>
@@ -193,13 +193,13 @@ export function ProfileForm() {
           />
 
           <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-xs font-semibold text-zinc-350 uppercase tracking-wide">
+            <label className="text-[13px] font-semibold text-text-label">
               E-mail (Somente leitura)
             </label>
             <input
               type="email"
               disabled
-              className="w-full bg-zinc-900/30 border border-zinc-900/80 text-zinc-550 rounded-xl py-2.5 px-4 text-sm cursor-not-allowed outline-none"
+              className="w-full bg-zinc-900/30 border border-zinc-900/80 text-text-muted rounded-xl py-2.5 px-4 text-sm cursor-not-allowed outline-none"
               value={user.email}
             />
           </div>

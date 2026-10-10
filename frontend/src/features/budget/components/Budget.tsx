@@ -259,7 +259,7 @@ export function Budget() {
             `,
               }}
             />
-            <div className="px-6 py-5 border-b border-zinc-850 bg-bg-surface/40 flex items-center justify-between">
+            <div className="px-6 py-5 border-b border-border-subtle bg-bg-surface/40 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-white">Distribuição por Categorias</h2>
                 <p className="text-zinc-400 text-xs mt-0.5">Defina e gerencie limites de gastos mensais.</p>

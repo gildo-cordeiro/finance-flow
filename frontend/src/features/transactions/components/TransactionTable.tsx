@@ -112,7 +112,7 @@ export function TransactionTable({
     return (
       <div className="bg-bg-surface border border-border-subtle rounded-xl overflow-hidden">
         {isSummaryLoading ? (
-          <div className="animate-pulse bg-zinc-850/60 h-14 w-full border-b border-border-subtle" />
+          <div className="animate-pulse bg-bg-elevated/60 h-14 w-full border-b border-border-subtle" />
         ) : (
           <div className="bg-bg-surface border-b border-border-subtle p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">

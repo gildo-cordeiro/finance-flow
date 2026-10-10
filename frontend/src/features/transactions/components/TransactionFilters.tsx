@@ -128,7 +128,7 @@ export function TransactionFilters({
               <span>{chip.label}</span>
               <button
                 onClick={chip.onClear}
-                className="text-zinc-550 hover:text-red-400 transition-colors p-0.5 rounded"
+                className="text-text-muted hover:text-red-400 transition-colors p-0.5 rounded"
                 title="Remover filtro"
               >
                 <X className="w-3 h-3" />
