@@ -66,7 +66,7 @@ export function CategoryList({
                     {parent.name}
                   </span>
                   {!parent.userId && (
-                    <span className="text-[9px] font-semibold bg-bg-elevated text-text-secondary border border-border-subtle px-1.5 py-0.5 rounded select-none">
+                    <span className="text-xs font-semibold bg-bg-elevated text-text-secondary border border-border-subtle px-1.5 py-0.5 rounded select-none">
                       padrão
                     </span>
                   )}
@@ -139,7 +139,7 @@ export function CategoryList({
                           {sub.name}
                         </span>
                         {!sub.userId && (
-                          <span className="text-[8px] text-text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border-subtle select-none">
+                          <span className="text-xs text-text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border-subtle select-none">
                             padrão
                           </span>
                         )}

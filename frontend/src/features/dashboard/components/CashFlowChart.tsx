@@ -84,7 +84,7 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
 
       <div className="h-72 w-full mt-6">
         {chartData.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-zinc-500 text-sm">
+          <div className="h-full flex items-center justify-center text-text-muted text-sm">
             Nenhum dado de fluxo de caixa disponível.
           </div>
         ) : (

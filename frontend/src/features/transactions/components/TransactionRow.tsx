@@ -103,7 +103,7 @@ export function TransactionRow({
                 </button>
               </>
             ) : (
-              <span className="text-xs text-zinc-550 italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
+              <span className="text-xs text-text-muted italic select-none" title="Você não pode alterar transações criadas pelo parceiro">Somente leitura</span>
             )}
           </div>
         </td>
