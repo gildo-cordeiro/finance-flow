@@ -231,7 +231,7 @@ export function CashFlow() {
             <span className="text-xs text-text-secondary font-bold">{formatDateDisplay(data.date)}</span>
             <span
               className={cn(
-                'text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+                'text-xs font-semibold px-2 py-0.5 rounded-full border',
                 data.consolidatedBalance < 0
                   ? 'bg-danger/10 text-danger border-danger/25'
                   : 'bg-success/10 text-success border-success/25'
@@ -255,20 +255,20 @@ export function CashFlow() {
           {/* Breakdown por membro (couple mode) */}
           {isCouple && breakdown && (
             <div className="border-t border-border-subtle pt-2 space-y-1.5">
-              <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">
+              <span className="text-[13px] text-text-label font-semibold block">
                 Breakdown por Membro
               </span>
               <div className="space-y-2 text-xs">
                 <div className="bg-bg-base/30 p-1.5 rounded-lg border border-border-subtle/50">
                   <p className="text-text-primary font-semibold">{user?.name} (Você)</p>
-                  <div className="flex justify-between text-[11px] text-text-secondary mt-0.5">
+                  <div className="flex justify-between text-xs text-text-secondary mt-0.5">
                     <span className="text-success font-medium">+{formatCurrency(breakdown.userA.income)}</span>
                     <span className="text-danger font-medium">-{formatCurrency(breakdown.userA.expense)}</span>
                   </div>
                 </div>
                 <div className="bg-bg-base/30 p-1.5 rounded-lg border border-border-subtle/50">
                   <p className="text-text-primary font-semibold">{partnerName}</p>
-                  <div className="flex justify-between text-[11px] text-text-secondary mt-0.5">
+                  <div className="flex justify-between text-xs text-text-secondary mt-0.5">
                     <span className="text-success font-medium">+{formatCurrency(breakdown.userB.income)}</span>
                     <span className="text-danger font-medium">-{formatCurrency(breakdown.userB.expense)}</span>
                   </div>
@@ -279,7 +279,7 @@ export function CashFlow() {
 
           {/* Lista de Transações */}
           <div className="border-t border-border-subtle pt-2 space-y-1.5">
-            <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">
+            <span className="text-[13px] text-text-label font-semibold block">
               Transações do Dia
             </span>
             {dayTransactions.length > 0 ? (

@@ -9,7 +9,7 @@ export const SectionLabel = forwardRef<HTMLSpanElement, SectionLabelProps>(
       <span
         ref={ref}
         className={cn(
-          'text-label-xs text-text-muted uppercase tracking-widest',
+          'text-[13px] font-semibold text-text-label',
           className
         )}
         {...props}

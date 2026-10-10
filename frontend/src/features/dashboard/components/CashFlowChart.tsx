@@ -49,7 +49,7 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
                 <MoneyValue amount={data.receitas} showSign={false} className="text-success text-xs font-bold" />
               </div>
               {isCouple && (
-                <div className="text-[10px] text-text-secondary pl-2 flex flex-col gap-0.5 border-l border-success/20">
+                <div className="text-xs text-text-secondary pl-2 flex flex-col gap-0.5 border-l border-success/20">
                   <span>Meu: <MoneyValue amount={data.userRevenue} showSign={false} className="font-normal text-text-secondary" /></span>
                   <span>{partnerName}: <MoneyValue amount={data.partnerRevenue} showSign={false} className="font-normal text-text-secondary" /></span>
                 </div>
@@ -62,7 +62,7 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
                 <MoneyValue amount={data.despesas} showSign={false} className="text-danger text-xs font-bold" />
               </div>
               {isCouple && (
-                <div className="text-[10px] text-text-secondary pl-2 flex flex-col gap-0.5 border-l border-danger/20">
+                <div className="text-xs text-text-secondary pl-2 flex flex-col gap-0.5 border-l border-danger/20">
                   <span>Meu: <MoneyValue amount={data.userExpenses} showSign={false} className="font-normal text-text-secondary" /></span>
                   <span>{partnerName}: <MoneyValue amount={data.partnerExpenses} showSign={false} className="font-normal text-text-secondary animate-none" /></span>
                 </div>

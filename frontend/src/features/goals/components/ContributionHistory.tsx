@@ -69,7 +69,7 @@ export function ContributionHistory({
                   </td>
                   <td className="py-4">
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                         c.type === 'AUTOMATIC'
                           ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'

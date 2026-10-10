@@ -132,7 +132,7 @@ export function AccountCard({
     return (
       <span
         className={cn(
-          'text-[10px] font-bold px-2 py-0.5 rounded-md border',
+          'text-xs font-bold px-2 py-0.5 rounded-md border',
           isOwn
             ? 'bg-violet-500/10 border-violet-500/20 text-violet-300'
             : 'bg-pink-500/10 border-pink-500/20 text-pink-300'
@@ -159,9 +159,9 @@ export function AccountCard({
           <p className="text-sm font-semibold text-text-secondary">
             {isCreditCard ? formatCurrency(Math.abs(account.balance)) : formatCurrency(account.balance)}
           </p>
-          <p className="text-[10px] text-text-muted">{isCreditCard ? 'Fatura' : 'Saldo'}</p>
+          <p className="text-xs text-text-muted">{isCreditCard ? 'Fatura' : 'Saldo'}</p>
         </div>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-700/40 border border-zinc-600/30 text-zinc-400 uppercase shrink-0">
+        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-zinc-700/40 border border-zinc-600/30 text-zinc-400 uppercase shrink-0">
           Arquivada
         </span>
         {actions.length > 0 && <AccountActionsMenu actions={actions} />}
@@ -190,7 +190,7 @@ export function AccountCard({
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 uppercase">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 uppercase">
                   Crédito
                 </span>
                 {actions.length > 0 && <AccountActionsMenu actions={actions} />}
@@ -201,7 +201,7 @@ export function AccountCard({
 
           <div className="pt-2 space-y-3">
             <div>
-              <span className="text-text-secondary text-xs font-semibold uppercase tracking-wider block">
+              <span className="text-text-label text-[13px] font-semibold block">
                 Fatura atual
               </span>
               <p className="text-2xl font-bold text-text-primary tracking-tight mt-1">
@@ -212,7 +212,7 @@ export function AccountCard({
               </p>
             </div>
             <div className="space-y-1.5 w-full">
-              <div className="flex justify-between items-center text-[10px] text-text-secondary">
+              <div className="flex justify-between items-center text-xs text-text-secondary">
                 <span>Uso do limite</span>
                 <span className="font-semibold">{usagePercent}%</span>
               </div>
@@ -223,7 +223,7 @@ export function AccountCard({
                 />
               </div>
               {payingAccountName && (
-                <p className="text-[10px] text-text-muted mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Débito automático:{' '}
                   <span className="font-medium text-text-secondary">{payingAccountName}</span>
                 </p>
@@ -268,7 +268,7 @@ export function AccountCard({
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <div className="flex items-center gap-1.5">
               {isClosed ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-700/40 border border-zinc-600/30 text-zinc-400 uppercase">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-zinc-700/40 border border-zinc-600/30 text-zinc-400 uppercase">
                   Encerrada
                 </span>
               ) : (
@@ -282,7 +282,7 @@ export function AccountCard({
 
         <div className="pt-2 space-y-3">
           <div>
-            <span className="text-text-secondary text-xs font-semibold uppercase tracking-wider block">
+            <span className="text-text-label text-[13px] font-semibold block">
               Saldo disponível
             </span>
             <p
@@ -297,7 +297,7 @@ export function AccountCard({
 
           {associatedCardsSum < 0 && (
             <div className="pt-3 border-t border-border-subtle flex flex-col gap-1">
-              <span className="text-[10px] text-text-secondary font-semibold uppercase tracking-wider block">
+              <span className="text-text-label text-[13px] font-semibold block">
                 Saldo Projetado (Livre)
               </span>
               <p
@@ -308,7 +308,7 @@ export function AccountCard({
               >
                 {formatCurrency(projectedBalance)}
               </p>
-              <span className="text-[10px] text-text-muted">
+              <span className="text-xs text-text-muted">
                 Deduzindo {formatCurrency(Math.abs(associatedCardsSum))} em faturas vinculadas
               </span>
             </div>
