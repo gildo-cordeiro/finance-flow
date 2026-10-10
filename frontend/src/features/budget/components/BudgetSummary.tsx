@@ -30,7 +30,7 @@ export function BudgetSummary({
           <TrendingUp className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Total Planejado</h3>
+          <h3 className="text-text-label text-[13px] font-semibold">Total Planejado</h3>
           <p className="text-2xl font-bold text-white mt-1">{formatCurrency(totalPlanned)}</p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export function BudgetSummary({
           <Wallet className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Total Realizado</h3>
+          <h3 className="text-text-label text-[13px] font-semibold">Total Realizado</h3>
           <p className="text-2xl font-bold text-white mt-1">{formatCurrency(totalRealized)}</p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function BudgetSummary({
           <PiggyBank className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Saldo Restante</h3>
+          <h3 className="text-text-label text-[13px] font-semibold">Saldo Restante</h3>
           <p
             className={`text-2xl font-bold mt-1 ${
               totalRemaining >= 0 ? 'text-emerald-400' : 'text-red-400'
@@ -67,7 +67,7 @@ export function BudgetSummary({
 
       <div className="auth-card p-6 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Utilização Geral</h3>
+          <h3 className="text-text-label text-[13px] font-semibold">Utilização Geral</h3>
           <span
             className={cn(
               'text-xs font-bold px-2 py-0.5 rounded-full select-none border',

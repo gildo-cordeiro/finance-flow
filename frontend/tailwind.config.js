@@ -18,9 +18,9 @@ export default {
         'danger':   '#EF4444',
         'warning':  '#F59E0B',
         'info':     '#3B82F6',
-        'text-primary':   '#F1F5F9',
-        'text-secondary': '#94A3B8',
-        'text-muted':     '#4B5563',
+        'text-primary':   '#F4F5FA',
+        'text-label':     '#C4C8D8',
+        'text-muted':     '#9AA0B4',
 
         // We'll define a sleek dark/light palette according to rich design requirements
         border: "hsl(var(--border))",

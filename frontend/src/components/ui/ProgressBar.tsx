@@ -18,7 +18,7 @@ export function ProgressBar({ value, max, className }: ProgressBarProps) {
   if (!hasLimit) {
     return (
       <div className={cn('flex flex-col gap-1 w-full', className)}>
-        <div className="flex justify-between items-center text-[10px] text-text-muted font-medium uppercase tracking-wider">
+        <div className="flex justify-between items-center text-xs text-text-muted font-medium">
           <span>Sem limite</span>
         </div>
         <div className="w-full border border-dashed border-zinc-800 bg-zinc-900/10 h-1.5 rounded-[9999px]" />
@@ -61,7 +61,7 @@ export function ProgressBar({ value, max, className }: ProgressBarProps) {
         }
       ` }} />
 
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide whitespace-nowrap">
+      <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide whitespace-nowrap">
         <span className={textColorClass}>{percentage}%</span>
         <span className="text-text-secondary font-normal opacity-40">—</span>
         <span className="text-text-secondary font-normal">

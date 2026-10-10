@@ -48,7 +48,7 @@ export function GoalHeader({
             {/* Badges */}
             <div className="flex items-center gap-2 pt-2">
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                   isCompleted
                     ? 'bg-success/10 text-success border-success/20'
                     : goal.status === 'ARCHIVED'
@@ -64,7 +64,7 @@ export function GoalHeader({
               </span>
 
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                   hasCoupleId
                     ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
                     : 'bg-violet-500/10 text-violet-400 border-violet-500/20'
@@ -78,13 +78,13 @@ export function GoalHeader({
           {/* Money Info */}
           <div className="grid grid-cols-2 md:flex md:flex-col justify-end gap-4 text-right">
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[13px] font-semibold text-text-label block">
                 Progresso Atual
               </span>
               <MoneyValue amount={goal.currentAmount} showSign={false} className="text-2xl font-bold" />
             </div>
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[13px] font-semibold text-text-label block">
                 Meta Total
               </span>
               <span className="text-sm font-semibold text-text-secondary">

@@ -93,10 +93,13 @@ export function CategoryExpensesChart({
                       borderRadius: '12px',
                       fontSize: '12px',
                     }}
-                    formatter={(value: number | string) => [
-                      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0)),
-                      'Total',
-                    ]}
+                    formatter={(value: string | number | readonly (string | number)[] | undefined) => {
+                      const numericValue = Array.isArray(value) ? value[0] : value;
+                      return [
+                        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(numericValue || 0)),
+                        'Total',
+                      ];
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -118,13 +121,13 @@ export function CategoryExpensesChart({
                     </div>
                     <div className="text-right shrink-0 ml-2 font-semibold text-zinc-100">
                       <MoneyValue amount={item.value} showSign={false} className="text-zinc-100 font-semibold" />
-                      <span className="text-zinc-500 text-[10px] ml-1.5 font-normal">({percent}%)</span>
+                      <span className="text-text-muted text-xs ml-1.5 font-normal">({percent}%)</span>
                     </div>
                   </div>
                 );
               })}
               {chartData.length > 5 && (
-                <div className="text-center text-[10px] text-text-secondary pt-1">
+                <div className="text-center text-xs text-text-secondary pt-1">
                   + {chartData.length - 5} categoria(s)
                 </div>
               )}

@@ -305,7 +305,7 @@ export function Budget() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-800 bg-zinc-900/30 text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+                  <tr className="border-b border-zinc-800 bg-zinc-900/30 text-zinc-400 text-xs font-semibold uppercase tracking-wide">
                     <th className="px-6 py-4">Categoria</th>
                     <th className="px-6 py-4 w-[180px] min-w-[180px]">Orçado</th>
                     <th className="px-6 py-4 w-[140px] min-w-[140px]">Gasto</th>

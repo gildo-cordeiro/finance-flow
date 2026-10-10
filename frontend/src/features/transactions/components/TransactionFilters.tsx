@@ -53,7 +53,7 @@ export function TransactionFilters({
         isCouple ? "sm:grid-cols-4" : "sm:grid-cols-3"
       )}>
         <div>
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Conta</label>
+          <label className="text-[13px] font-semibold text-text-label block mb-2">Conta</label>
           <select
             value={filterAccountId}
             onChange={(e) => setFilterAccountId(e.target.value)}
@@ -67,7 +67,7 @@ export function TransactionFilters({
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Categoria</label>
+          <label className="text-[13px] font-semibold text-text-label block mb-2">Categoria</label>
           <select
             value={filterCategoryId}
             onChange={(e) => setFilterCategoryId(e.target.value)}
@@ -86,7 +86,7 @@ export function TransactionFilters({
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Status</label>
+          <label className="text-[13px] font-semibold text-text-label block mb-2">Status</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as 'ALL' | 'PAID' | 'PLANNED' | 'PENDING' | 'OVERDUE')}
@@ -102,7 +102,7 @@ export function TransactionFilters({
 
         {isCouple && (
           <div>
-            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">Membro</label>
+            <label className="text-[13px] font-semibold text-text-label block mb-2">Membro</label>
             <select
               value={filterMember}
               onChange={(e) => setFilterMember(e.target.value as 'ALL' | 'OWN' | 'PARTNER')}

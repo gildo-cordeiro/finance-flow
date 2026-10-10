@@ -127,7 +127,7 @@ export function TransactionTable({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
+              <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wide bg-bg-surface/30">
                 <th className="p-4">Competência</th>
                 <th className="p-4">Descrição</th>
                 <th className="p-4">Categoria</th>
@@ -217,7 +217,7 @@ export function TransactionTable({
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wider bg-bg-surface/30">
+                      <tr className="border-b border-zinc-800/60 text-zinc-400 text-xs font-semibold uppercase tracking-wide bg-bg-surface/30">
                         <th className="p-4">Competência</th>
                         <th className="p-4">Descrição</th>
                         <th className="p-4">Categoria</th>

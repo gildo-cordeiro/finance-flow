@@ -71,7 +71,7 @@ export function BudgetModal({ isOpen, onClose, onSave, categoryOptions }: Budget
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+            <label className="text-[13px] font-semibold text-text-label">
               Categoria
             </label>
             <select

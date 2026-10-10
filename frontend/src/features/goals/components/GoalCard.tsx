@@ -37,7 +37,7 @@ export function GoalCard({ goal, onClick, onEdit, onArchive, onUnarchive }: Goal
             )}
           </div>
           <span
-            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+            className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
               hasCoupleId
                 ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
                 : 'bg-violet-500/10 text-violet-400 border-violet-500/20'
@@ -50,13 +50,13 @@ export function GoalCard({ goal, onClick, onEdit, onArchive, onUnarchive }: Goal
         {/* Amounts */}
         <div className="flex justify-between items-baseline pt-1">
           <div className="space-y-0.5">
-            <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+            <span className="text-[13px] font-semibold text-text-label block">
               Poupança Atual
             </span>
             <MoneyValue amount={goal.currentAmount} showSign={false} className="text-lg font-bold" />
           </div>
           <div className="text-right space-y-0.5">
-            <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+            <span className="text-[13px] font-semibold text-text-label block">
               Valor-Alvo
             </span>
             <span className="text-sm font-semibold text-text-secondary">

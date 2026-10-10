@@ -136,7 +136,7 @@ export function BudgetRow({
             </div>
           )}
           {isEditing && saveError && (
-            <div className="text-[10px] text-danger mt-1">{saveError}</div>
+            <div className="text-xs text-danger mt-1">{saveError}</div>
           )}
         </td>
 
@@ -169,7 +169,7 @@ export function BudgetRow({
               <div className="flex items-center gap-2">
                 <div
                   className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] uppercase border select-none shrink-0',
+                    'w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs uppercase border select-none shrink-0',
                     userId === user.id
                       ? 'bg-brand/10 border-brand/30 text-brand'
                       : 'bg-pink-500/10 border-pink-500/30 text-pink-400'
@@ -184,7 +184,7 @@ export function BudgetRow({
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-zinc-500">—</span>
+              <span className="text-xs text-text-muted">—</span>
             )}
           </td>
         )}
@@ -247,7 +247,7 @@ export function BudgetRow({
             )}
           </div>
         )}
-        {isEditing && saveError && <div className="text-[10px] text-danger mt-1">{saveError}</div>}
+        {isEditing && saveError && <div className="text-xs text-danger mt-1">{saveError}</div>}
       </td>
 
       {/* Gasto */}
@@ -277,7 +277,7 @@ export function BudgetRow({
             <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] uppercase border select-none shrink-0',
+                  'w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs uppercase border select-none shrink-0',
                   userId === user.id
                     ? 'bg-brand/10 border-brand/30 text-brand'
                     : 'bg-pink-500/10 border-pink-500/30 text-pink-400'
@@ -292,7 +292,7 @@ export function BudgetRow({
               </span>
             </div>
           ) : (
-            <span className="text-xs text-zinc-500">—</span>
+            <span className="text-xs text-text-muted">—</span>
           )}
         </td>
       )}
