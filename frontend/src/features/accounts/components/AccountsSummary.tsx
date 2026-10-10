@@ -1,5 +1,6 @@
 import { Landmark, CreditCard, Shield } from 'lucide-react';
 import type { Account } from '../types';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 interface AccountsSummaryProps {
   accounts: Account[];
@@ -27,9 +28,7 @@ export function AccountsSummary({ accounts, currency }: AccountsSummaryProps) {
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Saldo Disponível Geral
           </p>
-          <p className="text-2xl font-extrabold text-text-primary tracking-tight">
-            {formatCurrency(totalBalance)}
-          </p>
+          <MoneyValue amount={totalBalance} variant="auto" showSign={false} className="text-2xl font-extrabold tracking-tight block" />
           <p className="text-xs text-text-muted">
             Soma de {bankAccounts.length} conta{bankAccounts.length === 1 ? '' : 's'} bancária
             {bankAccounts.length === 1 ? '' : 's'}
@@ -46,9 +45,7 @@ export function AccountsSummary({ accounts, currency }: AccountsSummaryProps) {
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Faturas em Aberto
           </p>
-          <p className="text-2xl font-extrabold text-danger tracking-tight">
-            {formatCurrency(totalInvoice)}
-          </p>
+          <MoneyValue amount={totalInvoice} variant="expense" showSign={false} className="text-2xl font-extrabold tracking-tight block" />
           <p className="text-xs text-text-muted">
             Em {creditCards.length} cartão{creditCards.length === 1 ? '' : 'ões'} de crédito
           </p>
@@ -64,9 +61,7 @@ export function AccountsSummary({ accounts, currency }: AccountsSummaryProps) {
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Limite de Crédito Disponível
           </p>
-          <p className="text-2xl font-extrabold text-success tracking-tight">
-            {formatCurrency(availableLimit)}
-          </p>
+          <MoneyValue amount={availableLimit} variant="income" showSign={false} className="text-2xl font-extrabold tracking-tight block" />
           <p className="text-xs text-text-muted">
             De um limite total de {formatCurrency(totalLimit)}
           </p>

@@ -1,5 +1,6 @@
 import { CalendarDays, Calendar } from 'lucide-react';
 import { cn } from '../../../lib/cn';
+import { MoneyValue } from '../../../components/ui/MoneyValue';
 
 interface CashFlowRowProps {
   type: 'daily' | 'weekly' | 'monthly';
@@ -7,7 +8,6 @@ interface CashFlowRowProps {
   income: number;
   expense: number;
   balance: number;
-  currency: string;
 }
 
 export function CashFlowRow({
@@ -16,14 +16,8 @@ export function CashFlowRow({
   income,
   expense,
   balance,
-  currency,
 }: CashFlowRowProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: currency || 'BRL',
-    }).format(value);
-  };
+
 
   const renderPeriodCell = () => {
     if (type === 'weekly') {
@@ -49,19 +43,14 @@ export function CashFlowRow({
   return (
     <tr className="hover:bg-bg-elevated/20 transition-colors">
       {renderPeriodCell()}
-      <td className="p-4 text-right text-success font-semibold">
-        {income > 0 ? `+ ${formatCurrency(income)}` : '-'}
+      <td className="p-4 text-right font-semibold">
+        <MoneyValue amount={income} variant="income" showSign={false} />
       </td>
-      <td className="p-4 text-right text-danger font-semibold">
-        {expense > 0 ? `- ${formatCurrency(expense)}` : '-'}
+      <td className="p-4 text-right font-semibold">
+        <MoneyValue amount={expense} variant="expense" showSign={false} />
       </td>
-      <td
-        className={cn(
-          'p-4 text-right font-bold',
-          balance < 0 ? 'text-danger' : 'text-text-primary'
-        )}
-      >
-        {formatCurrency(balance)}
+      <td className="p-4 text-right font-bold">
+        <MoneyValue amount={balance} variant="auto" />
       </td>
       <td className="p-4 text-center">
         <span
