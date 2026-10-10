@@ -1,6 +1,9 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { Card } from '../../../components/ui/Card';
 import { MoneyValue } from '../../../components/ui/MoneyValue';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Button } from '../../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 
 interface Transaction {
   id: string;
@@ -37,6 +40,8 @@ export function CategoryExpensesChart({
   categories,
   currentMonth,
 }: CategoryExpensesChartProps) {
+  const navigate = useNavigate();
+
   // Filter for expenses of current month
   const expenses = transactions.filter(
     (t) => t.type === 'EXPENSE' && t.competenceDate.startsWith(currentMonth)
@@ -67,7 +72,16 @@ export function CategoryExpensesChart({
 
       <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-4 mt-4 min-h-0">
         {chartData.length === 0 ? (
-          <div className="text-zinc-500 text-sm">Nenhum gasto registrado neste mês.</div>
+          <EmptyState
+            title="Sem despesas neste mês"
+            description="Registre uma despesa para ver a distribuição por categoria."
+            compact
+            action={
+              <Button onClick={() => navigate('/transactions')} variant="primary" size="sm">
+                Adicionar despesa
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="w-40 h-40 shrink-0">

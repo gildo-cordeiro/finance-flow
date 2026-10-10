@@ -28,6 +28,8 @@ interface TransactionTableProps {
   getMonthLimit: (monthKey: string) => number;
   handleLoadMore: (monthKey: string) => void;
   handleOpenNewTrans: () => void;
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
   onEdit: (t: Transaction) => void;
   onDelete: (t: Transaction) => void;
   getMonthName: (monthKey: string) => string;
@@ -55,6 +57,8 @@ export function TransactionTable({
   getMonthLimit,
   handleLoadMore,
   handleOpenNewTrans,
+  hasActiveFilters,
+  onClearFilters,
   onEdit,
   onDelete,
   getMonthName,
@@ -83,12 +87,17 @@ export function TransactionTable({
       <div className="bg-bg-surface border border-border-subtle rounded-xl">
         <EmptyState
           icon={<Calendar className="w-12 h-12 text-zinc-600" />}
-          title="Nenhuma transação encontrada"
-          description="Ajuste os filtros ou crie um novo lançamento."
+          title="Nenhum lançamento encontrado"
           action={
-            <Button onClick={handleOpenNewTrans} variant="primary" size="sm">
-              Adicionar transação
-            </Button>
+            hasActiveFilters ? (
+              <Button onClick={onClearFilters} variant="secondary" size="sm">
+                Limpar filtros
+              </Button>
+            ) : (
+              <Button onClick={handleOpenNewTrans} variant="primary" size="sm">
+                Novo lançamento
+              </Button>
+            )
           }
         />
       </div>

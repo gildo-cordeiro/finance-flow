@@ -484,6 +484,8 @@ export function Transactions() {
               getMonthLimit={getMonthLimit}
               handleLoadMore={handleLoadMore}
               handleOpenNewTrans={handleOpenNewTrans}
+              hasActiveFilters={activeChips.length > 0}
+              onClearFilters={handleClearAllFilters}
               onEdit={handleOpenEditTrans}
               onDelete={handleDeleteTrans}
               getMonthName={getMonthName}
