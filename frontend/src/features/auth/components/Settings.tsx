@@ -5,8 +5,11 @@ import {
   ShieldAlert,
   Tag,
   Heart,
-  RefreshCw
+  RefreshCw,
+  Copy,
+  Check
 } from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
 import { ProfileTab } from './settings/ProfileTab';
 import { CategoriesTab } from './settings/CategoriesTab';
@@ -19,17 +22,26 @@ import { PageHeader } from '../../../components/ui/PageHeader';
 export function Settings() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<'profile' | 'categories' | 'couple' | 'open-finance' | 'danger-zone'>('profile');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyId = async () => {
+    if (!user?.id) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(user.id);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
 
   return (
     <PageContainer>
       <PageHeader
         title="Configurações"
         subtitle="Gerencie sua conta e preferências."
-        actions={
-          <div className="flex items-center gap-4">
-            <span className="text-text-muted text-xs select-none">ID do Usuário: {user?.id}</span>
-          </div>
-        }
       />
 
       {/* Main Settings Page Container */}
@@ -103,14 +115,30 @@ export function Settings() {
           </button>
         </aside>
 
-        {/* Right Content Section - Scrollable and Flex */}
-        <main className="flex-1 min-w-0 max-h-[85vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
+        {/* Right Content Section */}
+        <main className="flex-1 min-w-0">
           {activeSection === 'profile' && <ProfileTab />}
           {activeSection === 'categories' && <CategoriesTab />}
           {activeSection === 'couple' && <CoupleTab />}
           {activeSection === 'open-finance' && <OpenFinanceTab />}
           {activeSection === 'danger-zone' && <DangerZoneTab />}
         </main>
+      </div>
+
+      {/* Footer User ID */}
+      <div className="mt-8 pt-6 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-text-muted">
+        <span>ID do Usuário: {user?.id}</span>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleCopyId}
+          disabled={!user?.id}
+          className="shrink-0"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>{copied ? 'Copiado!' : 'Copiar'}</span>
+        </Button>
       </div>
     </PageContainer>
   );

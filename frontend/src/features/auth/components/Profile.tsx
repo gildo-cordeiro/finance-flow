@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { User, Globe, DollarSign, Calendar, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { User, Globe, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 import { CoupleSettingsSection } from '../../couple/components/CoupleSettingsSection';
 import type { ApiError } from '../types';
 
@@ -23,7 +22,6 @@ const CURRENCIES = [
 
 export function Profile() {
   const { user, updateProfile } = useAuth();
-  const navigate = useNavigate();
 
   const [name, setName] = useState('');
   const [timeZone, setTimeZone] = useState('America/Sao_Paulo');
@@ -74,14 +72,7 @@ export function Profile() {
 
   return (
     <div className="gradient-bg min-h-screen text-white">
-      <header className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between border-b border-zinc-800/80">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar ao Painel
-        </button>
+      <header className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-end border-b border-zinc-800/80">
         <span className="text-text-muted text-xs">ID: {user?.id}</span>
       </header>
 
