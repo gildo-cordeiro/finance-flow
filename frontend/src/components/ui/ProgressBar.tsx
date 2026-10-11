@@ -26,18 +26,18 @@ export function ProgressBar({ value, max, className }: ProgressBarProps) {
     );
   }
 
-  const isOverLimit = percentage >= 100;
+  const isOverLimit = percentage > 100;
 
   // Determine color of progress bar based on 3 states:
-  // - Normal (< 80%): #7C5CFC (bg-brand)
-  // - Warning (80–99%): #F59E0B (bg-warning)
-  // - Over-budget (>= 100%): #EF4444 (bg-danger)
-  let barColorClass = 'bg-brand';
-  let textColorClass = 'text-brand';
-  if (percentage >= 80 && percentage < 100) {
+  // - Normal (< 80%): #22C55E (bg-success)
+  // - Warning (80–100%): #F59E0B (bg-warning)
+  // - Over-budget (> 100%): #EF4444 (bg-danger)
+  let barColorClass = 'bg-success';
+  let textColorClass = 'text-success';
+  if (percentage >= 80 && percentage <= 100) {
     barColorClass = 'bg-warning';
     textColorClass = 'text-warning';
-  } else if (percentage >= 100) {
+  } else if (percentage > 100) {
     barColorClass = 'bg-danger';
     textColorClass = 'text-danger';
   }

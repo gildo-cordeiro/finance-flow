@@ -64,7 +64,7 @@ export function BudgetRow({
     return (
       <tr
         className={cn(
-          'hover:bg-bg-elevated/20 transition-colors bg-bg-surface/30 border-b border-zinc-800/40',
+          'group hover:bg-bg-elevated/20 transition-colors bg-bg-surface/30 border-b border-zinc-800/40',
           hasChildren && !isCollapsed && 'border-b-0 bg-bg-surface/20'
         )}
       >
@@ -92,17 +92,18 @@ export function BudgetRow({
         </td>
 
         {/* Orçado */}
-        <td className="px-6 py-4 w-[180px]">
+        <td className="px-6 py-4 text-right text-sm tabular-nums w-[180px]">
           {isEditing ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-end gap-1.5">
               <input
                 type="number"
                 value={editValue}
                 onChange={(e) => onEditValueChange(e.target.value)}
-                className="w-24 bg-zinc-950 border border-zinc-800 focus:border-brand outline-none rounded-lg px-2.5 py-1 text-sm font-medium"
+                className="w-24 bg-zinc-950 border border-zinc-800 focus:border-brand outline-none rounded-lg px-2.5 py-1 text-sm font-medium text-right tabular-nums"
                 autoFocus
               />
               <button
+                type="button"
                 onClick={handleSaveClick}
                 className="p-1 hover:bg-success/10 text-success rounded-lg transition-all cursor-pointer"
                 title="Salvar"
@@ -110,6 +111,7 @@ export function BudgetRow({
                 <Check className="w-4 h-4" />
               </button>
               <button
+                type="button"
                 onClick={onCancelEditing}
                 className="p-1 hover:bg-danger/10 text-zinc-400 hover:text-danger rounded-lg transition-all cursor-pointer"
                 title="Cancelar"
@@ -117,13 +119,35 @@ export function BudgetRow({
                 <X className="w-4 h-4" />
               </button>
             </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-zinc-100">{formatCurrency(plannedAmount)}</span>
+          ) : plannedAmount === 0 ? (
+            <div className="flex items-center justify-end gap-1.5">
               {isEditable ? (
                 <button
+                  type="button"
                   onClick={onStartEditing}
-                  className="p-1 text-zinc-400 hover:text-brand rounded-lg transition-all cursor-pointer"
+                  className="text-brand hover:text-brand-hover text-sm font-medium transition-colors cursor-pointer"
+                >
+                  Definir
+                </button>
+              ) : (
+                <span className="text-text-muted flex items-center gap-1.5 justify-end">
+                  <span>—</span>
+                  <span title={`Categoria de ${partnerName}`}>
+                    <Lock className="w-3.5 h-3.5 text-zinc-500 cursor-help inline-block" />
+                  </span>
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-1.5">
+              <span className="font-semibold text-zinc-100 tabular-nums text-sm">
+                {formatCurrency(plannedAmount)}
+              </span>
+              {isEditable ? (
+                <button
+                  type="button"
+                  onClick={onStartEditing}
+                  className="p-1 text-zinc-400 hover:text-brand rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
                   title="Editar limite planejado"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
@@ -136,25 +160,35 @@ export function BudgetRow({
             </div>
           )}
           {isEditing && saveError && (
-            <div className="text-xs text-danger mt-1">{saveError}</div>
+            <div className="text-xs text-danger mt-1 text-right">{saveError}</div>
           )}
         </td>
 
         {/* Gasto */}
-        <td className="px-6 py-4 font-semibold text-zinc-300 w-[140px]">
-          {formatCurrency(realizedAmount)}
+        <td className="px-6 py-4 text-right text-sm tabular-nums w-[140px]">
+          {realizedAmount === 0 ? (
+            <span className="text-text-muted">—</span>
+          ) : (
+            <span className="font-semibold text-zinc-300 tabular-nums text-sm">
+              {formatCurrency(realizedAmount)}
+            </span>
+          )}
         </td>
 
         {/* Restante */}
-        <td className="px-6 py-4 w-[140px]">
-          <span
-            className={cn(
-              'font-medium tabular-nums text-sm',
-              remaining < 0 ? 'text-danger font-semibold' : 'text-zinc-400'
-            )}
-          >
-            {formatCurrency(remaining)}
-          </span>
+        <td className="px-6 py-4 text-right text-sm tabular-nums w-[140px]">
+          {remaining === 0 ? (
+            <span className="text-text-muted">—</span>
+          ) : (
+            <span
+              className={cn(
+                'tabular-nums text-sm',
+                remaining < 0 ? 'text-danger font-semibold' : 'text-zinc-400 font-medium'
+              )}
+            >
+              {formatCurrency(remaining)}
+            </span>
+          )}
         </td>
 
         {/* Progresso */}
@@ -194,7 +228,7 @@ export function BudgetRow({
 
   // Subcategory
   return (
-    <tr className="hover:bg-bg-elevated/10 transition-colors subcategory-animate border-b-0">
+    <tr className="group hover:bg-bg-elevated/10 transition-colors subcategory-animate border-b-0">
       {/* Categoria */}
       <td className="px-6 py-3 pl-12 text-sm font-normal text-zinc-400">
         <div className="flex items-center gap-2">
@@ -204,17 +238,18 @@ export function BudgetRow({
       </td>
 
       {/* Orçado */}
-      <td className="px-6 py-3 text-sm w-[180px]">
+      <td className="px-6 py-3 text-right text-sm tabular-nums w-[180px]">
         {isEditing ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-end gap-1.5">
             <input
               type="number"
               value={editValue}
               onChange={(e) => onEditValueChange(e.target.value)}
-              className="w-24 bg-zinc-950 border border-zinc-800 focus:border-brand outline-none rounded-lg px-2.5 py-1 text-sm font-medium"
+              className="w-24 bg-zinc-950 border border-zinc-800 focus:border-brand outline-none rounded-lg px-2.5 py-1 text-sm font-medium text-right tabular-nums"
               autoFocus
             />
             <button
+              type="button"
               onClick={handleSaveClick}
               className="p-1 hover:bg-success/10 text-success rounded-lg transition-all cursor-pointer"
               title="Salvar"
@@ -222,6 +257,7 @@ export function BudgetRow({
               <Check className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={onCancelEditing}
               className="p-1 hover:bg-danger/10 text-zinc-400 hover:text-danger rounded-lg transition-all cursor-pointer"
               title="Cancelar"
@@ -229,40 +265,74 @@ export function BudgetRow({
               <X className="w-4 h-4" />
             </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
-            <span className="text-zinc-300">{formatCurrency(plannedAmount)}</span>
+        ) : plannedAmount === 0 ? (
+          <div className="flex items-center justify-end gap-1.5">
             {isEditable ? (
               <button
+                type="button"
                 onClick={onStartEditing}
-                className="p-1 text-zinc-400 hover:text-brand rounded-lg transition-all cursor-pointer"
+                className="text-brand hover:text-brand-hover text-sm font-medium transition-colors cursor-pointer"
+              >
+                Definir
+              </button>
+            ) : (
+              <span className="text-text-muted flex items-center gap-1.5 justify-end">
+                <span>—</span>
+                <span title={`Categoria de ${partnerName}`}>
+                  <Lock className="w-3.5 h-3.5 text-zinc-500 cursor-help inline-block" />
+                </span>
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-end gap-1.5">
+            <span className="text-zinc-300 tabular-nums text-sm">
+              {formatCurrency(plannedAmount)}
+            </span>
+            {isEditable ? (
+              <button
+                type="button"
+                onClick={onStartEditing}
+                className="p-1 text-zinc-400 hover:text-brand rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
                 title="Editar limite planejado"
               >
-                <Edit2 className="w-3 h-3" />
+                <Edit2 className="w-3.5 h-3.5" />
               </button>
             ) : (
               <span title={`Categoria de ${partnerName}`}>
-                <Lock className="w-3 h-3 text-zinc-500 cursor-help inline-block" />
+                <Lock className="w-3.5 h-3.5 text-zinc-500 cursor-help inline-block" />
               </span>
             )}
           </div>
         )}
-        {isEditing && saveError && <div className="text-xs text-danger mt-1">{saveError}</div>}
+        {isEditing && saveError && <div className="text-xs text-danger mt-1 text-right">{saveError}</div>}
       </td>
 
       {/* Gasto */}
-      <td className="px-6 py-3 text-sm text-zinc-400 w-[140px]">{formatCurrency(realizedAmount)}</td>
+      <td className="px-6 py-3 text-right text-sm tabular-nums text-zinc-400 w-[140px]">
+        {realizedAmount === 0 ? (
+          <span className="text-text-muted">—</span>
+        ) : (
+          <span className="text-zinc-400 tabular-nums text-sm">
+            {formatCurrency(realizedAmount)}
+          </span>
+        )}
+      </td>
 
       {/* Restante */}
-      <td className="px-6 py-3 text-sm w-[140px]">
-        <span
-          className={cn(
-            'font-medium tabular-nums text-sm',
-            remaining < 0 ? 'text-danger font-semibold' : 'text-zinc-400'
-          )}
-        >
-          {formatCurrency(remaining)}
-        </span>
+      <td className="px-6 py-3 text-right text-sm tabular-nums w-[140px]">
+        {remaining === 0 ? (
+          <span className="text-text-muted">—</span>
+        ) : (
+          <span
+            className={cn(
+              'tabular-nums text-sm',
+              remaining < 0 ? 'text-danger font-semibold' : 'text-zinc-400 font-medium'
+            )}
+          >
+            {formatCurrency(remaining)}
+          </span>
+        )}
       </td>
 
       {/* Progresso */}
