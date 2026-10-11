@@ -46,7 +46,7 @@ Os ADRs 0001 a 0038 foram escritos **retroativamente** em 2026-10-10, a partir d
 | [0036](0036-kafka-fora-da-stack.md) | Kafka fora da stack | Aceito (retroativo) | 2026-10-10 | alta |
 | [0037](0037-tokens-de-texto-e-tipografia-minima.md) | Tokens de texto e tipografia mínima legível | Aceito (retroativo) | 2026-10-10 | alta |
 | [0038](0038-componentes-compartilhados-de-valor-estado-vazio-e-periodo.md) | Componentes compartilhados para valor monetário, estado vazio e período | Aceito (retroativo) | 2026-10-10 | média |
-| [0039](0039-modal-unico-de-lancamento.md) | Modal único de lançamento (Despesa | Receita, Pago com, Mais detalhes) | Proposto | 2026-10-10 | alta |
+| [0039](0039-modal-unico-de-lancamento.md) | Modal único de lançamento (Despesa ou Receita, Pago com, Mais detalhes) | Proposto | 2026-10-10 | alta |
 | [0040](0040-governanca-de-skills-e-adrs.md) | Governança de skills e ADRs mantida por skills e checagem não bloqueante no CI | Aceito | 2026-10-11 | alta |
 
 ## Como criar um ADR
