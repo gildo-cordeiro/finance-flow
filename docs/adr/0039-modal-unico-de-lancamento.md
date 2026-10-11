@@ -1,4 +1,4 @@
-# ADR-0039 — Modal único de lançamento (Despesa | Receita, Pago com, Mais detalhes)
+# ADR-0039 — Modal único de lançamento (Despesa ou Receita, Pago com, Mais detalhes)
 
 - Status: Proposto
 - Data: 2026-10-10 (data do commit ou do artefato que introduziu a decisão)

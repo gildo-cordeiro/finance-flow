@@ -5,7 +5,7 @@ description: >
   (Clean Code, exceções, testes) e segurança no FinanceFlow.
   Use esta skill SEMPRE que o código envolver decisões de arquitetura, estrutura de pacotes, configuração de segurança,
   Flyway, Redis, JWT, ou quando houver dúvida sobre "onde esse código deve viver?" ou "como organizar esse módulo?".
-  Acione também para perguntas sobre o monólito modular, desacoplamento entre módulos, eventos de domínio ou padrões
+  Acione também para perguntas sobre o monólito modular, desacoplamento entre módulos ou padrões
   de comunicação interna.
 ---
 
@@ -139,41 +139,16 @@ public final class TransactionMapper {
 
 ## 4. Comunicação entre Módulos (Desacoplamento)
 
-**Nunca** acesse diretamente o repositório de outro módulo. Use uma dessas estratégias:
+Estratégias para código novo:
 
 | Cenário | Estratégia |
 |---|---|
-| Lógica síncrona necessária de outro módulo | Interface pública de `Service` exposta pelo módulo alvo |
-| Reação a ação de negócio (recalcular orçamento após nova transação) | `ApplicationEventPublisher` → evento de domínio |
+| Lógica síncrona necessária de outro módulo | Interface pública de `Service`/`UseCase` exposta pelo módulo alvo |
 | Integração com sistema externo (Open Finance) | Adapter na camada `shared/` ou no próprio módulo |
 
-> ⚠ **Divergência conhecida (decisão pendente):** hoje nenhum módulo usa `ApplicationEventPublisher` nem eventos de domínio. A comunicação entre módulos é por injeção direta de repositórios e services (por exemplo, `goals` usa o repositório de `couple`). Eventos são alvo, não prática atual. Não introduza eventos sem consultar o desenvolvedor (skill `adr-workflow`).
+> **Decisão do desenvolvedor (2026-10-11):** eventos de domínio **não fazem parte** da arquitetura (sem `ApplicationEventPublisher` nem listeners). A comunicação entre módulos é síncrona, por injeção. Introduzir eventos exige uma decisão registrada em ADR (skill `adr-workflow`).
 
-```java
-// Exemplo: TransactionService publica evento após criar transação
-@Service
-@Transactional
-public class TransactionService {
-
-    private final ApplicationEventPublisher eventPublisher;
-
-    public TransactionResponse create(UUID userId, CreateTransactionRequest request) {
-        // ... persiste transação
-        eventPublisher.publishEvent(new TransactionCreatedEvent(saved.id(), saved.competenceDate()));
-        return toResponse(saved);
-    }
-}
-
-// BudgetModule ouve o evento sem acoplamento direto
-@Component
-public class BudgetCompetenceListener {
-
-    @EventListener
-    public void onTransactionCreated(TransactionCreatedEvent event) {
-        budgetService.recalculate(event.userId(), event.competenceMonth());
-    }
-}
-```
+> ⚠ **Divergência conhecida (decisão pendente):** a regra "nunca acesse diretamente o repositório de outro módulo" não é seguida hoje (por exemplo, `transaction` e `goals` usam o `CoupleRepository`). Ou a regra passa a valer só para código novo, ou esses acessos viram interfaces públicas de service. Pergunte ao desenvolvedor antes de mudar o código ou a regra.
 
 ## 5. Segurança
 
