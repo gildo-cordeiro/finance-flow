@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Target } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { useGoals, useDeleteGoal, useUnarchiveGoal } from '../hooks/useGoals';
 import { GoalFormModal } from './GoalFormModal';
 import { GoalCard } from './GoalCard';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 import { Goal } from '../types';
 import { useToast } from '../../../context/ToastContext';
 
@@ -101,23 +103,19 @@ export function Goals() {
   const filteredGoals = goals?.filter((goal) => goal.status === filterStatus) || [];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
-            <Target className="w-6 h-6 text-brand" />
-            Objetivos Financeiros
-          </h1>
-          <p className="text-text-secondary text-sm">
-            Planeje, acompanhe e realize suas metas de médio e longo prazo.
-          </p>
-        </div>
-        <Button onClick={handleOpenCreate} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Novo Objetivo
-        </Button>
-      </div>
+    <>
+      <PageContainer>
+        <PageHeader
+          title="Objetivos Financeiros"
+          subtitle="Planeje, acompanhe e realize suas metas de médio e longo prazo."
+          actions={
+            <Button onClick={handleOpenCreate} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Novo Objetivo
+            </Button>
+          }
+        />
+        <div className="space-y-6">
 
       {/* Tabs / Filters */}
       <div className="flex bg-bg-surface border border-border-subtle p-1 rounded-xl shadow-lg max-w-md">
@@ -197,6 +195,8 @@ export function Goals() {
         onClose={() => setIsModalOpen(false)}
         editingGoal={editingGoal}
       />
-    </div>
+        </div>
+      </PageContainer>
+    </>
   );
 }

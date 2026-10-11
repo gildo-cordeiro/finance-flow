@@ -23,6 +23,8 @@ import { format, parse, startOfMonth, endOfMonth } from 'date-fns';
 import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 import { CashFlowSummary } from './CashFlowSummary';
 import { CashFlowTable } from './CashFlowTable';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 
 export function CashFlow() {
   const { user } = useAuth();
@@ -308,7 +310,7 @@ export function CashFlow() {
   if (!user) return null;
 
   return (
-    <div className="bg-bg-base min-h-screen text-text-primary pb-16">
+    <>
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div className="bg-brand/10 border-b border-brand/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
@@ -318,23 +320,17 @@ export function CashFlow() {
         </div>
       )}
 
-      {/* Main content */}
-      <main className="max-w-6xl mx-auto px-4 pt-10 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight text-white">Fluxo de Caixa</h1>
-            <p className="text-text-secondary text-sm">
-              Projete suas finanças e identifique períodos de aperto antes que aconteçam.
-            </p>
-          </div>
-
-          {/* Month Navigation & Period Selector */}
-          <PeriodSelector
-            value={selectedMonth}
-            onChange={setSelectedMonth}
-          />
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Fluxo de Caixa"
+          subtitle="Projete suas finanças e identifique períodos de aperto antes que aconteçam."
+          actions={
+            <PeriodSelector
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+            />
+          }
+        />
 
         {/* Tightness alerts */}
         {hasTightness && (
@@ -533,7 +529,7 @@ export function CashFlow() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </PageContainer>
+    </>
   );
 }

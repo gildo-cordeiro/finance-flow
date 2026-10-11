@@ -17,6 +17,8 @@ import { TransactionFilters } from './TransactionFilters';
 import { TransactionTable } from './TransactionTable';
 import { TransactionModal } from './TransactionModal';
 import { BulkActionModals } from './BulkActionModals';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 
 export function Transactions() {
@@ -333,7 +335,7 @@ export function Transactions() {
   if (!user) return null;
 
   return (
-    <div className="gradient-bg min-h-screen text-white">
+    <>
       {/* Couple context banner */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
@@ -344,52 +346,50 @@ export function Transactions() {
       )}
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Transações</h1>
-            <p className="text-zinc-400 text-sm mt-1">Monitore e gerencie seus lançamentos</p>
-          </div>
+      <PageContainer>
+        <PageHeader
+          title="Transações"
+          subtitle="Monitore e gerencie seus lançamentos"
+          actions={
+            <>
+              {searchMonth !== 'ALL' ? (
+                <PeriodSelector
+                  value={searchMonth}
+                  onChange={handleMonthChange}
+                />
+              ) : (
+                <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-300">
+                  <span>Busca Avançada</span>
+                </div>
+              )}
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {searchMonth !== 'ALL' ? (
-              <PeriodSelector
-                value={searchMonth}
-                onChange={handleMonthChange}
-              />
-            ) : (
-              <div className="flex items-center gap-2 bg-bg-surface border border-border-subtle rounded-xl px-3 py-1.5 shadow-sm text-sm font-semibold text-zinc-300">
-                <span>Busca Avançada</span>
-              </div>
-            )}
+              {searchMonth !== 'ALL' ? (
+                <button
+                  onClick={() => handleMonthChange('ALL')}
+                  className="bg-bg-surface hover:bg-bg-elevated border border-border-subtle rounded-xl px-4 py-2 text-sm font-semibold transition-all text-zinc-300"
+                >
+                  Ver todos os meses
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleMonthChange(currentCompetenceMonth())}
+                  className="bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand rounded-xl px-4 py-2 text-sm font-semibold transition-all"
+                >
+                  Voltar para mês atual
+                </button>
+              )}
 
-            {searchMonth !== 'ALL' ? (
+              {/* Action CTA */}
               <button
-                onClick={() => handleMonthChange('ALL')}
-                className="bg-bg-surface hover:bg-bg-elevated border border-border-subtle rounded-xl px-4 py-2 text-sm font-semibold transition-all text-zinc-300"
+                onClick={handleOpenNewTrans}
+                className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
               >
-                Ver todos os meses
+                <Plus className="w-4 h-4" />
+                <span>Novo Lançamento</span>
               </button>
-            ) : (
-              <button
-                onClick={() => handleMonthChange(currentCompetenceMonth())}
-                className="bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand rounded-xl px-4 py-2 text-sm font-semibold transition-all"
-              >
-                Voltar para mês atual
-              </button>
-            )}
-
-            {/* Action CTA */}
-            <button
-              onClick={handleOpenNewTrans}
-              className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-medium text-sm rounded-xl px-4 py-2 shadow-lg shadow-violet-500/25 transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Lançamento</span>
-            </button>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <div className="space-y-6">
           {/* Filters Component */}
@@ -443,7 +443,7 @@ export function Transactions() {
             />
           </div>
         </div>
-      </main>
+      </PageContainer>
 
       {/* Manual Transaction Form Modal */}
       <TransactionModal
@@ -465,6 +465,6 @@ export function Transactions() {
         onBulkDeleteClose={() => setIsBulkDeleteModalOpen(false)}
         onConfirmBulkDelete={handleConfirmBulkDelete}
       />
-    </div>
+    </>
   );
 }

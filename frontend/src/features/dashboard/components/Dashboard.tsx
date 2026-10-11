@@ -16,6 +16,8 @@ import { RecentTransactions } from './RecentTransactions';
 import { CategoryExpensesChart } from './CategoryExpensesChart';
 import { BudgetProgressList } from './BudgetProgressList';
 import { PeriodSelector } from '../../../components/ui/PeriodSelector';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 
 const DashboardSkeleton = () => (
   <div className="space-y-8 animate-pulse">
@@ -259,7 +261,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="bg-bg-base min-h-screen text-white pb-16">
+    <>
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div
@@ -277,22 +279,18 @@ export function Dashboard() {
       )}
 
       {/* Main dashboard content */}
-      <main className="max-w-6xl mx-auto px-4 pt-10 space-y-8">
-        {/* Header and month selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight">
-              {isCouple ? `Finanças de ${user.name} & ${partnerName}` : `Olá, ${user.name}!`}
-            </h1>
-            <p className="text-zinc-400 text-sm">Acompanhe a sua saúde financeira atual.</p>
-          </div>
-
-          {/* Month selector UI */}
-          <PeriodSelector
-            value={currentMonth}
-            onChange={setCurrentMonth}
-          />
-        </div>
+      <PageContainer>
+        <PageHeader
+          title={isCouple ? `Finanças de ${user.name} & ${partnerName}` : `Olá, ${user.name}!`}
+          subtitle="Acompanhe a sua saúde financeira atual."
+          actions={
+            <PeriodSelector
+              value={currentMonth}
+              onChange={setCurrentMonth}
+            />
+          }
+        />
+        <div className="space-y-8">
 
         {/* Loading and error states */}
         {isDashboardLoading ? (
@@ -346,7 +344,8 @@ export function Dashboard() {
             </div>
           </>
         ) : null}
-      </main>
-    </div>
+        </div>
+      </PageContainer>
+    </>
   );
 }
