@@ -75,25 +75,22 @@ public static LocalDate calculateCompetence(LocalDate transactionDate, int closi
 
 ### Cálculo da Due Date a partir da Competência
 
-```java
-/**
- * Dado o mês de competência e o dia de vencimento do cartão, calcula a due_date.
- *
- * @param competenceMonth  Mês de competência (ex: LocalDate de 2024-06-01)
- * @param dueDay           Dia do mês de vencimento (ex: 5 para dia 5 do mês seguinte)
- * @return                 Data de vencimento da fatura correspondente
- */
-public static LocalDate calculateDueDate(LocalDate competenceMonth, int dueDay) {
-    // A fatura do mês de competência vence no mês seguinte
-    return competenceMonth.plusMonths(1).withDayOfMonth(dueDay);
-}
+Implementação: `CreateTransactionUseCase.calculateDueDate`. Para contas que não são cartão (ou cartão sem `closing_day` e `due_day`), o vencimento é o `dueDate` informado no request.
 
-// Exemplo:
-// Competência = Jun/2024, dueDay = 5 → due_date = 05/Jul/2024
-// Competência = Jun/2024, dueDay = 16 → due_date = 16/Jul/2024
+```java
+// Cartão de crédito com closing_day e due_day
+int gap = dueDay - closingDay;
+if (gap < 7) {   // inclui gap negativo (vencimento "menor" que o fechamento)
+    due = competenceDate.plusMonths(1) com dia = dueDay;   // vence no mês seguinte à competência
+} else {
+    due = competenceDate com dia = dueDay;                 // vence no mesmo mês da competência
+}
+// Dias inexistentes (por exemplo 31 em fevereiro) são ajustados por safeDateOf
 ```
 
-> ⚠ **Divergência conhecida (decisão pendente):** a implementação real (`CreateTransactionUseCase.calculateDueDate`) não vence sempre no mês seguinte. Ela calcula `gap = due_day - closing_day`: se `gap < 7` (inclui negativo), vence no mês seguinte à competência; senão, vence **no mesmo mês** da competência. Os exemplos desta skill (gap negativo ou menor que 7) dão o mesmo resultado; a diferença aparece quando `gap >= 7` (por exemplo, fechamento dia 5 e vencimento dia 20). Qual regra vale? Pergunte ao desenvolvedor antes de alterar o código ou esta regra.
+Exemplos: Nubank (fecha 18, vence 16, gap -2): competência Jul vence 16/Ago. Itaú (fecha 3, vence 5, gap 2): competência Jun vence 05/Jul. Fecha 5 e vence 20 (gap 15): competência Jun vence 20/Jun.
+
+> **Decisão do desenvolvedor (2026-10-11):** vale a regra do código (gap). A regra antiga "sempre no mês seguinte" foi descartada.
 
 ## 4. Cartões do FinanceFlow (Configuração Real)
 
@@ -104,27 +101,21 @@ public static LocalDate calculateDueDate(LocalDate competenceMonth, int dueDay) 
 
 ## 5. Status de Transação
 
-```java
-public enum TransactionStatus {
-    PLANNED,   // Planejada, ainda não venceu
-    PENDING,   // Vencida, não paga (due_date < hoje e payment_date == null)
-    PAID,      // Paga (payment_date preenchida)
-    OVERDUE    // Em atraso (due_date ultrapassada sem pagamento)
-}
-```
+O status é **derivado das datas**, nunca escolhido pelo usuário. Regra única em `TransactionStatusPolicy.derive(dueDate, paymentDate, today)`:
 
-### Lógica de Status Automático
+| Condição | Status |
+|---|---|
+| `payment_date` preenchida | `PAID` |
+| sem pagamento e `due_date` anterior a hoje | `OVERDUE` |
+| sem pagamento e `due_date` igual a hoje | `PENDING` |
+| sem pagamento e `due_date` posterior a hoje | `PLANNED` |
 
-```java
-public static TransactionStatus deriveStatus(LocalDate dueDate, LocalDate paymentDate) {
-    if (paymentDate != null) return TransactionStatus.PAID;
-    if (dueDate.isBefore(LocalDate.now())) return TransactionStatus.OVERDUE;
-    if (dueDate.isEqual(LocalDate.now())) return TransactionStatus.PENDING;
-    return TransactionStatus.PLANNED;
-}
-```
+**Onde é aplicada:** criação (única, parcelada e recorrente, cada ocorrência pela própria data), atualização e leitura em `ListTransactionsUseCase` (o status devolvido acompanha o dia atual, sem job agendado). `TransactionRequest.status` continua obrigatório e só é validado por consistência (`PAID` exige `payment_date`; os demais proíbem), mas o valor gravado e devolvido é o derivado. Em cartão, `PAID` no request grava `payment_date = due_date` da fatura.
 
-> ⚠ **Divergência conhecida (decisão pendente):** `deriveStatus` **não existe** no backend. O status chega pronto no request (`CreateTransactionUseCase` só valida que `payment_date` é obrigatória quando o status é `PAID` e proibida caso contrário) e nenhum código atribui `OVERDUE`. Ou o backend passa a derivar o status, ou esta seção deve virar 'regra alvo'. Pergunte ao desenvolvedor antes de implementar ou de remover a regra.
+**Cuidados:**
+- "Hoje" é `LocalDate.now()` do servidor, sem fuso do usuário (perto da meia-noite o status pode mudar algumas horas antes ou depois no horário local).
+- O status gravado pode ficar velho (um `PLANNED` gravado que já venceu). Para exibição vale o status derivado na leitura.
+- Fluxo de caixa e saldo só distinguem `PAID` de não pago. Arquivar cartão é bloqueado por transações `PENDING`, `PLANNED` ou `OVERDUE`.
 
 ## 6. Anti-Patterns a Evitar
 

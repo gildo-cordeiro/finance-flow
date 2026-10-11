@@ -9,6 +9,7 @@ import com.financeflow.transaction.dto.TransactionRequest;
 import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.Transaction;
 import com.financeflow.transaction.model.domain.TransactionStatus;
+import com.financeflow.transaction.model.domain.TransactionStatusPolicy;
 import com.financeflow.transaction.model.domain.TransactionType;
 import com.financeflow.transaction.model.entity.CategoryEntity;
 import com.financeflow.transaction.model.entity.TransactionEntity;
@@ -249,7 +250,8 @@ public class UpdateTransactionUseCase {
             paymentDate = dueDate;
         }
         target.setPaymentDate(paymentDate);
-        target.setStatus(request.status());
+        // Status derivado das datas (ver TransactionStatusPolicy), não do status informado no request
+        target.setStatus(TransactionStatusPolicy.derive(dueDate, paymentDate, LocalDate.now()));
 
         // Apply balance of new state if paid
         if (target.getStatus() == TransactionStatus.PAID) {

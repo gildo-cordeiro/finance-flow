@@ -61,7 +61,7 @@
         "frontend/eslint.config.js",
         "frontend/tsconfig*.json",
         "frontend/vite.config.*",
-        "backend/src/test/**"
+        "backend/src/test/resources/**"
       ]
     },
     {
