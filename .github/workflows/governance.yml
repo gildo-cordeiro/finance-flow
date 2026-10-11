@@ -1,0 +1,24 @@
+name: Governança (skills e ADRs)
+
+# Lembrete em Pull Requests: atualizar skills afetadas e considerar ADRs.
+# Não bloqueia o PR; as mensagens aparecem como avisos e no resumo do job.
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  skills-and-adr-check:
+    name: Verificar skills e sinais de ADR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar skills e sinais de ADR
+        run: python3 scripts/check_skills_sync.py --base "origin/${{ github.base_ref }}"
