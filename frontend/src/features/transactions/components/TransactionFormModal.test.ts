@@ -30,12 +30,16 @@ vi.mock('react', async () => {
 });
 
 let mockedEditingTx: Transaction | null = null;
+let mockedWatchOverrides: Record<string, unknown> = {};
 
 vi.mock('react-hook-form', () => ({
   useForm: () => ({
     register: (name: string) => ({ name, onChange: vi.fn(), onBlur: vi.fn(), ref: vi.fn() }),
     handleSubmit: (fn: unknown) => fn,
     watch: (fieldName?: string) => {
+      if (fieldName && fieldName in mockedWatchOverrides) {
+        return mockedWatchOverrides[fieldName];
+      }
       if (fieldName === 'type') {
         return mockedEditingTx?.type || TransactionType.EXPENSE;
       }
@@ -47,6 +51,17 @@ vi.mock('react-hook-form', () => ({
       }
       if (fieldName === 'categoryId') {
         return mockedEditingTx?.categoryId || '';
+      }
+      if (fieldName === 'totalInstallments') {
+        return mockedEditingTx?.totalInstallments ?? null;
+      }
+      if (fieldName === 'dueDate') {
+        return mockedEditingTx?.dueDate || '2026-10-11';
+      }
+      if (fieldName === 'repetitionType') {
+        return mockedEditingTx?.totalInstallments && mockedEditingTx.totalInstallments > 1
+          ? RepetitionType.INSTALLMENT
+          : RepetitionType.SINGLE;
       }
       return undefined;
     },
@@ -277,7 +292,7 @@ describe('TransactionFormModal (UX-15 — TransactionFormModal: esqueleto)', () 
     const [, form] = modalContent.props.children;
     const formChildren = form.props.children;
 
-    const footer = formChildren[5];
+    const footer = formChildren[formChildren.length - 1];
     const [cancelBtn, saveAndAddAnotherBtn, saveBtn] = footer.props.children;
 
     // Cancelar
@@ -312,7 +327,7 @@ describe('TransactionFormModal (UX-15 — TransactionFormModal: esqueleto)', () 
     const [, form] = modalContent.props.children;
     const formChildren = form.props.children;
 
-    const footer = formChildren[5];
+    const footer = formChildren[formChildren.length - 1];
     const [cancelBtn, saveAndAddAnotherBtn, saveBtn] = footer.props.children;
 
     expect(cancelBtn.props.children).toBe('Cancelar');
@@ -418,3 +433,471 @@ describe('TransactionFormModal (UX-15 — TransactionFormModal: esqueleto)', () 
     expect(parsed.success).toBe(true);
   });
 });
+
+describe('TransactionFormModal (UX-16 — Modal: "Pago com" e parcelas)', () => {
+  const dummyAccounts: Account[] = [
+    {
+      id: 'acc-checking-1',
+      userId: 'user-1',
+      name: 'Conta Corrente',
+      type: 'CHECKING',
+      bank: 'Nubank',
+      balance: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-1',
+      userId: 'user-1',
+      name: 'Nubank Ultravioleta',
+      type: 'CREDIT_CARD',
+      bank: 'Nubank',
+      balance: 0,
+      creditLimit: 5000,
+      closingDay: 20,
+      dueDay: 27,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const dummyMultipleCardsAccounts: Account[] = [
+    {
+      id: 'acc-checking-1',
+      userId: 'user-1',
+      name: 'Conta Corrente',
+      type: 'CHECKING',
+      bank: 'Nubank',
+      balance: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-1',
+      userId: 'user-1',
+      name: 'Nubank Ultravioleta',
+      type: 'CREDIT_CARD',
+      bank: 'Nubank',
+      balance: 0,
+      creditLimit: 5000,
+      closingDay: 20,
+      dueDay: 27,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-2',
+      userId: 'user-1',
+      name: 'Itaú Uniclass Black',
+      type: 'CREDIT_CARD',
+      bank: 'Itaú',
+      balance: 0,
+      creditLimit: 15000,
+      closingDay: 3,
+      dueDay: 10,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const dummyCategories: Category[] = [
+    {
+      id: 'cat-exp-root',
+      name: 'Alimentação',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-exp-sub',
+      name: 'Supermercado',
+      parentId: 'cat-exp-root',
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-inc-root',
+      name: 'Receitas',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-inc-sub',
+      name: 'Salário',
+      parentId: 'cat-inc-root',
+      visibility: TransactionVisibility.PERSONAL,
+    },
+  ];
+
+  it('renders SectionLabel with "Pago com" in expense mode and "Recebido em" in income mode', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+
+    const expenseEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const expenseForm = expenseEl?.props.children.props.children[1];
+    const expensePagoComSection = expenseForm.props.children[5];
+    const expenseSectionLabel = expensePagoComSection.props.children[0];
+    expect(expenseSectionLabel.props.children).toBe('Pago com');
+
+    mockedEditingTx = {
+      id: 'tx-inc',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-inc-sub',
+      description: 'Salário',
+      amount: 5000,
+      type: TransactionType.INCOME,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-11',
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+
+    const incomeEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const incomeForm = incomeEl?.props.children.props.children[1];
+    const incomePagoComSection = incomeForm.props.children[5];
+    const incomeSectionLabel = incomePagoComSection.props.children[0];
+    expect(incomeSectionLabel.props.children).toBe('Recebido em');
+  });
+
+  it('renders 44px rounded-xl chips for active checking accounts and credit card in expense mode', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-checking-1' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    // In fragment: children[1] is <> [chipsContainer, errors, cardOptions] </>
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const chipsContainer = fragmentChildren[0];
+    const checkingChips = chipsContainer.props.children[0];
+    const checkingChip = checkingChips[0];
+    const cardChip = chipsContainer.props.children[1];
+
+    // Checking chip: selected
+    expect(checkingChip.props.children).toBe('Conta Corrente');
+    expect(checkingChip.props.className).toContain('h-11');
+    expect(checkingChip.props.className).toContain('rounded-xl');
+    expect(checkingChip.props.className).toContain('border-brand');
+    expect(checkingChip.props.className).toContain('bg-brand/15');
+    expect(checkingChip.props.className).toContain('text-text-primary');
+
+    // Card chip: not selected
+    expect(cardChip.props.children).toBe('Cartão de crédito');
+    expect(cardChip.props.className).toContain('h-11');
+    expect(cardChip.props.className).toContain('rounded-xl');
+    expect(cardChip.props.className).toContain('border-border-subtle');
+    expect(cardChip.props.className).toContain('bg-bg-surface');
+    expect(cardChip.props.className).toContain('text-text-muted');
+  });
+
+  it('does not render "Cartão de crédito" chip in income mode', () => {
+    mockedEditingTx = {
+      id: 'tx-inc',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-inc-sub',
+      description: 'Salário',
+      amount: 5000,
+      type: TransactionType.INCOME,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-11',
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const chipsContainer = fragmentChildren[0];
+    const checkingChips = chipsContainer.props.children[0];
+    const cardChip = chipsContainer.props.children[1];
+
+    // Only non-card accounts appear
+    expect(checkingChips[0].props.children).toBe('Conta Corrente');
+    expect(cardChip).toBeFalsy();
+  });
+
+  it('shows credit card Select when credit card is selected and there are multiple credit cards', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-card-1' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyMultipleCardsAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const cardOptions = fragmentChildren[2]; // isCardSelected && ...
+
+    expect(cardOptions).toBeDefined();
+    const [cardSelect, parcelsBlock] = cardOptions.props.children;
+
+    // Select should be rendered because there are 2 credit cards
+    expect(cardSelect).toBeDefined();
+    expect(cardSelect.props['aria-label']).toBe('Selecionar cartão de crédito');
+    expect(cardSelect.props.children.length).toBe(2);
+
+    expect(parcelsBlock).toBeDefined();
+  });
+
+  it('does not render credit card Select when there is only one credit card', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-card-1' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts, // only 1 credit card
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const cardOptions = fragmentChildren[2];
+
+    expect(cardOptions).toBeDefined();
+    const [cardSelect, parcelsBlock] = cardOptions.props.children;
+
+    // Select is not rendered
+    expect(cardSelect).toBeFalsy();
+    // Parcels block is rendered
+    expect(parcelsBlock).toBeDefined();
+  });
+
+  it('renders "Parcelas" block with 14px semibold label and 12px muted invoice month text', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-15',
+      totalInstallments: null,
+    };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const cardOptions = fragmentChildren[2];
+    const [, parcelsBlock] = cardOptions.props.children;
+
+    const [leftSide, rightSide] = parcelsBlock.props.children;
+
+    // Left side: Parcelas + Entra na fatura de {mês}
+    const [title, invoiceMonth] = leftSide.props.children;
+    expect(title.props.children).toBe('Parcelas');
+    expect(title.props.className).toContain('text-sm');
+    expect(title.props.className).toContain('font-semibold');
+
+    // Due date 2026-10-15 is <= closingDay (20), so invoice is current month (outubro)
+    expect(invoiceMonth.props.children).toBe('Entra na fatura de outubro');
+    expect(invoiceMonth.props.className).toContain('text-xs');
+    expect(invoiceMonth.props.className).toContain('text-text-muted');
+
+    // Right side: stepper buttons '−', '1x', '+'
+    const [minusBtn, countDisplay, plusBtn] = rightSide.props.children;
+    expect(minusBtn.props['aria-label']).toBe('Menos uma parcela');
+    expect(minusBtn.props.disabled).toBe(true);
+    expect(minusBtn.props.className).toContain('w-11');
+    expect(minusBtn.props.className).toContain('h-11');
+
+    expect(countDisplay.props.children).toBe('1x');
+
+    expect(plusBtn.props['aria-label']).toBe('Mais uma parcela');
+    expect(plusBtn.props.disabled).toBe(false);
+    expect(plusBtn.props.className).toContain('w-11');
+    expect(plusBtn.props.className).toContain('h-11');
+  });
+
+  it('calculates invoice month for next month when transaction date is after closing day', () => {
+    mockedEditingTx = null;
+    // Nubank closingDay is 20; transaction date is 25/Oct (after closing day)
+    mockedWatchOverrides = {
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-25',
+    };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const cardOptions = fragmentChildren[2];
+    const [, parcelsBlock] = cardOptions.props.children;
+    const [leftSide] = parcelsBlock.props.children;
+    const [, invoiceMonth] = leftSide.props.children;
+
+    expect(invoiceMonth.props.children).toBe('Entra na fatura de novembro');
+  });
+
+  it('shows "Entra na próxima fatura" when credit card has no closing day', () => {
+    mockedEditingTx = null;
+    const cardWithoutClosing: Account[] = [
+      {
+        ...dummyAccounts[1],
+        closingDay: null,
+      },
+    ];
+    mockedWatchOverrides = {
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-15',
+    };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: cardWithoutClosing,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+    const cardOptions = fragmentChildren[2];
+    const [, parcelsBlock] = cardOptions.props.children;
+    const [leftSide] = parcelsBlock.props.children;
+    const [, invoiceMonth] = leftSide.props.children;
+
+    expect(invoiceMonth.props.children).toBe('Entra na próxima fatura');
+  });
+
+  it('shows "Cadastre uma conta" with link to /accounts when no accounts are available', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: [],
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const linkContainer = pagoComSection.props.children[1];
+    const link = linkContainer.props.children;
+
+    expect(link.props.to).toBe('/accounts');
+    expect(link.props.children).toBe('Cadastre uma conta');
+  });
+
+  it('opens with credit card chip selected and correct installments in edit mode', () => {
+    mockedEditingTx = {
+      id: 'tx-installment',
+      userId: 'user-1',
+      accountId: 'acc-card-1',
+      categoryId: 'cat-exp-sub',
+      description: 'Notebook parcelado',
+      amount: 3600,
+      type: TransactionType.EXPENSE,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-15',
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      installmentGroupId: 'grp-123',
+      totalInstallments: 6,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const pagoComSection = form.props.children[5];
+    const fragmentChildren = pagoComSection.props.children[1].props.children;
+
+    // Chips: Card chip is selected
+    const chipsContainer = fragmentChildren[0];
+    const cardChip = chipsContainer.props.children[1];
+    expect(cardChip.props.children).toBe('Cartão de crédito');
+    expect(cardChip.props.className).toContain('border-brand');
+    expect(cardChip.props.className).toContain('bg-brand/15');
+
+    // Stepper: displays 6x and minus button is enabled
+    const cardOptions = fragmentChildren[2];
+    const [, parcelsBlock] = cardOptions.props.children;
+    const [, rightSide] = parcelsBlock.props.children;
+    const [minusBtn, countDisplay] = rightSide.props.children;
+
+    expect(countDisplay.props.children).toBe('6x');
+    expect(minusBtn.props.disabled).toBe(false);
+  });
+});
+
