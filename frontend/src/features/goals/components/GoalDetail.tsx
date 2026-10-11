@@ -13,6 +13,7 @@ import { ContributionHistory } from './ContributionHistory';
 import { useToast } from '../../../context/ToastContext';
 import { formatDate, formatCurrency } from '../../../utils/formatters';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { getGoalDeadlineStatus } from '../utils/goalStatus';
 
 export function GoalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -97,6 +98,7 @@ export function GoalDetail() {
   const { goal, contributions, projectedCompletionDate } = detail;
   const isCompleted = goal.status === 'COMPLETED' || goal.currentAmount >= goal.targetAmount;
   const hasCoupleId = !!goal.coupleId;
+  const deadlineStatus = getGoalDeadlineStatus(goal);
 
   // Check if deadline is in risk
   const isDeadlineInRisk =
@@ -259,7 +261,9 @@ export function GoalDetail() {
 
             <div className="flex justify-between py-2 border-b border-white/[0.04]">
               <span className="text-text-secondary">Prazo Estipulado:</span>
-              <span className="text-text-primary font-medium">{formatDate(goal.deadline)}</span>
+              <span className={`font-medium ${deadlineStatus.isOverdue ? 'text-red-300' : 'text-text-primary'}`}>
+                {formatDate(goal.deadline)}
+              </span>
             </div>
 
             <div className="flex justify-between py-2 border-b border-white/[0.04]">
