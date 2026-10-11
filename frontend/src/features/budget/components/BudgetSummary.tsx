@@ -66,7 +66,7 @@ export function BudgetSummary({
           <span
             className={cn(
               'text-xs font-bold px-2 py-0.5 rounded-full select-none border',
-              totalPlanned > 0 && totalRealized / totalPlanned >= 1
+              totalPlanned > 0 && totalRealized / totalPlanned > 1
                 ? 'bg-danger/10 text-danger border-danger/20'
                 : totalPlanned > 0 && totalRealized / totalPlanned >= 0.8
                 ? 'bg-warning/10 text-warning border-warning/20'
@@ -80,11 +80,11 @@ export function BudgetSummary({
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500',
-              totalPlanned > 0 && totalRealized / totalPlanned >= 1
+              totalPlanned > 0 && totalRealized / totalPlanned > 1
                 ? 'bg-danger'
                 : totalPlanned > 0 && totalRealized / totalPlanned >= 0.8
                 ? 'bg-warning'
-                : 'bg-brand'
+                : 'bg-success'
             )}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
