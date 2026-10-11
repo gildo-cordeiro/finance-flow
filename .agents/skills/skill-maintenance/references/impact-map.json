@@ -49,6 +49,9 @@
         "frontend/src/index.css",
         "frontend/tailwind.config.js",
         "frontend/package.json",
+        "frontend/vite.config.*",
+        "frontend/tsconfig*.json",
+        "frontend/src/test/**",
         "docs/design-system.md"
       ],
       "companions": ["docs/design-system.md"]
