@@ -82,6 +82,8 @@ export interface TransactionFormModalProps {
   isSubmitting: boolean;
 }
 
+export type DateOption = 'TODAY' | 'YESTERDAY' | 'CUSTOM';
+
 export function TransactionFormModal({
   isOpen,
   onClose,
@@ -102,6 +104,47 @@ export function TransactionFormModal({
     return `${d.getFullYear()}-${month}-${day}`;
   };
 
+  const getYesterdayStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
+
+  const initialDateOption: DateOption = (() => {
+    if (editingTransaction?.dueDate) {
+      if (editingTransaction.dueDate === getTodayStr()) return 'TODAY';
+      if (editingTransaction.dueDate === getYesterdayStr()) return 'YESTERDAY';
+      return 'CUSTOM';
+    }
+    return 'TODAY';
+  })();
+  const [dateOption, setDateOption] = useState<DateOption>(initialDateOption);
+
+  const initialIsPaid: boolean = (() => {
+    if (editingTransaction) {
+      return (
+        editingTransaction.status === TransactionStatus.PAID ||
+        Boolean(editingTransaction.paymentDate)
+      );
+    }
+    const defaultAcc =
+      accounts.find(
+        (a) => (a.status === 'ACTIVE' || !a.status) && a.type !== 'CREDIT_CARD'
+      ) || accounts[0];
+    const isDefaultCard = defaultAcc?.type === 'CREDIT_CARD';
+    return !isDefaultCard;
+  })();
+  const [isPaid, setIsPaid] = useState<boolean>(initialIsPaid);
+
+  const defaultAccount =
+    accounts.find(
+      (a) => (a.status === 'ACTIVE' || !a.status) && a.type !== 'CREDIT_CARD'
+    ) || accounts[0];
+  const isDefaultCard = defaultAccount?.type === 'CREDIT_CARD';
+  const todayStr = getTodayStr();
+
   const {
     register,
     handleSubmit,
@@ -121,9 +164,9 @@ export function TransactionFormModal({
       accountId: '',
       categoryId: '',
       competenceDate: '',
-      dueDate: getTodayStr(),
-      paymentDate: '',
-      status: TransactionStatus.PENDING,
+      dueDate: todayStr,
+      paymentDate: isDefaultCard ? '' : todayStr,
+      status: isDefaultCard ? TransactionStatus.PENDING : TransactionStatus.PAID,
       visibility: TransactionVisibility.PERSONAL,
       repetitionType: RepetitionType.SINGLE,
       totalInstallments: null,
@@ -191,6 +234,21 @@ export function TransactionFormModal({
         repetitionType = RepetitionType.RECURRING;
       }
 
+      const txPaid =
+        editingTransaction.status === TransactionStatus.PAID ||
+        Boolean(editingTransaction.paymentDate);
+      setIsPaid(txPaid);
+
+      const tToday = getTodayStr();
+      const tYesterday = getYesterdayStr();
+      if (editingTransaction.dueDate === tToday) {
+        setDateOption('TODAY');
+      } else if (editingTransaction.dueDate === tYesterday) {
+        setDateOption('YESTERDAY');
+      } else {
+        setDateOption('CUSTOM');
+      }
+
       reset({
         type: editingTransaction.type,
         amount: editingTransaction.amount,
@@ -211,6 +269,12 @@ export function TransactionFormModal({
       });
     } else {
       const firstChecking = accounts.find((a) => a.type !== 'CREDIT_CARD');
+      const isCard = !firstChecking && accounts[0]?.type === 'CREDIT_CARD';
+      const curToday = getTodayStr();
+
+      setDateOption('TODAY');
+      setIsPaid(!isCard);
+
       reset({
         type: TransactionType.EXPENSE,
         amount: 0,
@@ -218,9 +282,9 @@ export function TransactionFormModal({
         accountId: firstChecking?.id || accounts[0]?.id || '',
         categoryId: '',
         competenceDate: '',
-        dueDate: getTodayStr(),
-        paymentDate: '',
-        status: TransactionStatus.PENDING,
+        dueDate: curToday,
+        paymentDate: isCard ? '' : curToday,
+        status: isCard ? TransactionStatus.PENDING : TransactionStatus.PAID,
         visibility: TransactionVisibility.PERSONAL,
         repetitionType: RepetitionType.SINGLE,
         totalInstallments: null,
@@ -278,15 +342,88 @@ export function TransactionFormModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const handleSelectToday = () => {
+    const today = getTodayStr();
+    setDateOption('TODAY');
+    setValue('dueDate', today, { shouldValidate: true });
+    if (!isCardSelected) {
+      setIsPaid(true);
+      setValue('paymentDate', today, { shouldValidate: true });
+      setValue('status', TransactionStatus.PAID, { shouldValidate: true });
+    }
+  };
+
+  const handleSelectYesterday = () => {
+    const yesterday = getYesterdayStr();
+    setDateOption('YESTERDAY');
+    setValue('dueDate', yesterday, { shouldValidate: true });
+    if (!isCardSelected) {
+      setIsPaid(true);
+      setValue('paymentDate', yesterday, { shouldValidate: true });
+      setValue('status', TransactionStatus.PAID, { shouldValidate: true });
+    }
+  };
+
+  const handleSelectCustomDate = () => {
+    setDateOption('CUSTOM');
+  };
+
+  const handleCustomDateChange = (newDate: string) => {
+    setValue('dueDate', newDate, { shouldValidate: true });
+    if (!isCardSelected && newDate) {
+      const isFuture = newDate > getTodayStr();
+      if (isFuture) {
+        setIsPaid(false);
+        setValue('paymentDate', '', { shouldValidate: true });
+        setValue('status', TransactionStatus.PENDING, { shouldValidate: true });
+      } else {
+        setIsPaid(true);
+        setValue('paymentDate', newDate, { shouldValidate: true });
+        setValue('status', TransactionStatus.PAID, { shouldValidate: true });
+      }
+    }
+  };
+
+  const handleTogglePaid = () => {
+    const nextPaid = !isPaid;
+    setIsPaid(nextPaid);
+    if (nextPaid) {
+      const curDueDate = watch('dueDate') || getTodayStr();
+      setValue('paymentDate', curDueDate, { shouldValidate: true });
+      setValue('status', TransactionStatus.PAID, { shouldValidate: true });
+    } else {
+      setValue('paymentDate', '', { shouldValidate: true });
+      setValue('status', TransactionStatus.PENDING, { shouldValidate: true });
+    }
+  };
+
   const handleSelectAccount = (accId: string) => {
     setValue('accountId', accId);
     setValue('repetitionType', RepetitionType.SINGLE);
     setValue('totalInstallments', null);
+
+    const prevAcc = accounts.find((a) => a.id === watch('accountId'));
+    if (prevAcc?.type === 'CREDIT_CARD') {
+      const curDueDate = watch('dueDate') || getTodayStr();
+      const isFuture = curDueDate > getTodayStr();
+      if (isFuture) {
+        setIsPaid(false);
+        setValue('paymentDate', '', { shouldValidate: true });
+        setValue('status', TransactionStatus.PENDING, { shouldValidate: true });
+      } else {
+        setIsPaid(true);
+        setValue('paymentDate', curDueDate, { shouldValidate: true });
+        setValue('status', TransactionStatus.PAID, { shouldValidate: true });
+      }
+    }
   };
 
   const handleSelectCreditCard = () => {
     if (selectedAccount?.type !== 'CREDIT_CARD' && activeCardAccounts.length > 0) {
       setValue('accountId', activeCardAccounts[0].id);
+      setValue('paymentDate', '', { shouldValidate: true });
+      setValue('status', TransactionStatus.PENDING, { shouldValidate: true });
+      setIsPaid(false);
     }
   };
 
@@ -327,6 +464,18 @@ export function TransactionFormModal({
       const currentCatId = watch('categoryId');
       if (currentCatId && !isIncomeCategory(currentCatId, categories)) {
         setValue('categoryId', '');
+      }
+
+      const curDueDate = watch('dueDate') || getTodayStr();
+      const isFuture = curDueDate > getTodayStr();
+      if (isFuture) {
+        setIsPaid(false);
+        setValue('paymentDate', '', { shouldValidate: true });
+        setValue('status', TransactionStatus.PENDING, { shouldValidate: true });
+      } else {
+        setIsPaid(true);
+        setValue('paymentDate', curDueDate, { shouldValidate: true });
+        setValue('status', TransactionStatus.PAID, { shouldValidate: true });
       }
     } else {
       const currentCatId = watch('categoryId');
@@ -602,6 +751,97 @@ export function TransactionFormModal({
                   </div>
                 )}
               </>
+            )}
+          </div>
+
+          {/* Seção Data */}
+          <div className="space-y-3">
+            <SectionLabel>{isCardSelected ? 'Data da compra' : 'Data'}</SectionLabel>
+
+            {/* Chips de data */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleSelectToday}
+                className={cn(
+                  'h-11 px-3.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center',
+                  dateOption === 'TODAY'
+                    ? 'border-brand bg-brand/15 text-text-primary'
+                    : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                )}
+              >
+                Hoje
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectYesterday}
+                className={cn(
+                  'h-11 px-3.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center',
+                  dateOption === 'YESTERDAY'
+                    ? 'border-brand bg-brand/15 text-text-primary'
+                    : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                )}
+              >
+                Ontem
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectCustomDate}
+                className={cn(
+                  'h-11 px-3.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center',
+                  dateOption === 'CUSTOM'
+                    ? 'border-brand bg-brand/15 text-text-primary'
+                    : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                )}
+              >
+                Outra data
+              </button>
+            </div>
+
+            {errors.dueDate?.message && dateOption !== 'CUSTOM' && (
+              <p className="text-xs text-danger">{errors.dueDate.message}</p>
+            )}
+
+            {dateOption === 'CUSTOM' && (
+              <Input
+                type="date"
+                aria-label="Outra data"
+                className="[color-scheme:dark]"
+                value={watchedDueDate}
+                onChange={(e) => handleCustomDateChange(e.target.value)}
+                error={errors.dueDate?.message}
+              />
+            )}
+
+            {/* Switch Já foi pago / Já foi recebido */}
+            {!isCardSelected && (
+              <div className="flex items-center justify-between min-h-[44px] pt-1">
+                <span
+                  onClick={handleTogglePaid}
+                  className="text-sm font-medium text-text-primary cursor-pointer select-none"
+                >
+                  {isIncome ? 'Já foi recebido' : 'Já foi pago'}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isPaid}
+                  aria-label={isIncome ? 'Já foi recebido' : 'Já foi pago'}
+                  disabled={isBusy}
+                  onClick={handleTogglePaid}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-bg-surface disabled:opacity-50 disabled:cursor-not-allowed',
+                    isPaid ? 'bg-brand' : 'bg-bg-elevated border border-border-subtle'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-text-primary shadow-sm transition duration-200 ease-in-out',
+                      isPaid ? 'translate-x-5' : 'translate-x-0.5'
+                    )}
+                  />
+                </button>
+              </div>
             )}
           </div>
 
