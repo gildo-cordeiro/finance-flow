@@ -62,8 +62,8 @@ export function TransactionRow({
             <Badge status={transaction.status} className="text-xs px-1.5 py-0" />
           </div>
         </td>
-        <td className="p-4 text-zinc-400">
-          {cat ? cat.name : (user && transaction.userId !== user.id ? 'Categoria do Parceiro' : 'Sem Categoria')}
+        <td className={cn("p-4", cat ? "text-zinc-400" : "text-text-muted")}>
+          {cat ? cat.name : (user && transaction.userId !== user.id ? 'Categoria do Parceiro' : 'Sem categoria')}
         </td>
         <td className="p-4 text-zinc-400">
           {acc ? acc.name : (user && transaction.userId !== user.id ? 'Conta do Parceiro' : 'Conta excluída')}
