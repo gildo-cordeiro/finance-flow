@@ -117,7 +117,8 @@ vi.mock('react-hook-form', () => ({
     }),
 }));
 
-import { TransactionFormModal, hasNonDefaultDetails } from './TransactionFormModal';
+import { TransactionFormModal } from './TransactionFormModal';
+import { hasNonDefaultDetails } from '../utils/transactionDetails';
 
 describe('TransactionFormModal (UX-15 — TransactionFormModal: esqueleto)', () => {
   const dummyAccounts: Account[] = [
