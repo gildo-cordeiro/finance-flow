@@ -194,13 +194,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
               <div className="flex flex-col min-w-0 overflow-hidden">
                 <span className="text-sm font-medium text-text-primary truncate">{user.name}</span>
-                <span className="text-xs text-text-muted truncate">{user.email}</span>
+                <span className="text-xs text-text-muted truncate" title={user.email}>{user.email}</span>
               </div>
             </div>
             <button
               onClick={logout}
               className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-danger/5 transition-colors shrink-0"
               title="Sair"
+              aria-label="Sair"
             >
               <LogOut className="w-4.5 h-4.5" />
             </button>
