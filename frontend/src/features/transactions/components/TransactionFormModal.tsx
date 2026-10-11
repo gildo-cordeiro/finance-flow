@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
   transactionSchema,
   TransactionFormData,
@@ -12,6 +15,7 @@ import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
 import { CurrencyInput } from '../../../components/ui/CurrencyInput';
+import { SectionLabel } from '../../../components/ui/SectionLabel';
 import { Account } from '../../accounts/types';
 import {
   Category,
@@ -21,6 +25,39 @@ import {
   TransactionVisibility,
 } from '../types';
 import { cn } from '../../../lib/cn';
+
+// Helper to parse date string YYYY-MM-DD safely into Date without timezone offsets
+const parseDateParts = (dateStr: string): Date => {
+  if (!dateStr) return new Date();
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(y, m, d);
+    }
+  }
+  return new Date();
+};
+
+// Helper to determine invoice month based on card closing day and temporal-competence rule
+const getInvoiceMonthText = (card: Account | undefined, dueDateStr: string): string => {
+  if (!card?.closingDay || card.closingDay <= 0) {
+    return 'Entra na próxima fatura';
+  }
+
+  const txDate = parseDateParts(dueDateStr);
+
+  // temporal-competence: compra até o dia de fechamento entra no mês atual; depois, no mês seguinte
+  const compDate =
+    txDate.getDate() <= card.closingDay
+      ? new Date(txDate.getFullYear(), txDate.getMonth(), 1)
+      : new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1);
+
+  const monthName = format(compDate, 'MMMM', { locale: ptBR });
+  return `Entra na fatura de ${monthName}`;
+};
 
 // Helper function to check if a category belongs to income
 const isIncomeCategory = (catId: string, categories: Category[]): boolean => {
@@ -99,6 +136,33 @@ export function TransactionFormModal({
   const isIncome = watchedType === TransactionType.INCOME;
   const watchedVisibility = watch('visibility');
 
+  // Filter active accounts and credit cards
+  const activeCheckingAccounts = accounts.filter(
+    (a) =>
+      (a.status === 'ACTIVE' || !a.status || a.id === editingTransaction?.accountId) &&
+      a.type !== 'CREDIT_CARD'
+  );
+  const activeCardAccounts = accounts.filter(
+    (a) =>
+      (a.status === 'ACTIVE' || !a.status || a.id === editingTransaction?.accountId) &&
+      a.type === 'CREDIT_CARD'
+  );
+
+  const noAccountsAvailable = isIncome
+    ? activeCheckingAccounts.length === 0
+    : activeCheckingAccounts.length === 0 && activeCardAccounts.length === 0;
+
+  const watchedAccountId = watch('accountId');
+  const selectedAccount = accounts.find((a) => a.id === watchedAccountId);
+  const isCardSelected = !isIncome && selectedAccount?.type === 'CREDIT_CARD';
+
+  const watchedTotalInstallments = watch('totalInstallments');
+  const watchedDueDate = watch('dueDate');
+  const installmentCount =
+    watchedTotalInstallments && watchedTotalInstallments > 1
+      ? watchedTotalInstallments
+      : 1;
+
   // Filter root categories based on visibility and current type
   const filteredCategories = categories.filter((c) => {
     if (!c.userId) return true;
@@ -170,11 +234,20 @@ export function TransactionFormModal({
   // Ensure an account is set if accounts load after modal was opened
   useEffect(() => {
     if (!isOpen || editingTransaction) return;
-    if (!watch('accountId') && accounts.length > 0) {
-      const firstChecking = accounts.find((a) => a.type !== 'CREDIT_CARD');
+    const currentAccId = watch('accountId');
+    const currentAcc = accounts.find((a) => a.id === currentAccId);
+    if (isIncome && currentAcc?.type === 'CREDIT_CARD') {
+      const firstChecking = accounts.find(
+        (a) => (a.status === 'ACTIVE' || !a.status) && a.type !== 'CREDIT_CARD'
+      );
+      setValue('accountId', firstChecking?.id || '');
+    } else if (!currentAccId && accounts.length > 0) {
+      const firstChecking = accounts.find(
+        (a) => (a.status === 'ACTIVE' || !a.status) && a.type !== 'CREDIT_CARD'
+      );
       setValue('accountId', firstChecking?.id || accounts[0]?.id || '');
     }
-  }, [isOpen, editingTransaction, accounts, setValue, watch]);
+  }, [isOpen, editingTransaction, accounts, isIncome, setValue, watch]);
 
   // Reset category if it is incompatible with the current type
   useEffect(() => {
@@ -205,6 +278,35 @@ export function TransactionFormModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const handleSelectAccount = (accId: string) => {
+    setValue('accountId', accId);
+    setValue('repetitionType', RepetitionType.SINGLE);
+    setValue('totalInstallments', null);
+  };
+
+  const handleSelectCreditCard = () => {
+    if (selectedAccount?.type !== 'CREDIT_CARD' && activeCardAccounts.length > 0) {
+      setValue('accountId', activeCardAccounts[0].id);
+    }
+  };
+
+  const handleDecrementInstallment = () => {
+    if (installmentCount <= 1) return;
+    if (installmentCount === 2) {
+      setValue('repetitionType', RepetitionType.SINGLE);
+      setValue('totalInstallments', null);
+    } else {
+      setValue('repetitionType', RepetitionType.INSTALLMENT);
+      setValue('totalInstallments', installmentCount - 1);
+    }
+  };
+
+  const handleIncrementInstallment = () => {
+    const next = installmentCount + 1;
+    setValue('repetitionType', RepetitionType.INSTALLMENT);
+    setValue('totalInstallments', next);
+  };
+
   const handleSelectType = (newType: TransactionType) => {
     if (newType === watchedType) return;
     setValue('type', newType);
@@ -216,7 +318,9 @@ export function TransactionFormModal({
 
       const currentAcc = accounts.find((a) => a.id === watch('accountId'));
       if (currentAcc?.type === 'CREDIT_CARD') {
-        const firstChecking = accounts.find((a) => a.type !== 'CREDIT_CARD');
+        const firstChecking = accounts.find(
+          (a) => (a.status === 'ACTIVE' || !a.status) && a.type !== 'CREDIT_CARD'
+        );
         setValue('accountId', firstChecking?.id || '');
       }
 
@@ -389,6 +493,117 @@ export function TransactionFormModal({
               );
             })}
           </Select>
+
+          {/* Seção Pago com / Recebido em */}
+          <div className="space-y-3">
+            <SectionLabel>{isIncome ? 'Recebido em' : 'Pago com'}</SectionLabel>
+
+            {noAccountsAvailable ? (
+              <div className="text-sm text-text-muted">
+                <Link to="/accounts" className="text-brand hover:underline">
+                  Cadastre uma conta
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Chips de contas e cartão */}
+                <div className="flex flex-wrap gap-2">
+                  {activeCheckingAccounts.map((acc) => {
+                    const isSelected = !isCardSelected && watchedAccountId === acc.id;
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => handleSelectAccount(acc.id)}
+                        className={cn(
+                          'h-11 px-3.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center',
+                          isSelected
+                            ? 'border-brand bg-brand/15 text-text-primary'
+                            : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                        )}
+                      >
+                        {acc.name}
+                      </button>
+                    );
+                  })}
+
+                  {!isIncome && activeCardAccounts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleSelectCreditCard}
+                      className={cn(
+                        'h-11 px-3.5 rounded-xl border text-sm font-medium transition-colors flex items-center justify-center',
+                        isCardSelected
+                          ? 'border-brand bg-brand/15 text-text-primary'
+                          : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                      )}
+                    >
+                      Cartão de crédito
+                    </button>
+                  )}
+                </div>
+
+                {errors.accountId?.message && (
+                  <p className="text-xs text-danger">{errors.accountId.message}</p>
+                )}
+
+                {/* Opções de Cartão quando Cartão está selecionado */}
+                {isCardSelected && (
+                  <div className="space-y-3 pt-1">
+                    {activeCardAccounts.length > 1 && (
+                      <Select
+                        aria-label="Selecionar cartão de crédito"
+                        value={watchedAccountId}
+                        onChange={(e) => setValue('accountId', e.target.value)}
+                      >
+                        {activeCardAccounts.map((card) => (
+                          <option key={card.id} value={card.id}>
+                            {card.name} ({card.bank})
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+
+                    {/* Bloco Parcelas */}
+                    <div className="flex items-center justify-between p-3.5 bg-bg-surface border border-border-subtle rounded-xl">
+                      <div>
+                        <div className="text-sm font-semibold text-text-primary">
+                          Parcelas
+                        </div>
+                        <div className="text-xs text-text-muted mt-0.5">
+                          {getInvoiceMonthText(selectedAccount, watchedDueDate)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          aria-label="Menos uma parcela"
+                          disabled={installmentCount <= 1 || isBusy}
+                          onClick={handleDecrementInstallment}
+                          className="w-11 h-11 flex items-center justify-center rounded-xl bg-bg-surface border border-border-subtle text-text-primary hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[36px] text-center text-sm font-semibold text-text-primary">
+                          {`${installmentCount}x`}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Mais uma parcela"
+                          disabled={isBusy}
+                          onClick={handleIncrementInstallment}
+                          className="w-11 h-11 flex items-center justify-center rounded-xl bg-bg-surface border border-border-subtle text-text-primary hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Footer */}
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border-subtle">
