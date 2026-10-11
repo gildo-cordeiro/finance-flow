@@ -31,11 +31,41 @@ vi.mock('react', async () => {
 
 let mockedEditingTx: Transaction | null = null;
 let mockedWatchOverrides: Record<string, unknown> = {};
+let mockedCoupleStatus: { status: string } = { status: 'NONE' };
+const mockedSetValue = vi.fn();
+const mockedReset = vi.fn();
+
+vi.mock('../../couple/hooks/useCouple', () => ({
+  useCouple: () => ({
+    coupleStatus: mockedCoupleStatus,
+  }),
+}));
 
 vi.mock('react-hook-form', () => ({
   useForm: () => ({
     register: (name: string) => ({ name, onChange: vi.fn(), onBlur: vi.fn(), ref: vi.fn() }),
-    handleSubmit: (fn: unknown) => fn,
+    handleSubmit: (fn: (data: unknown) => unknown) => (dataOrEvent?: unknown) => {
+      if (typeof fn === 'function') {
+        const payload = dataOrEvent || {
+          type: mockedEditingTx?.type || TransactionType.EXPENSE,
+          amount: mockedEditingTx?.amount || 100,
+          description: mockedEditingTx?.description || 'Teste',
+          accountId: mockedEditingTx?.accountId || 'acc-checking-1',
+          categoryId: mockedEditingTx?.categoryId || 'cat-exp-sub',
+          dueDate: mockedEditingTx?.dueDate || '2026-10-11',
+          competenceDate: mockedEditingTx?.competenceDate ? mockedEditingTx.competenceDate.slice(0, 7) : '',
+          paymentDate: mockedEditingTx?.paymentDate || '',
+          status: mockedEditingTx?.status || TransactionStatus.PENDING,
+          visibility: mockedEditingTx?.visibility || TransactionVisibility.PERSONAL,
+          repetitionType: RepetitionType.SINGLE,
+          totalInstallments: null,
+          isRecurring: false,
+          recurrenceRule: RecurrenceRule.MONTHLY,
+        };
+        return fn(payload);
+      }
+      return undefined;
+    },
     watch: (fieldName?: string) => {
       if (fieldName && fieldName in mockedWatchOverrides) {
         return mockedWatchOverrides[fieldName];
@@ -58,6 +88,9 @@ vi.mock('react-hook-form', () => ({
       if (fieldName === 'dueDate') {
         return mockedEditingTx?.dueDate || '2026-10-11';
       }
+      if (fieldName === 'competenceDate') {
+        return mockedEditingTx?.competenceDate ? mockedEditingTx.competenceDate.slice(0, 7) : '';
+      }
       if (fieldName === 'repetitionType') {
         return mockedEditingTx?.totalInstallments && mockedEditingTx.totalInstallments > 1
           ? RepetitionType.INSTALLMENT
@@ -65,8 +98,8 @@ vi.mock('react-hook-form', () => ({
       }
       return undefined;
     },
-    setValue: vi.fn(),
-    reset: vi.fn(),
+    setValue: (...args: unknown[]) => mockedSetValue(...args),
+    reset: (...args: unknown[]) => mockedReset(...args),
     control: {},
     clearErrors: vi.fn(),
     formState: { errors: {} },
@@ -85,6 +118,7 @@ vi.mock('react-hook-form', () => ({
 }));
 
 import { TransactionFormModal } from './TransactionFormModal';
+import { hasNonDefaultDetails } from '../utils/transactionDetails';
 
 describe('TransactionFormModal (UX-15 — TransactionFormModal: esqueleto)', () => {
   const dummyAccounts: Account[] = [
@@ -1402,4 +1436,518 @@ describe('TransactionFormModal (UX-17 — Modal: data e status de pagamento)', (
     expect(invalidResult.success).toBe(false);
   });
 });
+
+describe('TransactionFormModal (UX-18 — Modal: "Mais detalhes" e casal)', () => {
+  const dummyAccounts: Account[] = [
+    {
+      id: 'acc-checking-1',
+      userId: 'user-1',
+      name: 'Conta Corrente',
+      type: 'CHECKING',
+      bank: 'Nubank',
+      balance: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-1',
+      userId: 'user-1',
+      name: 'Nubank Ultravioleta',
+      type: 'CREDIT_CARD',
+      bank: 'Nubank',
+      balance: 0,
+      creditLimit: 5000,
+      closingDay: 20,
+      dueDay: 27,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const dummyCategories: Category[] = [
+    {
+      id: 'cat-sys-root',
+      userId: null,
+      name: 'Alimentação',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-pers-sub',
+      userId: 'user-1',
+      name: 'Lanche Pessoal',
+      parentId: 'cat-sys-root',
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-shared-sub',
+      userId: 'user-1',
+      name: 'Feira Casal',
+      parentId: 'cat-sys-root',
+      visibility: TransactionVisibility.SHARED,
+    },
+    {
+      id: 'cat-inc-root',
+      userId: null,
+      name: 'Receitas',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+  ];
+
+  const dummyEditingTransaction: Transaction = {
+    id: 'tx-1',
+    userId: 'user-1',
+    accountId: 'acc-checking-1',
+    categoryId: 'cat-pers-sub',
+    description: 'Compra Simples',
+    amount: 100,
+    type: TransactionType.EXPENSE,
+    competenceDate: '2026-10-01',
+    dueDate: '2026-10-15',
+    paymentDate: null,
+    status: TransactionStatus.PENDING,
+    visibility: TransactionVisibility.PERSONAL,
+    isRecurring: false,
+  };
+
+  it('correctly evaluates hasNonDefaultDetails helper', () => {
+    expect(hasNonDefaultDetails(null, dummyAccounts)).toBe(false);
+
+    // Default single transaction with matching competence month
+    const defaultTx: Transaction = {
+      ...dummyEditingTransaction,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-15',
+    };
+    expect(hasNonDefaultDetails(defaultTx, dummyAccounts)).toBe(false);
+
+    // Non-default: installment
+    expect(
+      hasNonDefaultDetails(
+        { ...defaultTx, installmentGroupId: 'inst-1', totalInstallments: 3 },
+        dummyAccounts
+      )
+    ).toBe(true);
+
+    // Non-default: recurring
+    expect(
+      hasNonDefaultDetails(
+        { ...defaultTx, isRecurring: true },
+        dummyAccounts
+      )
+    ).toBe(true);
+
+    // Non-default: competence differs from due month
+    expect(
+      hasNonDefaultDetails(
+        { ...defaultTx, competenceDate: '2026-11-01', dueDate: '2026-10-15' },
+        dummyAccounts
+      )
+    ).toBe(true);
+
+    // Credit card: transaction on 2026-10-10 (closingDay 20 -> expected 2026-10)
+    const cardTxDefault: Transaction = {
+      ...defaultTx,
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-10',
+      competenceDate: '2026-10-01',
+    };
+    expect(hasNonDefaultDetails(cardTxDefault, dummyAccounts)).toBe(false);
+
+    // Credit card: transaction on 2026-10-25 (closingDay 20 -> expected next month 2026-11)
+    const cardTxNextMonth: Transaction = {
+      ...defaultTx,
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-25',
+      competenceDate: '2026-11-01',
+    };
+    expect(hasNonDefaultDetails(cardTxNextMonth, dummyAccounts)).toBe(false);
+
+    // Credit card: competence differs from expected
+    const cardTxDiffComp: Transaction = {
+      ...defaultTx,
+      accountId: 'acc-card-1',
+      dueDate: '2026-10-25',
+      competenceDate: '2026-12-01',
+    };
+    expect(hasNonDefaultDetails(cardTxDiffComp, dummyAccounts)).toBe(true);
+  });
+
+  it('hides Switch "Compartilhar com o casal" when user has no active couple', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    // child 7 is {hasCouple && ...}
+    const coupleSwitchBlock = form.props.children[7];
+    expect(coupleSwitchBlock).toBeFalsy();
+  });
+
+  it('renders Switch "Compartilhar com o casal" when user has an active couple', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'ACTIVE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const coupleSwitchBlock = form.props.children[7];
+    expect(coupleSwitchBlock).toBeTruthy();
+
+    const [labelSpan, switchBtn] = coupleSwitchBlock.props.children;
+    expect(labelSpan.props.children).toBe('Compartilhar com o casal');
+    expect(switchBtn.props['role']).toBe('switch');
+    expect(switchBtn.props['aria-checked']).toBe(false);
+  });
+
+  it('renders Switch with aria-checked=true when visibility is SHARED and toggles visibility on click', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { visibility: TransactionVisibility.SHARED };
+    mockedCoupleStatus = { status: 'ACTIVE' };
+    mockedSetValue.mockClear();
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const coupleSwitchBlock = form.props.children[7];
+    const [, switchBtn] = coupleSwitchBlock.props.children;
+    expect(switchBtn.props['aria-checked']).toBe(true);
+
+    switchBtn.props.onClick();
+    expect(mockedSetValue).toHaveBeenCalledWith(
+      'visibility',
+      TransactionVisibility.PERSONAL,
+      { shouldValidate: true }
+    );
+  });
+
+  it('clears categoryId when toggling visibility if current category is invalid for the new visibility', () => {
+    // Current category is PERSONAL custom category 'cat-pers-sub'
+    mockedEditingTx = null;
+    mockedWatchOverrides = {
+      visibility: TransactionVisibility.PERSONAL,
+      categoryId: 'cat-pers-sub',
+    };
+    mockedCoupleStatus = { status: 'ACTIVE' };
+    mockedSetValue.mockClear();
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const coupleSwitchBlock = form.props.children[7];
+    const [, switchBtn] = coupleSwitchBlock.props.children;
+
+    // Toggle to SHARED: cat-pers-sub is PERSONAL with userId, so category must be cleared
+    switchBtn.props.onClick();
+    expect(mockedSetValue).toHaveBeenCalledWith(
+      'visibility',
+      TransactionVisibility.SHARED,
+      { shouldValidate: true }
+    );
+    expect(mockedSetValue).toHaveBeenCalledWith('categoryId', '', { shouldValidate: true });
+  });
+
+  it('does NOT clear categoryId when toggling visibility if current category is a system category', () => {
+    // System category has userId = null
+    mockedEditingTx = null;
+    mockedWatchOverrides = {
+      visibility: TransactionVisibility.PERSONAL,
+      categoryId: 'cat-sys-root',
+    };
+    mockedCoupleStatus = { status: 'ACTIVE' };
+    mockedSetValue.mockClear();
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const coupleSwitchBlock = form.props.children[7];
+    const [, switchBtn] = coupleSwitchBlock.props.children;
+
+    switchBtn.props.onClick();
+    expect(mockedSetValue).toHaveBeenCalledWith(
+      'visibility',
+      TransactionVisibility.SHARED,
+      { shouldValidate: true }
+    );
+    // categoryId should NOT be cleared because userId is null
+    expect(mockedSetValue).not.toHaveBeenCalledWith('categoryId', '', { shouldValidate: true });
+  });
+
+  it('renders "Mais detalhes" button with text-brand and aria-expanded=false closed by default', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const moreDetailsBtnBlock = form.props.children[8];
+    const button = moreDetailsBtnBlock.props.children;
+
+    expect(button.props['aria-expanded']).toBe(false);
+    expect(button.props.className).toContain('text-brand');
+    const [spanLabel, icon] = button.props.children;
+    expect(spanLabel.props.children).toBe('Mais detalhes');
+    expect(icon.props.className).toContain('text-brand');
+
+    // Collapsible content is closed and takes zero space
+    const collapsibleContent = form.props.children[9];
+    expect(collapsibleContent).toBeFalsy();
+  });
+
+  it('opens "Mais detalhes" when defaultDetailsOpen={true} is passed', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+      defaultDetailsOpen: true,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const moreDetailsBtnBlock = form.props.children[8];
+    const button = moreDetailsBtnBlock.props.children;
+    expect(button.props['aria-expanded']).toBe(true);
+
+    const collapsibleContent = form.props.children[9];
+    expect(collapsibleContent).toBeTruthy();
+    expect(collapsibleContent.props.id).toBe('transaction-more-details');
+  });
+
+  it('opens "Mais detalhes" by default in edit mode when transaction has non-default values', () => {
+    mockedEditingTx = {
+      ...dummyEditingTransaction,
+      isRecurring: true,
+    };
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const moreDetailsBtnBlock = form.props.children[8];
+    const button = moreDetailsBtnBlock.props.children;
+    expect(button.props['aria-expanded']).toBe(true);
+
+    const collapsibleContent = form.props.children[9];
+    expect(collapsibleContent).toBeTruthy();
+  });
+
+  it('renders Competência (type="month"), Vencimento (type="date") and Repetição in collapsible area', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+      defaultDetailsOpen: true,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const collapsibleContent = form.props.children[9];
+    const [datesRow, repetitionRow] = collapsibleContent.props.children;
+
+    // Dates row: Competência (month) + Vencimento (date)
+    const [competenceInput, dueDateInput] = datesRow.props.children;
+    expect(competenceInput.props.type).toBe('month');
+    expect(competenceInput.props.label).toBe('Competência');
+    expect(dueDateInput.props.type).toBe('date');
+    expect(dueDateInput.props.label).toBe('Vencimento');
+
+    // Repetition row: Select with Único, Parcelado, Fixo Mensal
+    const [repetitionSelect] = repetitionRow.props.children;
+    expect(repetitionSelect.props.label).toBe('Repetição');
+    const options = repetitionSelect.props.children as Array<{ props?: { children?: unknown } }>;
+    const optionLabels = options
+      .filter((opt) => opt && opt.props && opt.props.children)
+      .map((opt) => opt.props?.children);
+    expect(optionLabels).toContain('Único');
+    expect(optionLabels).toContain('Parcelado');
+    expect(optionLabels).toContain('Fixo Mensal');
+  });
+
+  it('hides "Parcelado" option from Repetição when transaction type is INCOME', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { type: TransactionType.INCOME };
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+      defaultDetailsOpen: true,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const collapsibleContent = form.props.children[9];
+    const [, repetitionRow] = collapsibleContent.props.children;
+    const [repetitionSelect] = repetitionRow.props.children;
+
+    const options = repetitionSelect.props.children as Array<{ props?: { children?: unknown } }>;
+    const optionLabels = options
+      .filter((opt) => opt && opt.props && opt.props.children)
+      .map((opt) => opt.props?.children);
+    expect(optionLabels).toContain('Único');
+    expect(optionLabels).not.toContain('Parcelado');
+    expect(optionLabels).toContain('Fixo Mensal');
+  });
+
+  it('normalizes competenceDate to YYYY-MM-01 and forces PERSONAL visibility when no active couple on submit', async () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'NONE' };
+
+    const onSubmitMock = vi.fn().mockResolvedValue(undefined);
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: onSubmitMock,
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    await form.props.onSubmit({
+      type: TransactionType.EXPENSE,
+      amount: 120,
+      description: 'Conta de Água',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-pers-sub',
+      dueDate: '2026-10-15',
+      competenceDate: '2026-10',
+      paymentDate: '',
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.SHARED, // should be forced to PERSONAL since no couple
+      repetitionType: RepetitionType.SINGLE,
+      totalInstallments: null,
+      isRecurring: false,
+      recurrenceRule: RecurrenceRule.MONTHLY,
+    });
+
+    expect(onSubmitMock).toHaveBeenCalledTimes(1);
+    const submittedData = onSubmitMock.mock.calls[0][0];
+    expect(submittedData.competenceDate).toBe('2026-10-01');
+    expect(submittedData.visibility).toBe(TransactionVisibility.PERSONAL);
+  });
+
+  it('preserves SHARED visibility when user has active couple on submit', async () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+    mockedCoupleStatus = { status: 'ACTIVE' };
+
+    const onSubmitMock = vi.fn().mockResolvedValue(undefined);
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: onSubmitMock,
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    await form.props.onSubmit({
+      type: TransactionType.EXPENSE,
+      amount: 200,
+      description: 'Jantar',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-shared-sub',
+      dueDate: '2026-10-20',
+      competenceDate: '',
+      paymentDate: '',
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.SHARED,
+      repetitionType: RepetitionType.SINGLE,
+      totalInstallments: null,
+      isRecurring: false,
+      recurrenceRule: RecurrenceRule.MONTHLY,
+    });
+
+    expect(onSubmitMock).toHaveBeenCalledTimes(1);
+    const submittedData = onSubmitMock.mock.calls[0][0];
+    expect(submittedData.competenceDate).toBe('');
+    expect(submittedData.visibility).toBe(TransactionVisibility.SHARED);
+  });
+});
+
 
