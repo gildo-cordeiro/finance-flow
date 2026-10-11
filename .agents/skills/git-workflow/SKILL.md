@@ -90,6 +90,10 @@ Ao sugerir ou criar a descrição de um PR, use exatamente este formato:
 - [ ] Nenhum dado sensível (CPF, e-mail, senha, token) foi logado ou exposto.
 - [ ] Realizei auto-review antes de enviar.
 
+## Skills e decisões
+- [ ] Revisei se esta mudança afeta alguma skill em `.agents/skills/` e atualizei na mesma PR (ou justifiquei abaixo).
+- [ ] ADR: criado/proposto, ou o desenvolvedor foi consultado e dispensou, ou não se aplica.
+
 ## Como testar
 
 [Passos para reproduzir / testar a mudança localmente, ex: endpoint a chamar, payload de exemplo]

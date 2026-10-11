@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "comentario": "Mapeia caminhos alterados para as skills que podem precisar de atualização. Usado por scripts/check_skills_sync.py e pela skill skill-maintenance. Glob: ** atravessa pastas, * não atravessa. 'companions' são arquivos que também contam como atualização da skill.",
+  "skills": [
+    {
+      "skill": "temporal-competence",
+      "watch": [
+        "backend/src/main/java/com/financeflow/transaction/**",
+        "backend/src/main/java/com/financeflow/account/**",
+        "backend/src/main/java/com/financeflow/budget/**",
+        "backend/src/main/java/com/financeflow/cashflow/**",
+        "frontend/src/features/transactions/**",
+        "frontend/src/features/accounts/**",
+        "frontend/src/features/cashflow/**"
+      ]
+    },
+    {
+      "skill": "couple-context",
+      "watch": [
+        "backend/src/main/java/com/financeflow/couple/**",
+        "backend/src/main/java/com/financeflow/goals/**",
+        "backend/src/main/java/com/financeflow/auth/config/SecurityConfig.java",
+        "frontend/src/features/couple/**",
+        "frontend/src/features/goals/**",
+        "frontend/src/context/ViewContext.tsx"
+      ]
+    },
+    {
+      "skill": "financeflow-architecture",
+      "watch": [
+        "backend/build.gradle",
+        "backend/Dockerfile",
+        "docker-compose.yml",
+        "backend/src/main/resources/application*.properties",
+        "backend/src/main/resources/db/migration/**",
+        "backend/src/main/java/com/financeflow/shared/**",
+        "backend/src/main/java/com/financeflow/auth/config/**"
+      ]
+    },
+    {
+      "skill": "frontend-financeflow",
+      "watch": [
+        "frontend/src/components/**",
+        "frontend/src/context/**",
+        "frontend/src/routes/**",
+        "frontend/src/services/**",
+        "frontend/src/lib/**",
+        "frontend/src/utils/**",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js",
+        "frontend/package.json",
+        "docs/design-system.md"
+      ],
+      "companions": ["docs/design-system.md"]
+    },
+    {
+      "skill": "code-implementation",
+      "watch": [
+        "backend/build.gradle",
+        "frontend/package.json",
+        "frontend/eslint.config.js",
+        "frontend/tsconfig*.json",
+        "frontend/vite.config.*",
+        "backend/src/test/**"
+      ]
+    },
+    {
+      "skill": "git-workflow",
+      "watch": [
+        ".github/**",
+        "frontend/.husky/**"
+      ]
+    }
+  ],
+  "adr_signals": [
+    { "sinal": "Dependência do backend adicionada, removida ou atualizada", "watch": ["backend/build.gradle"] },
+    { "sinal": "Dependência do frontend adicionada, removida ou atualizada", "watch": ["frontend/package.json"] },
+    { "sinal": "Nova migration de banco (mudança de modelo de dados)", "watch": ["backend/src/main/resources/db/migration/*.sql"] },
+    { "sinal": "Segurança, autenticação ou CORS", "watch": ["backend/src/main/java/com/financeflow/auth/config/**"] },
+    { "sinal": "Deploy, CI/CD ou infraestrutura", "watch": [".github/workflows/**", "backend/Dockerfile", "docker-compose.yml"] },
+    { "sinal": "Configuração de build, estilo ou bundler do frontend", "watch": ["frontend/tailwind.config.js", "frontend/vite.config.*", "frontend/tsconfig*.json"] }
+  ]
+}

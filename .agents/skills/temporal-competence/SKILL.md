@@ -93,6 +93,8 @@ public static LocalDate calculateDueDate(LocalDate competenceMonth, int dueDay) 
 // Competência = Jun/2024, dueDay = 16 → due_date = 16/Jul/2024
 ```
 
+> ⚠ **Divergência conhecida (decisão pendente):** a implementação real (`CreateTransactionUseCase.calculateDueDate`) não vence sempre no mês seguinte. Ela calcula `gap = due_day - closing_day`: se `gap < 7` (inclui negativo), vence no mês seguinte à competência; senão, vence **no mesmo mês** da competência. Os exemplos desta skill (gap negativo ou menor que 7) dão o mesmo resultado; a diferença aparece quando `gap >= 7` (por exemplo, fechamento dia 5 e vencimento dia 20). Qual regra vale? Pergunte ao desenvolvedor antes de alterar o código ou esta regra.
+
 ## 4. Cartões do FinanceFlow (Configuração Real)
 
 | Cartão | `closing_day` | `due_day` | Exemplo de competência |
@@ -121,6 +123,8 @@ public static TransactionStatus deriveStatus(LocalDate dueDate, LocalDate paymen
     return TransactionStatus.PLANNED;
 }
 ```
+
+> ⚠ **Divergência conhecida (decisão pendente):** `deriveStatus` **não existe** no backend. O status chega pronto no request (`CreateTransactionUseCase` só valida que `payment_date` é obrigatória quando o status é `PAID` e proibida caso contrário) e nenhum código atribui `OVERDUE`. Ou o backend passa a derivar o status, ou esta seção deve virar 'regra alvo'. Pergunte ao desenvolvedor antes de implementar ou de remover a regra.
 
 ## 6. Anti-Patterns a Evitar
 

@@ -15,5 +15,11 @@
 - [ ] O schema do banco de dados (se alterado) possui migração correspondente do Flyway.
 - [ ] Realizei um auto-review no código antes de enviar.
 
+## Skills e decisões
+- [ ] Revisei se esta mudança afeta alguma skill em `.agents/skills/` e atualizei na mesma PR (ou justifiquei abaixo).
+- [ ] ADR: criado/proposto, ou o desenvolvedor foi consultado e dispensou, ou não se aplica.
+- Skills atualizadas ou revisadas: [liste]
+- ADRs pendentes ou decisões em aberto: [liste ou 'nenhum']
+
 ## Screenshots / Demonstrações (opcional)
 [Imagens ou representações textuais do comportamento da interface ou das respostas de API]

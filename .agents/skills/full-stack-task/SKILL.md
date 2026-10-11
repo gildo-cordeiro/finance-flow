@@ -8,6 +8,8 @@ description: >
   Quando esta skill for acionada, o assistente DEVE carregar e seguir TAMBÉM as skills:
     - code-implementation   → padrões de back-end E front-end com regras detalhadas
     - frontend-financeflow  → sistema de design Dark Premium, componentes, formulários, React Query
+    - skill-maintenance     → ao finalizar: atualizar as skills afetadas pela mudança
+    - adr-workflow          → ao finalizar: avaliar se houve decisão importante e consultar o desenvolvedor sobre um ADR
   Esta skill não contém código — ela é um ponto de entrada que garante que ambas as referências sejam consideradas.
 ---
 
@@ -32,6 +34,7 @@ Pedidos que cruzam camadas, por exemplo:
 Ao receber um pedido full-stack, siga sempre esta sequência:
 
 ```
+0. CONSULTAR docs/adr/README.md (a tarefa contradiz algum ADR aceito? se sim, pare e pergunte)
 1. ENTENDER o escopo completo (back + front)
 2. PLANEJAR as duas camadas juntas antes de começar qualquer código
    ├── Back-end: entidade, migration, repository, service, controller, DTOs
@@ -39,6 +42,8 @@ Ao receber um pedido full-stack, siga sempre esta sequência:
 3. IMPLEMENTAR back-end primeiro (contrato da API define o front)
 4. IMPLEMENTAR front-end em seguida, consumindo o contrato definido
 5. VALIDAR coerência entre os dois lados (nomes de campos, tipos, status HTTP)
+6. SKILLS: rodar a skill skill-maintenance (atualizar as skills afetadas na mesma PR)
+7. ADR: rodar a skill adr-workflow (se houve decisão importante, CONSULTAR o desenvolvedor com sugestões; nunca criar ADR sozinho)
 ```
 
 ## Referências obrigatórias a consultar
@@ -51,6 +56,8 @@ Ao receber um pedido full-stack, siga sempre esta sequência:
 | `temporal-competence` | Se a feature envolver datas, competência ou ciclos de fatura |
 | `couple-context` | Se a feature envolver visibilidade de casal ou isolamento de dados |
 | `git-workflow` | Ao finalizar: nome de branch, commits e template de PR |
+| `skill-maintenance` | Ao finalizar: quais skills a mudança afeta e como atualizá-las |
+| `adr-workflow` | Ao finalizar (e ao detectar decisão no meio da tarefa): quando propor um ADR e como consultar o desenvolvedor |
 
 ## Checklist de coerência full-stack
 

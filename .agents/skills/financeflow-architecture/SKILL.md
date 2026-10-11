@@ -47,6 +47,7 @@ Esta é a **única** estrutura de pacotes autorizada. Toda nova feature deve seg
 ```
 com.financeflow/
 ├── auth/
+│   ├── config/             # SecurityConfig, JwtAuthenticationFilter, JwtProperties (segurança vive aqui, não em shared)
 │   ├── controller/         # @RestController — só orquestra HTTP
 │   ├── dto/                # Records de Request e Response
 │   ├── service/            # Lógica de negócio e use cases
@@ -63,11 +64,10 @@ com.financeflow/
 ├── cashflow/               # Fluxo de caixa e projeções
 ├── couple/                 # Gestão de casal
 ├── goals/                  # Metas financeiras
-├── travel/                 # Planejamento de viagens
-└── shared/                 # Utilitários globais, exception handler, configs
-    ├── exception/          # DomainException, NotFoundException, BusinessException
-    ├── handler/            # GlobalExceptionHandler (@RestControllerAdvice)
-    └── security/           # JWT filter, SecurityConfig
+├── dashboard/              # Resumo do dashboard (GetDashboardSummaryUseCase)
+├── travel/                 # Planejamento de viagens (pasta vazia: planejado)
+└── shared/                 # Utilitários globais
+    └── exception/          # DomainException, NotFound/Business/Validation/Unauthorized/ForbiddenException, GlobalExceptionHandler
 ```
 
 ### Frontend — `src/`
@@ -146,6 +146,8 @@ public final class TransactionMapper {
 | Lógica síncrona necessária de outro módulo | Interface pública de `Service` exposta pelo módulo alvo |
 | Reação a ação de negócio (recalcular orçamento após nova transação) | `ApplicationEventPublisher` → evento de domínio |
 | Integração com sistema externo (Open Finance) | Adapter na camada `shared/` ou no próprio módulo |
+
+> ⚠ **Divergência conhecida (decisão pendente):** hoje nenhum módulo usa `ApplicationEventPublisher` nem eventos de domínio. A comunicação entre módulos é por injeção direta de repositórios e services (por exemplo, `goals` usa o repositório de `couple`). Eventos são alvo, não prática atual. Não introduza eventos sem consultar o desenvolvedor (skill `adr-workflow`).
 
 ```java
 // Exemplo: TransactionService publica evento após criar transação
