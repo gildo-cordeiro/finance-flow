@@ -101,18 +101,6 @@ class DiscountPricing(private val discountPct: Double) : PricingStrategy {
 }
 ```
 
-#### Observer / Event-Driven
-**Use quando:** Desacoplar produtor de consumidores (ex: publicar domínio events).
-```kotlin
-sealed class DomainEvent
-data class UserCreated(val userId: UUID, val email: String) : DomainEvent()
-data class PaymentProcessed(val orderId: UUID, val amount: Money) : DomainEvent()
-
-interface DomainEventPublisher {
-    fun publish(event: DomainEvent)
-}
-```
-
 #### Command
 **Use quando:** Encapsular uma operação como objeto (auditoria, undo, filas).
 ```kotlin
@@ -126,15 +114,6 @@ class CreateOrderCommand(
 ) : Command<Order> {
     override fun execute() = orderService.create(request)
 }
-```
-
-#### Saga Pattern (para microserviços)
-**Use quando:** Transação distribuída entre múltiplos serviços.
-- **Choreography**: cada serviço publica eventos e reage a eventos de outros
-- **Orchestration**: um orquestrador central coordena os passos
-
-```
-OrderService → [OrderCreated] → PaymentService → [PaymentProcessed] → InventoryService
 ```
 
 ---
