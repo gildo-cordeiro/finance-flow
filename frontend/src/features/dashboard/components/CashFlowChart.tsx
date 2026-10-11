@@ -2,6 +2,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -10,7 +11,7 @@ import {
 import { Card } from '../../../components/ui/Card';
 import { MoneyValue } from '../../../components/ui/MoneyValue';
 
-interface ChartPoint {
+export interface ChartPoint {
   name: string;
   receitas: number;
   despesas: number;
@@ -18,6 +19,7 @@ interface ChartPoint {
   userExpenses: number;
   partnerRevenue: number;
   partnerExpenses: number;
+  projected?: boolean;
 }
 
 interface CashFlowChartProps {
@@ -40,7 +42,14 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
       const data = payload[0].payload;
       return (
         <div className="bg-bg-surface border border-border-subtle rounded-xl p-4 shadow-2xl space-y-3">
-          <p className="text-sm font-bold text-white border-b border-border-subtle pb-1.5">{label}</p>
+          <div className="flex items-center justify-between border-b border-border-subtle pb-1.5 gap-4">
+            <p className="text-sm font-bold text-white">{label}</p>
+            {data.projected && (
+              <span className="text-xs font-normal text-text-muted">
+                (Projetado)
+              </span>
+            )}
+          </div>
           <div className="space-y-2">
             {/* Receitas */}
             <div className="space-y-1">
@@ -75,6 +84,29 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
     return null;
   };
 
+  const hasProjected = chartData.some((point) => point.projected);
+
+  const renderLegend = () => {
+    return (
+      <div className="flex items-center justify-center gap-4 pt-3 text-[11px] text-text-muted">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-success" />
+          <span>Receitas</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-danger" />
+          <span>Despesas</span>
+        </div>
+        {hasProjected && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-text-muted/40 border border-text-muted/30" />
+            <span>Projetado</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Card className="lg:col-span-2 p-6 flex flex-col justify-between">
       <div>
@@ -107,13 +139,27 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
                 tickFormatter={(v) => `R$ ${v}`}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{ fontSize: '11px', paddingTop: '12px', color: '#a1a1aa' }}
-              />
-              <Bar dataKey="receitas" name="Receitas" fill="#22C55E" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="despesas" name="Despesas" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              <Legend content={renderLegend} />
+              <Bar dataKey="receitas" name="Receitas" fill="#22C55E" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-receitas-${index}`}
+                    fill="#22C55E"
+                    fillOpacity={entry.projected ? 0.4 : 1}
+                    opacity={entry.projected ? 0.4 : 1}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="despesas" name="Despesas" fill="#EF4444" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-despesas-${index}`}
+                    fill="#EF4444"
+                    fillOpacity={entry.projected ? 0.4 : 1}
+                    opacity={entry.projected ? 0.4 : 1}
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
