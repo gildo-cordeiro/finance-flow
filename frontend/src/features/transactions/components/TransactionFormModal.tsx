@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,6 +24,7 @@ import {
   TransactionType,
   TransactionVisibility,
 } from '../types';
+import { useCouple } from '../../couple/hooks/useCouple';
 import { cn } from '../../../lib/cn';
 
 // Helper to parse date string YYYY-MM-DD safely into Date without timezone offsets
@@ -59,6 +60,45 @@ const getInvoiceMonthText = (card: Account | undefined, dueDateStr: string): str
   return `Entra na fatura de ${monthName}`;
 };
 
+// Helper to determine if a transaction has non-default details in the collapsible area
+export const hasNonDefaultDetails = (
+  tx: Transaction | null,
+  accountsList: Account[]
+): boolean => {
+  if (!tx) return false;
+
+  // 1. Repetição não padrão (qualquer repetição além de Único / SINGLE)
+  if (
+    tx.installmentGroupId ||
+    (tx.totalInstallments && tx.totalInstallments > 1) ||
+    tx.isRecurring
+  ) {
+    return true;
+  }
+
+  // 2. Competência não padrão
+  if (tx.competenceDate) {
+    const compMonth = tx.competenceDate.slice(0, 7);
+    const acc = accountsList.find((a) => a.id === tx.accountId);
+    if (acc?.type === 'CREDIT_CARD' && acc.closingDay && tx.dueDate) {
+      const txDate = parseDateParts(tx.dueDate);
+      const expectedDate =
+        txDate.getDate() <= acc.closingDay
+          ? new Date(txDate.getFullYear(), txDate.getMonth(), 1)
+          : new Date(txDate.getFullYear(), txDate.getMonth() + 1, 1);
+      const expectedMonth = format(expectedDate, 'yyyy-MM');
+      if (compMonth !== expectedMonth) return true;
+    } else if (tx.dueDate) {
+      const dueMonth = tx.dueDate.slice(0, 7);
+      if (compMonth !== dueMonth) return true;
+    } else {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 // Helper function to check if a category belongs to income
 const isIncomeCategory = (catId: string, categories: Category[]): boolean => {
   if (!catId) return false;
@@ -80,6 +120,7 @@ export interface TransactionFormModalProps {
   categories: Category[];
   onSubmit: (data: TransactionFormData) => Promise<void>;
   isSubmitting: boolean;
+  defaultDetailsOpen?: boolean;
 }
 
 export type DateOption = 'TODAY' | 'YESTERDAY' | 'CUSTOM';
@@ -92,6 +133,7 @@ export function TransactionFormModal({
   categories,
   onSubmit,
   isSubmitting,
+  defaultDetailsOpen,
 }: TransactionFormModalProps) {
   const [transFormError, setTransFormError] = useState<string | null>(null);
   const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
@@ -121,6 +163,15 @@ export function TransactionFormModal({
     return 'TODAY';
   })();
   const [dateOption, setDateOption] = useState<DateOption>(initialDateOption);
+
+  const { coupleStatus } = useCouple();
+  const hasCouple = coupleStatus.status === 'ACTIVE';
+
+  const initialDetailsOpen: boolean =
+    defaultDetailsOpen !== undefined
+      ? defaultDetailsOpen
+      : Boolean(editingTransaction && hasNonDefaultDetails(editingTransaction, accounts));
+  const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(initialDetailsOpen);
 
   const initialIsPaid: boolean = (() => {
     if (editingTransaction) {
@@ -178,6 +229,8 @@ export function TransactionFormModal({
   const watchedType = watch('type');
   const isIncome = watchedType === TransactionType.INCOME;
   const watchedVisibility = watch('visibility');
+  const isShared = watchedVisibility === TransactionVisibility.SHARED;
+  const watchedRepetitionType = watch('repetitionType');
 
   // Filter active accounts and credit cards
   const activeCheckingAccounts = accounts.filter(
@@ -234,6 +287,10 @@ export function TransactionFormModal({
         repetitionType = RepetitionType.RECURRING;
       }
 
+      if (defaultDetailsOpen === undefined) {
+        setIsDetailsOpen(hasNonDefaultDetails(editingTransaction, accounts));
+      }
+
       const txPaid =
         editingTransaction.status === TransactionStatus.PAID ||
         Boolean(editingTransaction.paymentDate);
@@ -249,17 +306,24 @@ export function TransactionFormModal({
         setDateOption('CUSTOM');
       }
 
+      const txVisibility =
+        hasCouple && editingTransaction.visibility === TransactionVisibility.SHARED
+          ? TransactionVisibility.SHARED
+          : TransactionVisibility.PERSONAL;
+
       reset({
         type: editingTransaction.type,
         amount: editingTransaction.amount,
         description: editingTransaction.description,
         accountId: editingTransaction.accountId,
         categoryId: editingTransaction.categoryId,
-        competenceDate: editingTransaction.competenceDate || '',
+        competenceDate: editingTransaction.competenceDate
+          ? editingTransaction.competenceDate.slice(0, 7)
+          : '',
         dueDate: editingTransaction.dueDate,
         paymentDate: editingTransaction.paymentDate || '',
         status: editingTransaction.status,
-        visibility: editingTransaction.visibility,
+        visibility: txVisibility,
         repetitionType,
         totalInstallments: editingTransaction.totalInstallments || null,
         isRecurring: editingTransaction.isRecurring,
@@ -271,6 +335,10 @@ export function TransactionFormModal({
       const firstChecking = accounts.find((a) => a.type !== 'CREDIT_CARD');
       const isCard = !firstChecking && accounts[0]?.type === 'CREDIT_CARD';
       const curToday = getTodayStr();
+
+      if (defaultDetailsOpen === undefined) {
+        setIsDetailsOpen(false);
+      }
 
       setDateOption('TODAY');
       setIsPaid(!isCard);
@@ -293,7 +361,35 @@ export function TransactionFormModal({
       });
     }
     setTransFormError(null);
-  }, [isOpen, editingTransaction, accounts, reset]);
+  }, [isOpen, editingTransaction, accounts, defaultDetailsOpen, hasCouple, reset]);
+
+  // Handle visibility changes: clear category if it is no longer valid
+  const handleToggleCouple = () => {
+    const nextVisibility = isShared
+      ? TransactionVisibility.PERSONAL
+      : TransactionVisibility.SHARED;
+    setValue('visibility', nextVisibility, { shouldValidate: true });
+
+    const currentCatId = watch('categoryId');
+    if (currentCatId) {
+      const selectedCat = categories.find((c) => c.id === currentCatId);
+      if (selectedCat && selectedCat.userId && selectedCat.visibility !== nextVisibility) {
+        setValue('categoryId', '', { shouldValidate: true });
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const currentCatId = watch('categoryId');
+    if (currentCatId) {
+      const selectedCat = categories.find((c) => c.id === currentCatId);
+      if (selectedCat && selectedCat.userId && selectedCat.visibility !== watchedVisibility) {
+        setValue('categoryId', '', { shouldValidate: true });
+      }
+    }
+  }, [isOpen, watchedVisibility, categories, setValue, watch]);
 
   // Ensure an account is set if accounts load after modal was opened
   useEffect(() => {
@@ -485,11 +581,23 @@ export function TransactionFormModal({
     }
   };
 
+  const normalizeData = (data: TransactionFormData): TransactionFormData => {
+    let compDate = data.competenceDate;
+    if (compDate && compDate.length === 7) {
+      compDate = `${compDate}-01`;
+    }
+    return {
+      ...data,
+      competenceDate: compDate || '',
+      visibility: hasCouple ? data.visibility : TransactionVisibility.PERSONAL,
+    };
+  };
+
   const onFormSubmit = async (data: TransactionFormData) => {
     try {
       setIsSubmittingLocal(true);
       setTransFormError(null);
-      await onSubmit(data);
+      await onSubmit(normalizeData(data));
     } catch (err) {
       const error = err as Error;
       setTransFormError(error.message || 'Erro ao processar lançamento.');
@@ -503,7 +611,7 @@ export function TransactionFormModal({
     await handleSubmit(async (data: TransactionFormData) => {
       try {
         setIsSubmittingLocal(true);
-        await onSubmit(data);
+        await onSubmit(normalizeData(data));
         setValue('amount', 0);
         setValue('description', '');
         clearErrors('amount');
@@ -844,6 +952,117 @@ export function TransactionFormModal({
               </div>
             )}
           </div>
+
+          {/* Switch Compartilhar com o casal (apenas se tiver casal ativo) */}
+          {hasCouple && (
+            <div className="flex items-center justify-between min-h-[44px]">
+              <span
+                onClick={handleToggleCouple}
+                className="text-sm font-medium text-text-primary cursor-pointer select-none"
+              >
+                Compartilhar com o casal
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isShared}
+                aria-label="Compartilhar com o casal"
+                disabled={isBusy}
+                onClick={handleToggleCouple}
+                className={cn(
+                  'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-bg-surface disabled:opacity-50 disabled:cursor-not-allowed',
+                  isShared ? 'bg-brand' : 'bg-bg-elevated border border-border-subtle'
+                )}
+              >
+                <span
+                  className={cn(
+                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-text-primary shadow-sm transition duration-200 ease-in-out',
+                    isShared ? 'translate-x-5' : 'translate-x-0.5'
+                  )}
+                />
+              </button>
+            </div>
+          )}
+
+          {/* Botão Mais detalhes */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setIsDetailsOpen((prev) => !prev)}
+              aria-expanded={isDetailsOpen}
+              aria-controls="transaction-more-details"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline transition-colors focus:outline-none min-h-[44px]"
+            >
+              <span>Mais detalhes</span>
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 text-brand transition-transform duration-200',
+                  isDetailsOpen && 'rotate-180'
+                )}
+              />
+            </button>
+          </div>
+
+          {/* Área recolhível de Mais detalhes */}
+          {isDetailsOpen && (
+            <div
+              id="transaction-more-details"
+              className="space-y-4 pt-1 animate-in fade-in slide-in-from-top-2 duration-150"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  type="month"
+                  label="Competência"
+                  className="[color-scheme:dark]"
+                  error={errors.competenceDate?.message}
+                  {...register('competenceDate')}
+                />
+
+                <Input
+                  type="date"
+                  label="Vencimento"
+                  className="[color-scheme:dark]"
+                  error={errors.dueDate?.message}
+                  {...register('dueDate')}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Select
+                  label="Repetição"
+                  error={errors.repetitionType?.message}
+                  disabled={Boolean(editingTransaction)}
+                  {...register('repetitionType')}
+                >
+                  <option value={RepetitionType.SINGLE}>Único</option>
+                  {!isIncome && <option value={RepetitionType.INSTALLMENT}>Parcelado</option>}
+                  <option value={RepetitionType.RECURRING}>Fixo Mensal</option>
+                </Select>
+
+                {watchedRepetitionType === RepetitionType.INSTALLMENT && !isIncome && (
+                  <Input
+                    type="number"
+                    label="Nº de Parcelas"
+                    placeholder="Ex: 3"
+                    disabled={Boolean(editingTransaction)}
+                    error={errors.totalInstallments?.message}
+                    {...register('totalInstallments')}
+                  />
+                )}
+
+                {watchedRepetitionType === RepetitionType.RECURRING && (
+                  <Select
+                    label="Frequência"
+                    disabled={Boolean(editingTransaction)}
+                    error={errors.recurrenceRule?.message}
+                    {...register('recurrenceRule')}
+                  >
+                    <option value={RecurrenceRule.MONTHLY}>Mensal</option>
+                  </Select>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border-subtle">
