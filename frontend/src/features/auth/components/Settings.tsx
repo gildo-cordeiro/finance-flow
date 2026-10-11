@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
   User,
-  ArrowLeft,
   ShieldAlert,
   Tag,
   Heart,
@@ -15,30 +13,27 @@ import { CategoriesTab } from './settings/CategoriesTab';
 import { CoupleTab } from './settings/CoupleTab';
 import { OpenFinanceTab } from './settings/OpenFinanceTab';
 import { DangerZoneTab } from './settings/DangerZoneTab';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 
 export function Settings() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'profile' | 'categories' | 'couple' | 'open-finance' | 'danger-zone'>('profile');
 
   return (
-    <div className="gradient-bg min-h-screen text-white flex flex-col">
-      {/* Upper Navigation Header */}
-      <header className="max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between border-b border-zinc-800/80">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar ao Painel
-        </button>
-        <div className="flex items-center gap-3">
-          <span className="text-text-muted text-xs select-none">ID do Usuário: {user?.id}</span>
-        </div>
-      </header>
+    <PageContainer>
+      <PageHeader
+        title="Configurações"
+        subtitle="Gerencie sua conta e preferências."
+        actions={
+          <div className="flex items-center gap-4">
+            <span className="text-text-muted text-xs select-none">ID do Usuário: {user?.id}</span>
+          </div>
+        }
+      />
 
       {/* Main Settings Page Container */}
-      <div className="max-w-7xl mx-auto w-full px-6 py-8 flex-1 flex flex-col md:flex-row gap-8">
+      <div className="w-full flex-1 flex flex-col md:flex-row gap-8">
         
         {/* Left Vertical Navigation Menu (Tabs) - Fixed 200px */}
         <aside className="w-full md:w-[220px] shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 border-b md:border-b-0 md:border-r border-zinc-800/80 pr-0 md:pr-4 select-none scrollbar-thin scrollbar-thumb-zinc-800">
@@ -117,6 +112,6 @@ export function Settings() {
           {activeSection === 'danger-zone' && <DangerZoneTab />}
         </main>
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -9,6 +9,8 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { BudgetSummary } from './BudgetSummary';
 import { BudgetRow } from './BudgetRow';
 import { BudgetModal } from './BudgetModal';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 
 export function Budget() {
@@ -142,7 +144,7 @@ export function Budget() {
   };
 
   return (
-    <div className="gradient-bg min-h-screen text-white">
+    <>
       {/* Couple context banner — visible only in COUPLE mode */}
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center animate-in slide-in-from-top-1 duration-200">
@@ -152,17 +154,13 @@ export function Budget() {
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-12 space-y-8 animate-in fade-in duration-300">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-zinc-800/80 pb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Planejamento Orçamentário</h1>
-            <p className="text-zinc-400 text-sm mt-1">Planeje e acompanhe seus limites de gastos mensais</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Month Selector */}
+      <PageContainer>
+        <PageHeader
+          title="Planejamento Orçamentário"
+          subtitle="Planeje e acompanhe seus limites de gastos mensais"
+          actions={
+            <>
+              {/* Month Selector */}
             <PeriodSelector
               value={currentMonth}
               onChange={(val) => {
@@ -189,8 +187,9 @@ export function Budget() {
               <Plus className="w-4 h-4" />
               <span>Novo orçamento</span>
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
         {/* Highlighted Summary / Totals Grid */}
         <BudgetSummary
@@ -357,7 +356,7 @@ export function Budget() {
             </div>
           </div>
         )}
-      </main>
+      </PageContainer>
 
       {/* New Budget Modal */}
       <BudgetModal
@@ -366,6 +365,6 @@ export function Budget() {
         onSave={handleNewBudgetSave}
         categoryOptions={getSortedCategoryOptions()}
       />
-    </div>
+    </>
   );
 }

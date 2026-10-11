@@ -16,6 +16,8 @@ import { AccountCard, type DropdownAction } from './AccountCard';
 import { CreateBankModal, CreateCardModal, EditModal, parseApiError } from './AccountModal';
 import { ConfirmModal, confirmConfig, type ConfirmAction } from './AccountActionModals';
 import { Pencil, Archive as ArchiveIcon, ArchiveRestore, Lock, Trash2 } from 'lucide-react';
+import { PageContainer } from '../../../components/ui/PageContainer';
+import { PageHeader } from '../../../components/ui/PageHeader';
 
 export function Accounts() {
   const { user } = useAuth();
@@ -135,7 +137,7 @@ export function Accounts() {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: user.currency }).format(val);
 
   return (
-    <div className="gradient-bg min-h-screen text-white">
+    <>
       {isCouple && (
         <div className="bg-violet-500/10 border-b border-violet-500/20 py-2 text-center">
           <span className="text-violet-300 text-xs font-medium">
@@ -144,34 +146,29 @@ export function Accounts() {
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white animate-fade-in">
-              Contas & Cartões
-            </h1>
-            <p className="text-text-secondary text-sm mt-1">
-              Gerencie contas bancárias e cartões de crédito
-            </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-center">
-            <button
-              onClick={() => setIsBankModalOpen(true)}
-              className="bg-bg-surface hover:bg-bg-elevated border border-border-subtle hover:border-violet-500/40 text-text-primary font-medium text-sm rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 cursor-pointer group"
-            >
-              <Landmark className="w-4 h-4 text-violet-400 group-hover:text-violet-300 transition-colors" />
-              <span>Nova Conta</span>
-            </button>
-            <button
-              onClick={() => setIsCardModalOpen(true)}
-              className="bg-brand hover:bg-brand-hover text-white font-medium text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-brand/25 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Novo Cartão</span>
-            </button>
-          </div>
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Contas & Cartões"
+          subtitle="Gerencie contas bancárias e cartões de crédito"
+          actions={
+            <>
+              <button
+                onClick={() => setIsBankModalOpen(true)}
+                className="bg-bg-surface hover:bg-bg-elevated border border-border-subtle hover:border-violet-500/40 text-text-primary font-medium text-sm rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 cursor-pointer group"
+              >
+                <Landmark className="w-4 h-4 text-violet-400 group-hover:text-violet-300 transition-colors" />
+                <span>Nova Conta</span>
+              </button>
+              <button
+                onClick={() => setIsCardModalOpen(true)}
+                className="bg-brand hover:bg-brand-hover text-white font-medium text-sm rounded-xl px-4 py-2.5 shadow-lg shadow-brand/25 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Novo Cartão</span>
+              </button>
+            </>
+          }
+        />
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
@@ -295,7 +292,7 @@ export function Accounts() {
             )}
           </div>
         )}
-      </main>
+      </PageContainer>
 
       {/* Modals */}
       <CreateBankModal
@@ -336,6 +333,6 @@ export function Accounts() {
           errorMessage={confirmError}
         />
       )}
-    </div>
+    </>
   );
 }

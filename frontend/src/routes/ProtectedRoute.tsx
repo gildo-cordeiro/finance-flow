@@ -27,7 +27,10 @@ export function ProtectedRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base text-white flex flex-col">
+    <div 
+      className="min-h-screen bg-bg-base text-white flex flex-col"
+      style={{ backgroundImage: 'radial-gradient(600px circle at 50% 0, rgba(124,92,252,.10), transparent)' }}
+    >
       {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-bg-surface border-b border-white/[0.06] sticky top-0 z-40">
         <div className="flex items-center gap-2">
