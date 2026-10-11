@@ -5,6 +5,7 @@ import {
   Cell,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
 } from 'recharts';
@@ -121,7 +122,8 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 10, left: -10, bottom: 5 }}>
+            <BarChart data={chartData} maxBarSize={24} margin={{ top: 20, right: 10, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2E45" vertical={false} />
               <XAxis
                 dataKey="name"
                 stroke="#71717a"
@@ -131,16 +133,16 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
                 tick={{ fill: '#71717a' }}
               />
               <YAxis
-                stroke="#71717a"
-                fontSize={11}
+                stroke="#9AA0B4"
+                fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#71717a' }}
+                tick={{ fill: '#9AA0B4' }}
                 tickFormatter={(v) => `R$ ${v}`}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend content={renderLegend} />
-              <Bar dataKey="receitas" name="Receitas" fill="#22C55E" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="receitas" name="Receitas" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={24}>
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-receitas-${index}`}
@@ -150,7 +152,7 @@ export function CashFlowChart({ chartData, isCouple, partnerName }: CashFlowChar
                   />
                 ))}
               </Bar>
-              <Bar dataKey="despesas" name="Despesas" fill="#EF4444" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="despesas" name="Despesas" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={24}>
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-despesas-${index}`}
