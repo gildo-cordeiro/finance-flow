@@ -18,6 +18,7 @@ import { BudgetProgressList } from './BudgetProgressList';
 import { PeriodSelector } from '../../../components/ui/PeriodSelector';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
+import { aggregateTransactionsByMonth } from '../utils/aggregateCashFlow';
 
 const DashboardSkeleton = () => (
   <div className="space-y-8 animate-pulse">
@@ -187,68 +188,6 @@ export function Dashboard() {
     .slice(0, 5);
 
   // Aggregate cashflow for the last 6 months
-  const aggregateTransactionsByMonth = (
-    txs: typeof historyTransactions,
-    currentMonthStr: string,
-    userId: string,
-    isCoupleContext: boolean
-  ) => {
-    const [year, month] = currentMonthStr.split('-').map(Number);
-    const data = [];
-
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(year, month - 1 - i, 1);
-      const yStr = d.getFullYear();
-      const mStr = String(d.getMonth() + 1).padStart(2, '0');
-      const monthKey = `${yStr}-${mStr}`;
-
-      const monthName = d
-        .toLocaleDateString('pt-BR', { month: 'short' })
-        .replace('.', '')
-        .replace(/^\w/, (c) => c.toUpperCase());
-
-      const monthTxs = txs.filter((t) => t.competenceDate.startsWith(monthKey));
-
-      const totalRevenue = monthTxs
-        .filter((t) => t.type === 'INCOME')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalExpenses = monthTxs
-        .filter((t) => t.type === 'EXPENSE')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      let userRevenue = 0;
-      let userExpenses = 0;
-      let partnerRevenue = 0;
-      let partnerExpenses = 0;
-
-      if (isCoupleContext) {
-        userRevenue = monthTxs
-          .filter((t) => t.type === 'INCOME' && t.userId === userId)
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        userExpenses = monthTxs
-          .filter((t) => t.type === 'EXPENSE' && t.userId === userId)
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        partnerRevenue = totalRevenue - userRevenue;
-        partnerExpenses = totalExpenses - userExpenses;
-      }
-
-      data.push({
-        name: monthName,
-        receitas: totalRevenue,
-        despesas: totalExpenses,
-        userRevenue,
-        userExpenses,
-        partnerRevenue,
-        partnerExpenses,
-      });
-    }
-
-    return data;
-  };
-
   const chartData = aggregateTransactionsByMonth(
     historyTransactions,
     currentMonth,
