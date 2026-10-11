@@ -5,6 +5,7 @@ import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { MoneyValue } from '../../../components/ui/MoneyValue';
 import { formatDate } from '../../../utils/formatters';
 import type { Goal } from '../types';
+import { getGoalDeadlineStatus } from '../utils/goalStatus';
 
 interface GoalCardProps {
   goal: Goal;
@@ -16,6 +17,7 @@ interface GoalCardProps {
 
 export function GoalCard({ goal, onClick, onEdit, onArchive, onUnarchive }: GoalCardProps) {
   const hasCoupleId = !!goal.coupleId;
+  const deadlineStatus = getGoalDeadlineStatus(goal);
 
   return (
     <Card
@@ -36,15 +38,24 @@ export function GoalCard({ goal, onClick, onEdit, onArchive, onUnarchive }: Goal
               <p className="text-text-secondary text-xs line-clamp-1">{goal.description}</p>
             )}
           </div>
-          <span
-            className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-              hasCoupleId
-                ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
-                : 'bg-violet-500/10 text-violet-400 border-violet-500/20'
-            }`}
-          >
-            {hasCoupleId ? 'Casal' : 'Individual'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            {deadlineStatus.badge && (
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${deadlineStatus.badge.classes}`}
+              >
+                {deadlineStatus.badge.label}
+              </span>
+            )}
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                hasCoupleId
+                  ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
+                  : 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+              }`}
+            >
+              {hasCoupleId ? 'Casal' : 'Individual'}
+            </span>
+          </div>
         </div>
 
         {/* Amounts */}
@@ -71,9 +82,11 @@ export function GoalCard({ goal, onClick, onEdit, onArchive, onUnarchive }: Goal
 
       {/* Footer Info & Actions */}
       <div className="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between text-text-secondary text-xs">
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-text-muted" />
-          <span>Prazo: {formatDate(goal.deadline)}</span>
+        <div className={`flex items-center gap-1.5 ${deadlineStatus.isOverdue ? 'text-red-300' : ''}`}>
+          <Calendar className={`w-3.5 h-3.5 ${deadlineStatus.isOverdue ? 'text-red-300' : 'text-text-muted'}`} />
+          <span className={deadlineStatus.isOverdue ? 'text-red-300' : ''}>
+            Prazo: <span className={deadlineStatus.isOverdue ? 'text-red-300' : ''}>{formatDate(goal.deadline)}</span>
+          </span>
         </div>
 
         {/* Actions */}

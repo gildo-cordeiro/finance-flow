@@ -4,6 +4,7 @@ import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { MoneyValue } from '../../../components/ui/MoneyValue';
 import { formatDate } from '../../../utils/formatters';
 import type { Goal } from '../types';
+import { getGoalDeadlineStatus } from '../utils/goalStatus';
 
 interface GoalHeaderProps {
   goal: Goal;
@@ -20,6 +21,8 @@ export function GoalHeader({
   isDeadlineInRisk,
   projectedCompletionDate,
 }: GoalHeaderProps) {
+  const deadlineStatus = getGoalDeadlineStatus(goal);
+
   return (
     <div className="space-y-6">
       {/* Main Info Card */}
@@ -53,6 +56,8 @@ export function GoalHeader({
                     ? 'bg-success/10 text-success border-success/20'
                     : goal.status === 'ARCHIVED'
                     ? 'bg-zinc-800 text-zinc-400 border-zinc-700/50'
+                    : deadlineStatus.badge
+                    ? deadlineStatus.badge.classes
                     : 'bg-info/10 text-info border-info/20'
                 }`}
               >
@@ -60,6 +65,8 @@ export function GoalHeader({
                   ? 'Concluído'
                   : goal.status === 'ARCHIVED'
                   ? 'Arquivado'
+                  : deadlineStatus.badge
+                  ? deadlineStatus.badge.label
                   : 'Em Andamento'}
               </span>
 
