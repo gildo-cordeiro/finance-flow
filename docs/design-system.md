@@ -106,6 +106,20 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 <SectionLabel>Receitas do mês</SectionLabel>
 ```
 
+### CurrencyInput
+
+Campo de digitação de valor monetário de grande destaque (44px, `font-extrabold`) para modais e formulários rápidos, formando o valor por centavos e entregando número em reais.
+
+```tsx
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
+
+<CurrencyInput
+  value={valorEmReais}
+  onChange={(novoValor) => setValorEmReais(novoValor)}
+  autoFocus
+/>
+```
+
 ---
 
 ## 4. Regras Visuais de Desenvolvimento
