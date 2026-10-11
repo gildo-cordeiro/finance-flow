@@ -4,6 +4,7 @@ import com.financeflow.couple.model.domain.Couple;
 import com.financeflow.couple.repository.CoupleRepository;
 import com.financeflow.shared.exception.BusinessException;
 import com.financeflow.transaction.dto.TransactionResponse;
+import com.financeflow.transaction.model.domain.TransactionStatusPolicy;
 import com.financeflow.transaction.model.entity.TransactionEntity;
 import com.financeflow.transaction.model.mapper.TransactionMapper;
 import com.financeflow.transaction.repository.TransactionRepository;
@@ -64,6 +65,9 @@ public class ListTransactionsUseCase {
             transactions = transactionRepository.findAllFiltered(userId, startDate, endDate, categoryId, accountId);
         }
 
+        // O status devolvido é derivado do dia atual, para que um lançamento vencido apareça como OVERDUE sem job agendado
+        LocalDate today = LocalDate.now();
+
         return transactions.stream()
             .map(TransactionMapper::toDomain)
             .map(t -> new TransactionResponse(
@@ -77,7 +81,7 @@ public class ListTransactionsUseCase {
                 t.competenceDate(),
                 t.dueDate(),
                 t.paymentDate(),
-                t.status(),
+                TransactionStatusPolicy.derive(t.dueDate(), t.paymentDate(), today),
                 t.visibility(),
                 t.installmentGroupId(),
                 t.installmentNumber(),

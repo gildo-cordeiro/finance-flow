@@ -9,6 +9,7 @@ import com.financeflow.transaction.dto.TransactionRequest;
 import com.financeflow.transaction.dto.TransactionResponse;
 import com.financeflow.transaction.model.domain.Transaction;
 import com.financeflow.transaction.model.domain.TransactionStatus;
+import com.financeflow.transaction.model.domain.TransactionStatusPolicy;
 import com.financeflow.transaction.model.domain.TransactionType;
 import com.financeflow.transaction.model.entity.CategoryEntity;
 import com.financeflow.transaction.model.entity.TransactionEntity;
@@ -131,6 +132,9 @@ public class CreateTransactionUseCase {
             paymentDate = dueDate;
         }
 
+        // Status derivado das datas (ver TransactionStatusPolicy), não do status informado no request
+        TransactionStatus status = TransactionStatusPolicy.derive(dueDate, paymentDate, LocalDate.now());
+
         Transaction transaction = new Transaction(
             UUID.randomUUID(),
             userId,
@@ -142,7 +146,7 @@ public class CreateTransactionUseCase {
             competenceDate,
             dueDate,
             paymentDate,
-            request.status(),
+            status,
             request.visibility(),
             null,
             null,
@@ -184,14 +188,15 @@ public class CreateTransactionUseCase {
             LocalDate instCompetenceDate = competenceDate.plusMonths(i - 1);
             LocalDate instDueDate = calculateDueDate(account, request, instCompetenceDate);
 
-            TransactionStatus status = (i == 1) ? request.status() : TransactionStatus.PLANNED;
+            boolean requestedPaid = (i == 1) && request.status() == TransactionStatus.PAID;
             LocalDate paymentDate = null;
             if (i == 1) {
                 paymentDate = request.paymentDate();
-                if (account.getType() == AccountType.CREDIT_CARD && status == TransactionStatus.PAID) {
+                if (account.getType() == AccountType.CREDIT_CARD && requestedPaid) {
                     paymentDate = instDueDate;
                 }
             }
+            TransactionStatus status = TransactionStatusPolicy.derive(instDueDate, paymentDate, LocalDate.now());
 
             Transaction transaction = new Transaction(
                 UUID.randomUUID(),
@@ -255,14 +260,15 @@ public class CreateTransactionUseCase {
                 recDueDate = request.dueDate().plusMonths(i - 1);
             }
 
-            TransactionStatus status = (i == 1) ? request.status() : TransactionStatus.PLANNED;
+            boolean requestedPaid = (i == 1) && request.status() == TransactionStatus.PAID;
             LocalDate paymentDate = null;
             if (i == 1) {
                 paymentDate = request.paymentDate();
-                if (account.getType() == AccountType.CREDIT_CARD && status == TransactionStatus.PAID) {
+                if (account.getType() == AccountType.CREDIT_CARD && requestedPaid) {
                     paymentDate = recDueDate;
                 }
             }
+            TransactionStatus status = TransactionStatusPolicy.derive(recDueDate, paymentDate, LocalDate.now());
 
             Transaction transaction = new Transaction(
                 UUID.randomUUID(),

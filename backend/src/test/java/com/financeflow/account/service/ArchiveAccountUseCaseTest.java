@@ -65,7 +65,7 @@ class ArchiveAccountUseCaseTest {
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(entity));
         when(transactionRepository.existsByAccountIdAndStatusIn(
-            accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED)
+            accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED, TransactionStatus.OVERDUE)
         )).thenReturn(false);
         when(accountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -86,7 +86,7 @@ class ArchiveAccountUseCaseTest {
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(entity));
         when(transactionRepository.existsByAccountIdAndStatusIn(
-            accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED)
+            accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED, TransactionStatus.OVERDUE)
         )).thenReturn(true);
 
         assertThatThrownBy(() -> archiveAccountUseCase.execute(userId, accountId))

@@ -43,13 +43,13 @@ public class ArchiveAccountUseCase {
             throw new BusinessException("ALREADY_ARCHIVED", "Account is already archived");
         }
 
-        // Credit cards: block if pending or planned transactions exist in current/future billing cycles
+        // Credit cards: block if pending, planned or overdue transactions exist in current/future billing cycles
         if (entity.getType() == AccountType.CREDIT_CARD) {
             boolean hasPendingOrPlanned = transactionRepository.existsByAccountIdAndStatusIn(
-                accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED));
+                accountId, List.of(TransactionStatus.PENDING, TransactionStatus.PLANNED, TransactionStatus.OVERDUE));
             if (hasPendingOrPlanned) {
                 throw new BusinessException("CARD_HAS_PENDING_TRANSACTIONS",
-                    "Cannot archive credit card with PENDING or PLANNED transactions");
+                    "Cannot archive credit card with PENDING or PLANNED transactions (OVERDUE included)");
             }
         }
 
