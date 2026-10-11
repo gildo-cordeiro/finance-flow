@@ -901,3 +901,505 @@ describe('TransactionFormModal (UX-16 — Modal: "Pago com" e parcelas)', () => 
   });
 });
 
+describe('TransactionFormModal (UX-17 — Modal: data e status de pagamento)', () => {
+  const dummyAccounts: Account[] = [
+    {
+      id: 'acc-checking-1',
+      userId: 'user-1',
+      name: 'Conta Corrente',
+      type: 'CHECKING',
+      bank: 'Nubank',
+      balance: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-1',
+      userId: 'user-1',
+      name: 'Nubank Ultravioleta',
+      type: 'CREDIT_CARD',
+      bank: 'Nubank',
+      balance: 0,
+      creditLimit: 5000,
+      closingDay: 20,
+      dueDay: 27,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const dummyCategories: Category[] = [
+    {
+      id: 'cat-exp-root',
+      name: 'Alimentação',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-exp-sub',
+      name: 'Supermercado',
+      parentId: 'cat-exp-root',
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-inc-root',
+      name: 'Receitas',
+      parentId: null,
+      visibility: TransactionVisibility.PERSONAL,
+    },
+    {
+      id: 'cat-inc-sub',
+      name: 'Salário',
+      parentId: 'cat-inc-root',
+      visibility: TransactionVisibility.PERSONAL,
+    },
+  ];
+
+  const getTodayStr = () => {
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
+
+  const getYesterdayStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
+
+  it('renders SectionLabel with "Data" in expense and income modes, and "Data da compra" when credit card is selected', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-checking-1' };
+
+    // 1. Normal expense
+    const expenseEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const expenseForm = expenseEl?.props.children.props.children[1];
+    const expenseDataSection = expenseForm.props.children[6];
+    const expenseLabel = expenseDataSection.props.children[0];
+    expect(expenseLabel.props.children).toBe('Data');
+
+    // 2. Income
+    mockedEditingTx = {
+      id: 'tx-inc',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-inc-sub',
+      description: 'Salário',
+      amount: 5000,
+      type: TransactionType.INCOME,
+      competenceDate: '2026-10-01',
+      dueDate: getTodayStr(),
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const incomeEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const incomeForm = incomeEl?.props.children.props.children[1];
+    const incomeDataSection = incomeForm.props.children[6];
+    const incomeLabel = incomeDataSection.props.children[0];
+    expect(incomeLabel.props.children).toBe('Data');
+
+    // 3. Credit Card expense
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-card-1' };
+
+    const cardEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const cardForm = cardEl?.props.children.props.children[1];
+    const cardDataSection = cardForm.props.children[6];
+    const cardLabel = cardDataSection.props.children[0];
+    expect(cardLabel.props.children).toBe('Data da compra');
+  });
+
+  it('renders date chips "Hoje", "Ontem" and "Outra data" with 44px height and rounded-xl', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const chipsContainer = dataSection.props.children[1];
+    const [hojeBtn, ontemBtn, outraDataBtn] = chipsContainer.props.children;
+
+    // Hoje button (selected by default)
+    expect(hojeBtn.props.children).toBe('Hoje');
+    expect(hojeBtn.props.className).toContain('h-11');
+    expect(hojeBtn.props.className).toContain('rounded-xl');
+    expect(hojeBtn.props.className).toContain('border-brand');
+    expect(hojeBtn.props.className).toContain('bg-brand/15');
+    expect(hojeBtn.props.className).toContain('text-text-primary');
+
+    // Ontem button
+    expect(ontemBtn.props.children).toBe('Ontem');
+    expect(ontemBtn.props.className).toContain('h-11');
+    expect(ontemBtn.props.className).toContain('rounded-xl');
+    expect(ontemBtn.props.className).toContain('border-border-subtle');
+    expect(ontemBtn.props.className).toContain('bg-bg-surface');
+    expect(ontemBtn.props.className).toContain('text-text-muted');
+
+    // Outra data button
+    expect(outraDataBtn.props.children).toBe('Outra data');
+    expect(outraDataBtn.props.className).toContain('h-11');
+    expect(outraDataBtn.props.className).toContain('rounded-xl');
+    expect(outraDataBtn.props.className).toContain('border-border-subtle');
+    expect(outraDataBtn.props.className).toContain('bg-bg-surface');
+    expect(outraDataBtn.props.className).toContain('text-text-muted');
+  });
+
+  it('does not render date input when "Hoje" or "Ontem" is selected', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const customDateInput = dataSection.props.children[3];
+
+    expect(customDateInput).toBeFalsy();
+  });
+
+  it('renders date input with [color-scheme:dark] and aria-label="Outra data" when editing transaction with custom date', () => {
+    mockedEditingTx = {
+      id: 'tx-custom-date',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp-sub',
+      description: 'Lançamento data personalizada',
+      amount: 150,
+      type: TransactionType.EXPENSE,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-05',
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = { dueDate: '2026-10-05' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const chipsContainer = dataSection.props.children[1];
+    const [, , outraDataBtn] = chipsContainer.props.children;
+
+    // Outra data chip is selected
+    expect(outraDataBtn.props.className).toContain('border-brand');
+    expect(outraDataBtn.props.className).toContain('bg-brand/15');
+
+    // Date input is rendered
+    const customDateInput = dataSection.props.children[3];
+    expect(customDateInput).toBeDefined();
+    expect(customDateInput.props.type).toBe('date');
+    expect(customDateInput.props['aria-label']).toBe('Outra data');
+    expect(customDateInput.props.className).toContain('[color-scheme:dark]');
+    expect(customDateInput.props.value).toBe('2026-10-05');
+  });
+
+  it('selects "Ontem" chip when editing transaction with yesterday date', () => {
+    const yesterday = getYesterdayStr();
+    mockedEditingTx = {
+      id: 'tx-yesterday',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp-sub',
+      description: 'Lançamento de ontem',
+      amount: 80,
+      type: TransactionType.EXPENSE,
+      competenceDate: '2026-10-01',
+      dueDate: yesterday,
+      paymentDate: yesterday,
+      status: TransactionStatus.PAID,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = { dueDate: yesterday };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const chipsContainer = dataSection.props.children[1];
+    const [, ontemBtn] = chipsContainer.props.children;
+
+    expect(ontemBtn.props.className).toContain('border-brand');
+    expect(ontemBtn.props.className).toContain('bg-brand/15');
+
+    // Date input should not be open
+    const customDateInput = dataSection.props.children[3];
+    expect(customDateInput).toBeFalsy();
+  });
+
+  it('renders Switch "Já foi pago" for expense and "Já foi recebido" for income', () => {
+    // Expense
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-checking-1' };
+
+    const expenseEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const expenseForm = expenseEl?.props.children.props.children[1];
+    const expenseDataSection = expenseForm.props.children[6];
+    const expenseSwitchContainer = expenseDataSection.props.children[4];
+    const [expenseSwitchLabel, expenseSwitchBtn] = expenseSwitchContainer.props.children;
+
+    expect(expenseSwitchLabel.props.children).toBe('Já foi pago');
+    expect(expenseSwitchBtn.props.role).toBe('switch');
+    expect(expenseSwitchBtn.props['aria-label']).toBe('Já foi pago');
+
+    // Income
+    mockedEditingTx = {
+      id: 'tx-inc',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-inc-sub',
+      description: 'Salário',
+      amount: 5000,
+      type: TransactionType.INCOME,
+      competenceDate: '2026-10-01',
+      dueDate: getTodayStr(),
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const incomeEl = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const incomeForm = incomeEl?.props.children.props.children[1];
+    const incomeDataSection = incomeForm.props.children[6];
+    const incomeSwitchContainer = incomeDataSection.props.children[4];
+    const [incomeSwitchLabel, incomeSwitchBtn] = incomeSwitchContainer.props.children;
+
+    expect(incomeSwitchLabel.props.children).toBe('Já foi recebido');
+    expect(incomeSwitchBtn.props.role).toBe('switch');
+    expect(incomeSwitchBtn.props['aria-label']).toBe('Já foi recebido');
+  });
+
+  it('switch defaults to ON (aria-checked=true) for new transaction of today', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-checking-1' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const switchContainer = dataSection.props.children[4];
+    const [, switchBtn] = switchContainer.props.children;
+
+    expect(switchBtn.props['aria-checked']).toBe(true);
+    expect(switchBtn.props.className).toContain('bg-brand');
+  });
+
+  it('does not render switch "Já foi pago" when credit card is selected', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = { accountId: 'acc-card-1' };
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const switchContainer = dataSection.props.children[4];
+
+    expect(switchContainer).toBeFalsy();
+  });
+
+  it('opens with switch OFF (aria-checked=false) when editing an unpaid transaction', () => {
+    mockedEditingTx = {
+      id: 'tx-unpaid',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp-sub',
+      description: 'Conta de luz pendente',
+      amount: 120,
+      type: TransactionType.EXPENSE,
+      competenceDate: '2026-10-01',
+      dueDate: getTodayStr(),
+      paymentDate: null,
+      status: TransactionStatus.PENDING,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const switchContainer = dataSection.props.children[4];
+    const [, switchBtn] = switchContainer.props.children;
+
+    expect(switchBtn.props['aria-checked']).toBe(false);
+  });
+
+  it('opens with switch ON (aria-checked=true) when editing a paid transaction', () => {
+    const today = getTodayStr();
+    mockedEditingTx = {
+      id: 'tx-paid',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp-sub',
+      description: 'Supermercado pago',
+      amount: 250,
+      type: TransactionType.EXPENSE,
+      competenceDate: '2026-10-01',
+      dueDate: today,
+      paymentDate: today,
+      status: TransactionStatus.PAID,
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    const form = element?.props.children.props.children[1];
+    const dataSection = form.props.children[6];
+    const switchContainer = dataSection.props.children[4];
+    const [, switchBtn] = switchContainer.props.children;
+
+    expect(switchBtn.props['aria-checked']).toBe(true);
+  });
+
+  it('validates schema when transaction is paid with paymentDate and rejects when paid without paymentDate', () => {
+    const today = getTodayStr();
+    const validPaidPayload = {
+      type: TransactionType.EXPENSE,
+      amount: 50,
+      description: 'Almoço',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp-sub',
+      dueDate: today,
+      paymentDate: today,
+      status: TransactionStatus.PAID,
+      visibility: TransactionVisibility.PERSONAL,
+      repetitionType: RepetitionType.SINGLE,
+      totalInstallments: null,
+      isRecurring: false,
+      recurrenceRule: RecurrenceRule.MONTHLY,
+    };
+
+    const validResult = transactionSchema.safeParse(validPaidPayload);
+    expect(validResult.success).toBe(true);
+
+    const invalidPaidPayload = {
+      ...validPaidPayload,
+      paymentDate: '',
+    };
+    const invalidResult = transactionSchema.safeParse(invalidPaidPayload);
+    expect(invalidResult.success).toBe(false);
+  });
+});
+
