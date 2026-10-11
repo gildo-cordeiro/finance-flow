@@ -5,7 +5,7 @@ description: >
   Use esta skill SEMPRE que o usuário pedir para escrever, criar, refatorar, revisar ou implementar qualquer trecho
   de código — desde um simples script até sistemas complexos. Cobre a stack oficial do FinanceFlow:
   (1) Java 21 + Spring Boot 4 no back-end (SEM Lombok), com Spring Security + JWT com rotação de refresh token,
-  PostgreSQL (Supabase), Flyway para migrations e Redis (Upstash) para cache;
+  PostgreSQL (Supabase), Flyway para migrations e Redis (Upstash, planejado) para cache;
   (2) React 18 + Vite + TypeScript no front-end com Tailwind CSS v3 (travado em ^3.4.17 — NÃO atualizar para v4),
   React Query (TanStack Query), React Router v6, Recharts e date-fns.
   Acione também quando o usuário mencionar "boas práticas", "código limpo", "refatorar", "como implementar",
@@ -477,12 +477,14 @@ class CreateTransactionUseCaseTest {
 }
 
 // Teste de controller: sem banco, Spring slice
+// Spring Boot 4: use @MockitoBean (org.springframework.test.context.bean.override.mockito.MockitoBean);
+// @WebMvcTest vem de org.springframework.boot.webmvc.test.autoconfigure; ObjectMapper é tools.jackson.databind.ObjectMapper (Jackson 3).
 @WebMvcTest(TransactionController.class)
 class TransactionControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockBean private CreateTransactionUseCase createTransactionUseCase;
+    @MockitoBean private CreateTransactionUseCase createTransactionUseCase;
 
     @Test
     void shouldReturn201WhenTransactionIsCreated() throws Exception {
@@ -630,3 +632,8 @@ Para contextos específicos, consulte:
 > **Código é lido muito mais vezes do que é escrito.**
 > Otimize para o próximo desenvolvedor que vai ler — incluindo você mesmo daqui a 6 meses.
 > Clareza > Brevidade > Cleverness.
+
+## Ao terminar qualquer tarefa
+
+1. Rode a skill `skill-maintenance`: alguma skill ficou desatualizada por causa desta mudança? Atualize na mesma PR.
+2. Rode a skill `adr-workflow`: houve uma decisão importante? Consulte o desenvolvedor antes de criar qualquer ADR.

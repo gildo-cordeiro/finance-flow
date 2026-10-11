@@ -1,5 +1,7 @@
 # TypeScript + React + Tailwind CSS — Referência Completa
 
+> ⚠ Os exemplos desta referência usam imports `@/...` e caminhos genéricos. No FinanceFlow **não existe alias `@/`**: use imports relativos e os locais reais (`src/lib/cn.ts`, `src/utils/formatters.ts`, `src/services/api.ts`). Veja a seção 0 da skill `frontend-financeflow`.
+
 ## TypeScript: Configuração e Regras
 
 ### tsconfig.json — configuração strict obrigatória

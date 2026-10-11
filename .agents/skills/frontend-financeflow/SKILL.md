@@ -18,6 +18,17 @@ Stack: **React 18 + Vite + TypeScript (strict) + Tailwind CSS v3.4.x + TanStack 
 
 ---
 
+## 0. Divergências conhecidas entre esta skill e o código (leia antes de importar)
+
+> ⚠ Decisões pendentes: consulte o desenvolvedor antes de "corrigir" o código ou esta skill (skill `adr-workflow`).
+
+- **Alias `@/` não existe.** Os exemplos abaixo usam `@/...`, mas `tsconfig` e `vite.config` não definem alias e todo o código usa imports relativos (por exemplo `../../../components/ui/Card`). Use caminhos relativos até haver decisão.
+- **Locais reais dos utilitários:** `src/lib/cn.ts` (`cn`), `src/utils/formatters.ts` (`formatCurrency` e afins), `src/services/api.ts` (cliente HTTP; `handleResponse` fica nele, não em `lib/api`), `src/context/ToastContext.tsx` (`useToast`) e `src/context/ViewContext.tsx`.
+- **Error Boundary (§8) não está implementado** no código; é um alvo.
+- **Testing Library (§10) não está instalado**; hoje só há `vitest` com um teste (`dummy.test.ts`).
+
+---
+
 ## 1. Sistema de Design — Dark Premium
 
 O FinanceFlow usa um tema escuro sofisticado. Todos os componentes devem seguir estes tokens rigorosamente.
@@ -765,7 +776,7 @@ const router = createBrowserRouter([
 
 ---
 
-## 8. Error Boundary
+## 8. Error Boundary (alvo — ainda não implementado)
 
 ```tsx
 // components/ui/ErrorBoundary.tsx
@@ -839,7 +850,7 @@ export interface PaginatedResponse<T> {
 
 ---
 
-## 10. Testes (Vitest + Testing Library)
+## 10. Testes (Vitest + Testing Library — alvo; hoje só Vitest)
 
 ```tsx
 // Wrapper reutilizável com todos os providers
@@ -887,6 +898,8 @@ it('should show validation error when amount is negative', async () => {
 ---
 
 ## 11. Checklist de Front-end
+
+- [ ] Ao terminar: skill `skill-maintenance` (esta skill e `docs/design-system.md` continuam corretos?) e skill `adr-workflow` (houve decisão importante? consulte o desenvolvedor).
 
 ```
 VISUAL (Dark Premium)

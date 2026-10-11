@@ -11,6 +11,8 @@ description: >
 
 Esta skill orienta o desenvolvimento de todas as funcionalidades associadas ao Módulo de Gestão para Casal.
 
+> **Contexto de visão:** o frontend envia o cabeçalho `X-View-Context` (`PERSONAL` por padrão, ou `COUPLE`). Os casos de uso de listagem (transações, contas e metas) escolhem entre a consulta pessoal e a combinada com o parceiro; sem vínculo ativo, falham com `BusinessException` `NO_ACTIVE_COUPLE`. Enums reais: `CoupleStatus` = `PENDING`, `ACTIVE`, `DISSOLVED`; `TransactionVisibility` = `PERSONAL`, `SHARED`. Colunas reais da tabela `couples`: `user1_id` e `user2_id`.
+
 ## 1. Isolamento de Dados por Usuário (LGPD)
 
 **Toda query** que busque transações, contas ou orçamentos DEVE incluir o `userId` do usuário autenticado extraído do JWT.
@@ -44,15 +46,15 @@ public class CoupleEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "user_a_id", nullable = false)
-    private UUID userAId;
+    @Column(name = "user1_id", nullable = false)
+    private UUID user1Id;
 
-    @Column(name = "user_b_id", nullable = false)
-    private UUID userBId;
+    @Column(name = "user2_id", nullable = false)
+    private UUID user2Id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private CoupleStatus status; // PENDING_INVITE, ACTIVE, DISSOLVED
+    private CoupleStatus status; // PENDING, ACTIVE, DISSOLVED
 
     @CreationTimestamp
     private Instant createdAt;
@@ -63,7 +65,7 @@ public class CoupleEntity {
 }
 
 public enum CoupleStatus {
-    PENDING_INVITE, // convite enviado, aguardando aceitação
+    PENDING, // convite enviado, aguardando aceitação
     ACTIVE,         // vínculo ativo
     DISSOLVED       // desvinculados
 }
@@ -75,13 +77,13 @@ public enum CoupleStatus {
 -- V4__create_couples_table.sql
 CREATE TABLE couples (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_a_id UUID NOT NULL REFERENCES users(id),
-    user_b_id UUID NOT NULL REFERENCES users(id),
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING_INVITE',
+    user1_id UUID NOT NULL REFERENCES users(id),
+    user2_id UUID NOT NULL REFERENCES users(id),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_couple UNIQUE (
-        LEAST(user_a_id::TEXT, user_b_id::TEXT),
-        GREATEST(user_a_id::TEXT, user_b_id::TEXT)
+        LEAST(user1_id::TEXT, user2_id::TEXT),
+        GREATEST(user1_id::TEXT, user2_id::TEXT)
     )
 );
 ```
@@ -89,7 +91,7 @@ CREATE TABLE couples (
 ## 3. Fluxo de Convite de Vínculo
 
 ```
-Usuário A envia convite → status = PENDING_INVITE
+Usuário A envia convite → status = PENDING
 Usuário B aceita        → status = ACTIVE
 Usuário B recusa        → registro removido (ou status = DISSOLVED)
 Qualquer um dissolve    → status = DISSOLVED
@@ -111,7 +113,7 @@ public class CoupleInviteService {
         coupleRepository.findActiveOrPendingBetween(fromUserId, toUser.getId())
             .ifPresent(c -> { throw new BusinessException("ALREADY_LINKED", "Users already linked"); });
 
-        coupleRepository.save(new CoupleEntity(fromUserId, toUser.getId(), CoupleStatus.PENDING_INVITE));
+        coupleRepository.save(new CoupleEntity(fromUserId, toUser.getId(), CoupleStatus.PENDING));
     }
 
     public void acceptInvite(UUID currentUserId, UUID coupleId) {
@@ -224,5 +226,5 @@ public class CoupleAccessValidator {
 | `findById(id)` sem verificar `userId` | `findByIdAndUserId(id, currentUserId)` |
 | Retornar dados de casal sem verificar `CoupleStatus.ACTIVE` | Sempre chamar `requireActiveCouple()` antes |
 | Transação `PERSONAL` aparecer na visão de casal | Filtrar explicitamente por `visibility = SHARED` nas queries do parceiro |
-| Qualquer dos dois usuários pode aceitar o convite | Apenas `userBId` (convidado) pode aceitar |
-| Usar `couple_id` direto na query sem validar membros | Sempre validar que o `userId` autenticado é `userAId` ou `userBId` |
+| Qualquer dos dois usuários pode aceitar o convite | Apenas `user2Id` (convidado) pode aceitar |
+| Usar `couple_id` direto na query sem validar membros | Sempre validar que o `userId` autenticado é `user1Id` ou `user2Id` |

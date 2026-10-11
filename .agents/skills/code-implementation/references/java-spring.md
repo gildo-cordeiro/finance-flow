@@ -553,7 +553,8 @@ class OrderControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockBean private CreateOrderUseCase createOrderUseCase;
+    // Spring Boot 4: @MockitoBean substitui @MockBean (import org.springframework.test.context.bean.override.mockito.MockitoBean)
+    @MockitoBean private CreateOrderUseCase createOrderUseCase;
 
     @Test
     void shouldReturn201WithLocationHeader() throws Exception {

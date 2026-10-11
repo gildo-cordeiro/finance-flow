@@ -1,5 +1,7 @@
 # Design System — FinanceFlow
 
+> ⚠ Os exemplos de import usam `@/components/ui/...`, mas o projeto **não tem alias `@/`**: use imports relativos (por exemplo `../../../components/ui/Card`) até haver decisão.
+
 Este documento descreve as especificações visuais, tokens, componentes de UI e as regras visuais que regem a interface do FinanceFlow.
 
 ---
