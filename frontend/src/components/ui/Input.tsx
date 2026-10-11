@@ -1,5 +1,6 @@
 import { cn } from '../../lib/cn';
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import { formatCurrencyRaw, maskCurrency } from '../../utils/formatters';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -18,17 +19,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     if (isCurrency) {
       if (displayValue !== undefined && displayValue !== null && displayValue !== '') {
         const num = typeof displayValue === 'number' ? displayValue : parseFloat(displayValue.toString()) || 0;
-        displayValue = new Intl.NumberFormat('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(num);
+        displayValue = formatCurrencyRaw(num);
       }
       if (defaultDisplayValue !== undefined && defaultDisplayValue !== null && defaultDisplayValue !== '') {
         const num = typeof defaultDisplayValue === 'number' ? defaultDisplayValue : parseFloat(defaultDisplayValue.toString()) || 0;
-        defaultDisplayValue = new Intl.NumberFormat('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(num);
+        defaultDisplayValue = formatCurrencyRaw(num);
       }
     }
 
@@ -44,10 +39,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         }
         
         const numValue = parseFloat(raw) / 100;
-        const formatted = new Intl.NumberFormat('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(numValue);
+        const formatted = maskCurrency(raw, false);
 
         // Temporarily set the raw number string value so react-hook-form/controlled state receives the clean float value
         e.target.value = numValue.toString();

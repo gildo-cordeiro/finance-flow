@@ -173,6 +173,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 ```
 
+### CurrencyInput
+
+Input de valor em destaque (44px, `font-extrabold`) para digitação por centavos com retorno numérico em reais e compatibilidade com `Controller` do React Hook Form.
+
+```tsx
+// components/ui/CurrencyInput.tsx
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
+
+<CurrencyInput
+  value={amount}
+  onChange={(val) => setAmount(val)}
+  autoFocus
+/>
+```
+
 ### Card
 
 ```tsx

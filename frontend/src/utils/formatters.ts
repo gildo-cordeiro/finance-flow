@@ -44,3 +44,37 @@ export const parseCurrencyToNumber = (value: unknown): number => {
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 };
+
+export const formatCurrencyRaw = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+export const maskCurrency = (
+  value: string | number | null | undefined,
+  includePrefix = true
+): string => {
+  if (value === null || value === undefined || value === '') {
+    const formatted = formatCurrencyRaw(0);
+    return includePrefix ? `R$ ${formatted}` : formatted;
+  }
+
+  const rawDigits = typeof value === 'number'
+    ? Math.floor(Math.abs(value)).toString()
+    : String(value).replace(/\D/g, '');
+
+  if (!rawDigits) {
+    const formatted = formatCurrencyRaw(0);
+    return includePrefix ? `R$ ${formatted}` : formatted;
+  }
+
+  const numValue = parseFloat(rawDigits) / 100;
+  const formatted = formatCurrencyRaw(numValue);
+
+  return includePrefix ? `R$ ${formatted}` : formatted;
+};
+
+export const formatCurrencyMask = maskCurrency;
+
