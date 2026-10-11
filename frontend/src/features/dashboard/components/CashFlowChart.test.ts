@@ -1,4 +1,6 @@
+import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
+import { CashFlowChart } from './CashFlowChart';
 import { aggregateTransactionsByMonth } from '../utils/aggregateCashFlow';
 import {
   type Transaction,
@@ -125,3 +127,94 @@ describe('aggregateTransactionsByMonth (UX-09 CashFlow Projection)', () => {
     expect(october.projected).toBe(false);
   });
 });
+
+describe('CashFlowChart (UX-10 Visual requirements)', () => {
+  it('renders chart component tree with maxBarSize, CartesianGrid, and YAxis configuration', () => {
+    const mockData = [
+      {
+        name: 'Out/26',
+        receitas: 5000,
+        despesas: 2500,
+        userRevenue: 5000,
+        userExpenses: 2500,
+        partnerRevenue: 0,
+        partnerExpenses: 0,
+        projected: false,
+      },
+    ];
+
+    const element = CashFlowChart({
+      chartData: mockData,
+      isCouple: false,
+      partnerName: '',
+    });
+
+    expect(element).toBeDefined();
+
+    const [, chartContainer] = element.props.children;
+    const responsiveContainer = chartContainer.props.children;
+    const barChart = responsiveContainer.props.children;
+
+    expect(barChart.props.maxBarSize).toBe(24);
+    expect(barChart.props.data).toEqual(mockData);
+
+    interface ElementProps {
+      stroke?: string;
+      vertical?: boolean;
+      fontSize?: number;
+      tick?: { fill?: string };
+      dataKey?: string;
+      maxBarSize?: number;
+      fill?: string;
+      radius?: number[];
+    }
+
+    const isReactElementWithProps = (child: unknown): child is ReactElement<ElementProps> =>
+      Boolean(child && typeof child === 'object' && 'props' in child);
+
+    const chartChildren = (barChart.props.children as unknown[]).filter(isReactElementWithProps);
+
+    // Verify CartesianGrid with horizontal lines in #2A2E45
+    const cartesianGrid = chartChildren.find((child) => child.props.stroke === '#2A2E45');
+    expect(cartesianGrid).toBeDefined();
+    expect(cartesianGrid?.props.stroke).toBe('#2A2E45');
+    expect(cartesianGrid?.props.vertical).toBe(false);
+
+    // Verify YAxis with 12px and text-text-muted (#9AA0B4)
+    const yAxis = chartChildren.find((child) => child.props.stroke === '#9AA0B4');
+    expect(yAxis).toBeDefined();
+    expect(yAxis?.props.fontSize).toBe(12);
+    expect(yAxis?.props.stroke).toBe('#9AA0B4');
+    expect(yAxis?.props.tick).toEqual({ fill: '#9AA0B4' });
+
+    // Verify Bars: maxBarSize={24}, radius=[4,4,0,0], colors #22C55E and #EF4444
+    const bars = chartChildren.filter(
+      (child) => child.props.dataKey === 'receitas' || child.props.dataKey === 'despesas'
+    );
+    expect(bars).toHaveLength(2);
+
+    const [receitasBar, despesasBar] = bars;
+    expect(receitasBar.props.dataKey).toBe('receitas');
+    expect(receitasBar.props.maxBarSize).toBe(24);
+    expect(receitasBar.props.fill).toBe('#22C55E');
+    expect(receitasBar.props.radius).toEqual([4, 4, 0, 0]);
+
+    expect(despesasBar.props.dataKey).toBe('despesas');
+    expect(despesasBar.props.maxBarSize).toBe(24);
+    expect(despesasBar.props.fill).toBe('#EF4444');
+    expect(despesasBar.props.radius).toEqual([4, 4, 0, 0]);
+  });
+
+  it('renders empty state message when chartData is empty', () => {
+    const element = CashFlowChart({
+      chartData: [],
+      isCouple: false,
+      partnerName: '',
+    });
+
+    const [, chartContainer] = element.props.children;
+    const emptyState = chartContainer.props.children;
+    expect(emptyState.props.children).toBe('Nenhum dado de fluxo de caixa disponível.');
+  });
+});
+
