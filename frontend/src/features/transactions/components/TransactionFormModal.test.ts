@@ -1950,4 +1950,80 @@ describe('TransactionFormModal (UX-18 — Modal: "Mais detalhes" e casal)', () =
   });
 });
 
+describe('UX-19 — Modal: trocar TransactionModal pelo novo e remover o antigo', () => {
+  const dummyAccounts: Account[] = [
+    {
+      id: 'acc-checking-1',
+      userId: 'user-1',
+      name: 'Conta Corrente',
+      type: 'CHECKING',
+      bank: 'Nubank',
+      balance: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      id: 'acc-card-1',
+      userId: 'user-1',
+      name: 'Cartão de Crédito',
+      type: 'CREDIT_CARD',
+      bank: 'Nubank',
+      balance: 0,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const dummyCategories: Category[] = [
+    { id: 'cat-exp', name: 'Alimentação', parentId: null, visibility: TransactionVisibility.PERSONAL },
+    { id: 'cat-inc', name: 'Receitas', parentId: null, visibility: TransactionVisibility.PERSONAL },
+  ];
+
+  it('renders correctly for creating a new transaction', () => {
+    mockedEditingTx = null;
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: null,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    expect(element).not.toBeNull();
+  });
+
+  it('renders correctly when editing an existing transaction', () => {
+    mockedEditingTx = {
+      id: 'tx-edit-1',
+      userId: 'user-1',
+      accountId: 'acc-checking-1',
+      categoryId: 'cat-exp',
+      description: 'Supermercado',
+      amount: 150.5,
+      type: TransactionType.EXPENSE,
+      status: TransactionStatus.PAID,
+      competenceDate: '2026-10-01',
+      dueDate: '2026-10-11',
+      paymentDate: '2026-10-11',
+      visibility: TransactionVisibility.PERSONAL,
+      isRecurring: false,
+    };
+    mockedWatchOverrides = {};
+
+    const element = TransactionFormModal({
+      isOpen: true,
+      onClose: vi.fn(),
+      editingTransaction: mockedEditingTx,
+      accounts: dummyAccounts,
+      categories: dummyCategories,
+      onSubmit: vi.fn(),
+      isSubmitting: false,
+    });
+
+    expect(element).not.toBeNull();
+  });
+});
+
 
