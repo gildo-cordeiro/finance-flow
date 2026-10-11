@@ -1,12 +1,14 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { useState } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Menu } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 export function ProtectedRoute() {
   const { isAuthenticated, isInitializing } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { pathname } = useLocation();
 
   console.log('[ProtectedRoute] rendered. isAuthenticated:', isAuthenticated, 'isInitializing:', isInitializing);
 
@@ -53,7 +55,9 @@ export function ProtectedRoute() {
 
         {/* Main content */}
         <main className="flex-1 min-h-screen md:pl-[220px]">
-          <Outlet />
+          <ErrorBoundary key={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

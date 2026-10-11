@@ -18,14 +18,12 @@ Stack: **React 18 + Vite + TypeScript (strict) + Tailwind CSS v3.4.x + TanStack 
 
 ---
 
-## 0. Divergências conhecidas entre esta skill e o código (leia antes de importar)
+## 0. Convenções confirmadas no código (leia antes de importar)
 
-> ⚠ Decisões pendentes: consulte o desenvolvedor antes de "corrigir" o código ou esta skill (skill `adr-workflow`).
-
-- **Alias `@/` não existe.** Os exemplos abaixo usam `@/...`, mas `tsconfig` e `vite.config` não definem alias e todo o código usa imports relativos (por exemplo `../../../components/ui/Card`). Use caminhos relativos até haver decisão.
+- **Alias `@/` → `src/`** está configurado (`resolve.alias` em `vite.config.ts` e `paths` em `tsconfig.app.json`; mantenha os dois em sincronia). Em código novo, prefira `@/...`; os imports relativos existentes não precisam ser migrados.
 - **Locais reais dos utilitários:** `src/lib/cn.ts` (`cn`), `src/utils/formatters.ts` (`formatCurrency` e afins), `src/services/api.ts` (cliente HTTP; `handleResponse` fica nele, não em `lib/api`), `src/context/ToastContext.tsx` (`useToast`) e `src/context/ViewContext.tsx`.
-- **Error Boundary (§8) não está implementado** no código; é um alvo.
-- **Testing Library (§10) não está instalado**; hoje só há `vitest` com um teste (`dummy.test.ts`).
+- **Error Boundary:** `src/components/ui/ErrorBoundary.tsx`, usado em `App.tsx` (nível raiz, com fallback de recarregar) e em `routes/ProtectedRoute.tsx` (por página, com `key={pathname}` para resetar ao navegar).
+- **Testes:** Vitest + Testing Library (`@testing-library/react`, `jest-dom`, `user-event`) com `jsdom`. Configuração em `vite.config.ts` (`test`) e `src/test/setup.ts`. Testes ficam ao lado do componente (`Componente.test.tsx`); exemplos: `ErrorBoundary.test.tsx`, `MoneyValue.test.tsx`.
 
 ---
 
@@ -791,42 +789,9 @@ const router = createBrowserRouter([
 
 ---
 
-## 8. Error Boundary (alvo — ainda não implementado)
+## 8. Error Boundary
 
-```tsx
-// components/ui/ErrorBoundary.tsx
-import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Button } from './Button';
-
-interface Props { children: ReactNode; fallback?: ReactNode; }
-interface State { hasError: boolean; error?: Error; }
-
-export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div className="glassmorphism p-8 text-center space-y-4">
-          <p className="text-sm text-zinc-400">Algo deu errado neste componente.</p>
-          <Button variant="secondary" size="sm" onClick={() => this.setState({ hasError: false })}>
-            Tentar novamente
-          </Button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-```
+Implementado em `src/components/ui/ErrorBoundary.tsx` (componente de classe, `fallback` opcional, botão 'Tentar novamente'). Veja o uso em `App.tsx` e `routes/ProtectedRoute.tsx` e os testes em `ErrorBoundary.test.tsx`. Para resetar ao navegar, use `key={pathname}` no ponto de uso. Envolva também blocos que podem falhar sozinhos (por exemplo gráficos) quando fizer sentido.
 
 ---
 
@@ -865,7 +830,9 @@ export interface PaginatedResponse<T> {
 
 ---
 
-## 10. Testes (Vitest + Testing Library — alvo; hoje só Vitest)
+## 10. Testes (Vitest + Testing Library)
+
+Imports com `@/` funcionam nos testes. `src/test/setup.ts` registra `jest-dom` e o `cleanup`. Rode com `npm test`.
 
 ```tsx
 // Wrapper reutilizável com todos os providers
