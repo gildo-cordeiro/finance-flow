@@ -129,6 +129,24 @@ Exemplos:
    ./gradlew bootRun
    ```
 
+#### Perfil de Desenvolvimento com Dados de Teste (`dev`)
+Para iniciar o backend populando automaticamente o banco com uma base de dados realista (usuário de teste, contas, cartões, categorias, lançamentos dos últimos 3 meses, orçamento e metas), ative o profile `dev`:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+
+Ou defina a variável de ambiente:
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+```
+
+**Credenciais do usuário de teste pré-configurado:**
+* **E-mail:** `dev@financeflow.local`
+* **Senha:** `password123`
+
+> O seeder é **idempotente**: caso o usuário já exista no banco de dados, o processo não duplica nenhum registro.
+
 ### Inicialização do Frontend
 1. Navegue para o diretório `/frontend`.
 2. Instale as dependências:
