@@ -15,7 +15,7 @@ import { TransactionFormData, RepetitionType, RecurrenceRule } from '../schemas/
 // Subcomponents
 import { TransactionFilters } from './TransactionFilters';
 import { TransactionTable } from './TransactionTable';
-import { TransactionModal } from './TransactionModal';
+import { TransactionFormModal } from './TransactionFormModal';
 import { BulkActionModals } from './BulkActionModals';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
@@ -446,7 +446,7 @@ export function Transactions() {
       </PageContainer>
 
       {/* Manual Transaction Form Modal */}
-      <TransactionModal
+      <TransactionFormModal
         isOpen={isTransModalOpen}
         onClose={() => setIsTransModalOpen(false)}
         editingTransaction={editingTransaction}
