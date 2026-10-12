@@ -12,7 +12,8 @@ describe('cn utility', () => {
   });
 
   it('should ignore falsy, null and undefined values', () => {
-    expect(cn('base', false && 'hidden', null, undefined, 'visible')).toBe('base visible');
+    const isHidden = false;
+    expect(cn('base', isHidden && 'hidden', null, undefined, 'visible')).toBe('base visible');
   });
 
   it('should work seamlessly with class-variance-authority (cva)', async () => {
