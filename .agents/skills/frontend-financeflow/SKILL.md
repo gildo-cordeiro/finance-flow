@@ -23,6 +23,7 @@ Stack: **React 18 + Vite + TypeScript (strict) + Tailwind CSS v3.4.x + TanStack 
 - **Alias `@/` → `src/`** está configurado (`resolve.alias` em `vite.config.ts` e `paths` em `tsconfig.app.json`; mantenha os dois em sincronia). Em código novo, prefira `@/...`; os imports relativos existentes não precisam ser migrados.
 - **Locais reais dos utilitários:** `src/lib/cn.ts` (`cn`), `src/utils/formatters.ts` (`formatCurrency` e afins), `src/services/api.ts` (cliente HTTP; `handleResponse` fica nele, não em `lib/api`), `src/context/ToastContext.tsx` (`useToast`) e `src/context/ViewContext.tsx`.
 - **Error Boundary:** `src/components/ui/ErrorBoundary.tsx`, usado em `App.tsx` (nível raiz, com fallback de recarregar) e em `routes/ProtectedRoute.tsx` (por página, com `key={pathname}` para resetar ao navegar).
+- **Shadcn/UI & Tooling:** Configuração via `components.json` em `frontend/`, compatível com Tailwind CSS v3.4.x, plugin `tailwindcss-animate`, `class-variance-authority` (cva) e `@radix-ui/react-slot`. Utilitário `cn` em `src/lib/cn.ts`.
 - **Testes:** Vitest + Testing Library (`@testing-library/react`, `jest-dom`, `user-event`) com `jsdom`. Configuração em `vite.config.ts` (`test`) e `src/test/setup.ts`. Testes ficam ao lado do componente (`Componente.test.tsx`); exemplos: `ErrorBoundary.test.tsx`, `MoneyValue.test.tsx`.
 
 ---
