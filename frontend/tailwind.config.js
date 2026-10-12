@@ -2,6 +2,7 @@ import animate from "tailwindcss-animate";
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: ["class"],
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,23 +10,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Design System Colors
-        'bg-base':     '#0F1117',
-        'bg-surface':  '#1A1D27',
-        'bg-elevated': '#21253A',
-        'border-subtle': '#2A2E45',
-        'brand':       '#7C5CFC',
-        'brand-hover': '#6B4EE6',
-        'success':  '#22C55E',
-        'danger':   '#EF4444',
-        'warning':  '#F59E0B',
-        'info':     '#3B82F6',
-        'text-primary':   '#F4F5FA',
-        'text-label':     '#C4C8D8',
-        'text-secondary': '#C4C8D8', // alias legado de text-label: removido no #83, mas ainda usado em ~112 lugares
-        'text-muted':     '#9AA0B4',
-
-        // We'll define a sleek dark/light palette according to rich design requirements
+        // Shadcn UI HSL base tokens
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -59,6 +44,22 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+
+        // FinanceFlow Design System Tokens (unificados em variáveis CSS HSL)
+        'bg-base': "hsl(var(--background))",
+        'bg-surface': "hsl(var(--card))",
+        'bg-elevated': "hsl(var(--popover))",
+        'border-subtle': "hsl(var(--border))",
+        'brand': "hsl(var(--primary))",
+        'brand-hover': "hsl(var(--brand-hover))",
+        'success': "hsl(var(--success))",
+        'danger': "hsl(var(--destructive))",
+        'warning': "hsl(var(--warning))",
+        'info': "hsl(var(--info))",
+        'text-primary': "hsl(var(--foreground))",
+        'text-label': "hsl(var(--secondary-foreground))",
+        'text-secondary': "hsl(var(--secondary-foreground))",
+        'text-muted': "hsl(var(--muted-foreground))",
       },
       fontSize: {
         // Design System Typography
