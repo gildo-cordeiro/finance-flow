@@ -13,7 +13,6 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.assertEquals
 
-/** Restrições da V1 que o banco garante sozinho, sem depender da aplicação (F1-02). */
 @SpringBootTest
 @Transactional
 class SchemaV1Test(
@@ -172,7 +171,6 @@ class SchemaV1Test(
             "INSERT INTO notifications (id, user_id, type, payload) VALUES (?, ?, 'BUDGET_ALERT', '{}'::jsonb)",
             UUID.randomUUID(), user,
         )
-        // Transação de outro usuário editada por este: só perde a referência de auditoria
         val otherTransaction = insertTransaction(other, insertAccount(other), insertCategory(other), updatedBy = user)
 
         jdbc.update("DELETE FROM users WHERE id = ?", user)
