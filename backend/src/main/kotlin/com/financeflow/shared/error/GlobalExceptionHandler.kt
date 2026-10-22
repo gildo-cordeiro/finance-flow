@@ -27,6 +27,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             is NotFoundException -> HttpStatus.NOT_FOUND
             is BusinessRuleException -> HttpStatus.CONFLICT
             is ValidationException -> HttpStatus.UNPROCESSABLE_CONTENT
+            is UnauthorizedException -> HttpStatus.UNAUTHORIZED
             is ForbiddenException -> HttpStatus.FORBIDDEN
         }
         val fields = (ex as? ValidationException)?.fields

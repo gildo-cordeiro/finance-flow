@@ -4,6 +4,7 @@ Kotlin + Spring Boot 4 (JVM 21), PostgreSQL 16 e Flyway. As decisões estão em 
 
 ```bash
 docker compose up -d db   # na raiz do repositório
+export APP_JWT_SECRET=$(openssl rand -base64 48)   # obrigatório, mínimo 32 bytes
 ./gradlew bootRun
 ./gradlew test            # exige Docker (Testcontainers)
 ```
@@ -42,6 +43,7 @@ Toda resposta de erro é Problem Details (RFC 9457) com um `code` estável, que 
 | `NotFoundException()`                    | 404    | `NOT_FOUND`         |
 | `BusinessRuleException("CATEGORY_IN_USE", "...")` | 409 | o informado     |
 | `ValidationException("campo", "mensagem")` | 422  | `VALIDATION_FAILED` |
+| `UnauthorizedException()`                | 401    | `UNAUTHORIZED`      |
 | `ForbiddenException()`                   | 403    | `FORBIDDEN`         |
 
 O handler também cobre Bean Validation (`@Valid` no corpo e restrições em parâmetros → 422), JSON malformado (400, `MALFORMED_REQUEST`), falta de autenticação (401, `UNAUTHORIZED`), os demais erros do Spring MVC (`code` = nome do status, ex.: `METHOD_NOT_ALLOWED`) e erros inesperados (500, `INTERNAL_ERROR`, sem a mensagem interna).
@@ -55,6 +57,19 @@ Toda leitura e escrita é filtrada pelo usuário autenticado, no repositório e 
 ```kotlin
 val account = repository.findByIdAndUserId(id, currentUser.id()) ?: throw NotFoundException()
 ```
+
+## Autenticação
+
+JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-rotativo.md), [ADR-0026](../docs/adr/0026-armazenamento-de-tokens-no-frontend.md)):
+
+- `POST /api/v1/auth/register` e `POST /api/v1/auth/login` são públicos e devolvem `{accessToken, expiresIn, user}` no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`).
+- As demais rotas exigem `Authorization: Bearer <accessToken>`. O `sub` do token é o id do usuário, lido com `CurrentUser.id()`.
+- O cadastro publica `UserRegistered(userId)` (Spring `ApplicationEvent`) para outros módulos reagirem.
+
+| Variável              | Para quê                                              | Padrão    |
+|-----------------------|-------------------------------------------------------|-----------|
+| `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes)   | nenhum    |
+| `APP_PRIVACY_VERSION` | Versão vigente da política de privacidade (RF-102)    | `2026-10` |
 
 ## Testes
 
@@ -79,7 +94,7 @@ class AccountApiTest : ApiTest() {
 ```
 
 - `createUser()` grava um usuário com e-mail único; os testes não limpam o banco, então nada deve depender de tabelas vazias.
-- `TestUser.auth()` autentica a requisição como o usuário. Hoje usa o `spring-security-test`; quando o login com JWT chegar (F1-04), passa a mandar um access token real, sem mudar os testes.
+- `TestUser.auth()` autentica a requisição como o usuário, mandando um access token JWT real no cabeçalho `Authorization`.
 - Todo endpoint que recebe um id tem um `assertNotVisibleTo`, e toda listagem tem um `assertNotListedFor` (RNF-05).
 
 Cobertura mínima de 70%, verificada no CI com `./gradlew test koverVerify` (RNF-09).

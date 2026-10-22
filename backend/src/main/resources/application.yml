@@ -16,6 +16,13 @@ spring:
     enabled: true
     validate-on-migrate: true
 
+app:
+  auth:
+    jwt-secret: ${APP_JWT_SECRET:} # obrigatório, mínimo 32 bytes
+    privacy-version: ${APP_PRIVACY_VERSION:2026-10}
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+
 management:
   endpoints:
     web:

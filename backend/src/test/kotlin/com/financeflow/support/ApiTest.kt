@@ -1,11 +1,11 @@
 package com.financeflow.support
 
 import com.financeflow.IntegrationTest
+import com.financeflow.auth.infra.AccessTokenIssuer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.RequestPostProcessor
@@ -24,13 +24,17 @@ abstract class ApiTest : IntegrationTest() {
     @Autowired
     protected lateinit var jdbc: JdbcTemplate
 
+    @Autowired
+    private lateinit var accessTokens: AccessTokenIssuer
+
     protected fun createUser(name: String = "Usuário de teste"): TestUser {
-        val user = TestUser(UUID.randomUUID(), "${UUID.randomUUID()}@example.com")
+        val id = UUID.randomUUID()
+        val email = "$id@example.com"
         jdbc.update(
             "INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, 'hash-de-teste', ?)",
-            user.id, user.email, name,
+            id, email, name,
         )
-        return user
+        return TestUser(id, email, accessTokens.issue(id).value)
     }
 
     protected fun assertNotVisibleTo(other: TestUser, request: () -> MockHttpServletRequestBuilder) {
@@ -47,7 +51,10 @@ abstract class ApiTest : IntegrationTest() {
     }
 }
 
-data class TestUser(val id: UUID, val email: String) {
+data class TestUser(val id: UUID, val email: String, val accessToken: String) {
 
-    fun auth(): RequestPostProcessor = SecurityMockMvcRequestPostProcessors.user(id.toString())
+    fun auth(): RequestPostProcessor = RequestPostProcessor {
+        it.addHeader("Authorization", "Bearer $accessToken")
+        it
+    }
 }
