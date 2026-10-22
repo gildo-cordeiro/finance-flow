@@ -14,15 +14,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 import kotlin.test.assertFalse
 
-/**
- * Base dos testes de API: contexto completo, MockMvc e PostgreSQL real.
- *
- * ```
- * val alice = createUser()
- * mockMvc.get("/api/v1/accounts") { with(alice.auth()) }
- * assertNotVisibleTo(bob) { get("/api/v1/accounts/$id") }
- * ```
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 abstract class ApiTest : IntegrationTest() {
@@ -33,10 +24,6 @@ abstract class ApiTest : IntegrationTest() {
     @Autowired
     protected lateinit var jdbc: JdbcTemplate
 
-    /**
-     * Cria um usuário direto no banco. Cada chamada gera um e-mail único, então os testes
-     * não precisam limpar a tabela.
-     */
     protected fun createUser(name: String = "Usuário de teste"): TestUser {
         val user = TestUser(UUID.randomUUID(), "${UUID.randomUUID()}@example.com")
         jdbc.update(
@@ -46,20 +33,12 @@ abstract class ApiTest : IntegrationTest() {
         return user
     }
 
-    /**
-     * Garante que [other] recebe 404 `NOT_FOUND` ao acessar o recurso: recurso de outro
-     * usuário não existe para ele (ADR-0012). Usar em toda rota que recebe um id.
-     */
     protected fun assertNotVisibleTo(other: TestUser, request: () -> MockHttpServletRequestBuilder) {
         mockMvc.perform(request().with(other.auth()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
 
-    /**
-     * Garante que a resposta de uma listagem para [other] não menciona [resourceId].
-     * Usar em toda rota de listagem ou busca.
-     */
     protected fun assertNotListedFor(other: TestUser, resourceId: UUID, request: () -> MockHttpServletRequestBuilder) {
         val body = mockMvc.perform(request().with(other.auth()))
             .andExpect(status().is2xxSuccessful)
@@ -70,9 +49,5 @@ abstract class ApiTest : IntegrationTest() {
 
 data class TestUser(val id: UUID, val email: String) {
 
-    /**
-     * Autentica a requisição como este usuário. Até a F1-04 a autenticação é montada pelo
-     * spring-security-test; depois, passa a enviar um access token real, sem mudar os testes.
-     */
     fun auth(): RequestPostProcessor = SecurityMockMvcRequestPostProcessors.user(id.toString())
 }

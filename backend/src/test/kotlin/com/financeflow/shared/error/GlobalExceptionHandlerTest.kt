@@ -153,7 +153,6 @@ class GlobalExceptionHandlerTest : ApiTest() {
         @field:Positive val amount: Int,
     )
 
-    /** Rotas só para teste; classe aninhada fica fora do component scan e entra pelo @Import. */
     @RestController
     @RequestMapping("/test")
     class ErrorTestController(private val currentUser: CurrentUser) {

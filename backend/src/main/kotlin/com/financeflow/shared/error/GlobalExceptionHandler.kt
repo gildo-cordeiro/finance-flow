@@ -16,13 +16,6 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
-/**
- * Traduz todo erro da API em Problem Details (RFC 9457) com `code` estável e,
- * para 422, a lista `errors` de `{field, message}` (ADR-0027).
- *
- * Herda de [ResponseEntityExceptionHandler] para que os erros do próprio Spring MVC
- * (405, 415, parâmetro ausente...) também saiam no mesmo formato.
- */
 @RestControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
@@ -40,7 +33,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem(status, ex.code, ex.message, fields)
     }
 
-    // Vêm do filtro de segurança, delegados pelo SecurityConfig
     @ExceptionHandler(AuthenticationException::class)
     fun handleAuthentication(ex: AuthenticationException): ResponseEntity<ProblemDetail> =
         problem(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Autenticação necessária")
@@ -52,11 +44,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(ex: Exception): ResponseEntity<ProblemDetail> {
         log.error("Erro inesperado", ex)
-        // Sem a mensagem original: pode conter detalhes internos
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erro inesperado")
     }
 
-    // Bean Validation em @RequestBody: 422, não o 400 padrão do Spring
     override fun handleMethodArgumentNotValid(
         ex: MethodArgumentNotValidException,
         headers: HttpHeaders,
@@ -68,7 +58,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return validationFailed(fields)
     }
 
-    // Bean Validation em @PathVariable/@RequestParam
     override fun handleHandlerMethodValidationException(
         ex: HandlerMethodValidationException,
         headers: HttpHeaders,
@@ -90,8 +79,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     ): ResponseEntity<Any> =
         problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Corpo da requisição inválido ou malformado").widen()
 
-    // Demais erros do Spring MVC: mantém o ProblemDetail dele e acrescenta o `code`.
-    // Aqui, e não em handleExceptionInternal, porque só neste ponto o corpo já foi montado.
     override fun createResponseEntity(
         body: Any?,
         headers: HttpHeaders,

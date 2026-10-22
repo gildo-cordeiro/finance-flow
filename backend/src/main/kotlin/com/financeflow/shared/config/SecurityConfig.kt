@@ -14,7 +14,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver
  */
 @Configuration
 class SecurityConfig(
-    // Repassa 401/403 do filtro ao GlobalExceptionHandler, para saírem em Problem Details (ADR-0027)
     @Qualifier("handlerExceptionResolver") private val exceptionResolver: HandlerExceptionResolver,
 ) {
 
