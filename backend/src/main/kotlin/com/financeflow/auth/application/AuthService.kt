@@ -49,6 +49,7 @@ class AuthService(
         PasswordPolicy.violation(command.password)?.let { throw ValidationException("password", it) }
 
         val email = normalizeEmail(command.email)
+        if (!EMAIL_FORMAT.matches(email)) throw ValidationException("email", "E-mail inválido")
         if (users.existsByEmail(email)) throw emailAlreadyUsed()
 
         val user = UserEntity(
@@ -85,4 +86,8 @@ class AuthService(
     private fun normalizeEmail(email: String) = email.trim().lowercase()
 
     private fun emailAlreadyUsed() = BusinessRuleException("EMAIL_ALREADY_USED", "E-mail já cadastrado")
+
+    companion object {
+        private val EMAIL_FORMAT = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+    }
 }

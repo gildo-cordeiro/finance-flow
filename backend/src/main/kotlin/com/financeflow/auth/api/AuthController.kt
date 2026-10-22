@@ -5,7 +5,6 @@ import com.financeflow.auth.application.AuthService
 import com.financeflow.auth.application.RegisterCommand
 import com.financeflow.auth.infra.AuthProperties
 import jakarta.validation.Valid
-import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpHeaders
@@ -21,7 +20,7 @@ import java.util.UUID
 data class RegisterRequest(
     @field:NotBlank @field:Size(max = 120)
     val name: String = "",
-    @field:NotBlank @field:Email @field:Size(max = 255)
+    @field:NotBlank @field:Size(max = 255)
     val email: String = "",
     @field:NotBlank
     val password: String = "",
