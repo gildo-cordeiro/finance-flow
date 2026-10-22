@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 98%;
+    --foreground: 225 21% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 225 21% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 21% 11%;
+    --primary: 257 85% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 222 16% 36%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 215 16% 45%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 225 21% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 257 85% 58%;
+    --radius: 0.75rem;
+
+    --brand-hover: 257 85% 50%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 225 21% 11%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 225 21% 7%;
+    --foreground: 231 38% 97%;
+    --card: 227 20% 13%;
+    --card-foreground: 231 38% 97%;
+    --popover: 229 27% 18%;
+    --popover-foreground: 231 38% 97%;
+    --primary: 257 95% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 229 27% 18%;
+    --secondary-foreground: 228 20% 81%;
+    --muted: 227 20% 13%;
+    --muted-foreground: 226 14% 65%;
+    --accent: 229 27% 18%;
+    --accent-foreground: 231 38% 97%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 231 24% 22%;
+    --input: 231 24% 22%;
+    --ring: 257 95% 67%;
+    --radius: 0.75rem;
+
+    --brand-hover: 251 75% 60%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 225 21% 7%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Custom premium design classes */
+.glassmorphism {
+  background: rgba(15, 15, 20, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at 50% -20%, rgba(139, 92, 246, 0.18) 0%, rgba(9, 9, 11, 0) 60%),
+              radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.05) 0%, rgba(9, 9, 11, 0) 40%);
+}
+
+.auth-card {
+  background: rgba(20, 20, 25, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.25rem;
+}
+
+/* Indicacao visual de modo casal (Linha brilhante no topo de toda a janela) */
+.couple-mode-active::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Custom premium scrollbar utility classes */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Toast progress shrink animation keyframes */
+@keyframes toastProgressShrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-toast-progress {
+  animation: toastProgressShrink linear forwards;
+}
+
+/* Hide spin-buttons for Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide spin-buttons for Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
