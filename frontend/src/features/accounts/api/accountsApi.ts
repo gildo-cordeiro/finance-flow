@@ -1,7 +1,9 @@
 import { request } from '@/services/http';
-import type { Account, SaveAccountRequest } from '../types';
+import type { Account, AccountsSummary, SaveAccountRequest } from '../types';
 
 export const accountsApi = {
+  summary: () => request<AccountsSummary>('/accounts/summary'),
+
   list: (includeArchived: boolean) => request<Account[]>(`/accounts?includeArchived=${includeArchived}`),
 
   create: (data: SaveAccountRequest) => request<Account>('/accounts', { method: 'POST', body: data }),

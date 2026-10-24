@@ -13,6 +13,11 @@ export interface Account {
   balance: number;
 }
 
+export interface AccountsSummary {
+  balance: number;
+  accountCount: number;
+}
+
 export interface SaveAccountRequest {
   name: string;
   type: BankAccountType;

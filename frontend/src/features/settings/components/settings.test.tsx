@@ -110,3 +110,29 @@ describe('configurações: perfil', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('configurações: abas', () => {
+  it('abre no perfil e troca para categorias pelo teclado', async () => {
+    stubFetch((call) => {
+      if (call.path === '/auth/refresh') return json(200, session());
+      if (call.path === '/me') return json(200, profile);
+      if (call.path.startsWith('/categories')) return json(200, []);
+      return problem(404, 'NOT_FOUND');
+    });
+    renderApp('/configuracoes');
+    const user = userEvent.setup();
+
+    const perfil = await screen.findByRole('tab', { name: 'Perfil' });
+    expect(perfil).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByLabelText('Nome')).toHaveValue('Maria Silva');
+
+    perfil.focus();
+    await user.keyboard('{ArrowRight}');
+
+    const categorias = screen.getByRole('tab', { name: 'Categorias' });
+    expect(categorias).toHaveAttribute('aria-selected', 'true');
+    expect(categorias).toHaveFocus();
+    expect(screen.getByRole('tabpanel', { name: 'Categorias' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
+  });
+});

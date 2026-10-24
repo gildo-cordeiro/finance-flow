@@ -43,6 +43,7 @@ const MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Sua sessão expirou. Entre novamente.',
   INVALID_REFRESH_TOKEN: 'Sua sessão expirou. Entre novamente.',
   INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
+  INVALID_RESET_TOKEN: 'Este link não vale mais. Peça um novo para redefinir a senha.',
   EMAIL_ALREADY_USED: 'Já existe uma conta com este e-mail.',
   ACCOUNT_IN_USE: 'Esta conta tem transações e não pode ser excluída. Arquive-a para escondê-la.',
   CATEGORY_IN_USE: 'Esta categoria tem transações ou orçamento. Arquive ou mescle em outra.',

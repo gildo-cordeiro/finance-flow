@@ -6,8 +6,10 @@ import { UnderConstruction } from '@/components/layout/UnderConstruction';
 import { AccountsPage } from '@/features/accounts/components/AccountsPage';
 import { BudgetPage } from '@/features/budget/components/BudgetPage';
 import { DashboardPage } from '@/features/dashboard/components/DashboardPage';
+import { ForgotPasswordPage } from '@/features/auth/components/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
+import { ResetPasswordPage } from '@/features/auth/components/ResetPasswordPage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { TransactionsPage } from '@/features/transactions/components/TransactionsPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -28,7 +30,9 @@ export function AppRoutes() {
       <Route element={<PublicOnlyRoute />}>
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/cadastrar" element={<RegisterPage />} />
+        <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
       </Route>
+      <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
       <Route path="/privacidade" element={<UnderConstruction title="Política de privacidade" />} />
 
       <Route element={<ProtectedRoute />}>

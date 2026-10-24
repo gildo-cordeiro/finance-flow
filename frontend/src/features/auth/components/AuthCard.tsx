@@ -13,8 +13,8 @@ interface AuthCardProps {
 
 export function AuthCard({ title, subtitle, error, footer, children }: AuthCardProps) {
   return (
-    <main className="gradient-bg flex min-h-screen items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md bg-card/80 backdrop-blur">
+    <main className="flex min-h-screen items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
           <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl bg-primary">
             <span className="text-lg font-bold tracking-wider text-primary-foreground">FF</span>

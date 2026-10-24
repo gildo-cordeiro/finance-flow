@@ -9,3 +9,7 @@ export function useAccounts(includeArchived: boolean) {
     queryFn: () => accountsApi.list(includeArchived),
   });
 }
+
+export function useAccountsSummary() {
+  return useQuery({ queryKey: [...ACCOUNTS_KEY, 'summary'], queryFn: accountsApi.summary });
+}
