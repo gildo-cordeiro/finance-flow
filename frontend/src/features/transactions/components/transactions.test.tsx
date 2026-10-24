@@ -16,8 +16,11 @@ const aluguel: Transaction = {
   categoryName: 'Aluguel',
   parentCategoryName: 'Moradia',
   competenceMonth: '2026-10',
+  competenceInformed: false,
   dueDate: '2026-10-05',
   paymentDate: null,
+  purchaseDate: null,
+  invoiceId: null,
   status: 'PENDING',
   visibility: 'PRIVATE',
   installmentNumber: null,
@@ -172,6 +175,16 @@ describe('transações', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }));
 
     expect(await within(dialog).findByText('A categoria é de receita')).toBeInTheDocument();
+  });
+
+  it('compra no cartão leva à fatura em vez de ser editada na listagem', async () => {
+    const compra: Transaction = { ...aluguel, id: 't-9', description: 'Mercado', accountId: 'card-1', invoiceId: 'inv-1' };
+    stubApi([compra], () => problem(500, 'INTERNAL_ERROR'));
+    renderApp('/transacoes?mes=2026-10');
+
+    const table = await screen.findByRole('table');
+    expect(within(table).getByRole('link', { name: 'Ver fatura' })).toHaveAttribute('href', '/cartoes/card-1/faturas/inv-1');
+    expect(within(table).queryByRole('button', { name: 'Editar Mercado' })).not.toBeInTheDocument();
   });
 
   it('marca como paga e exclui pela linha', async () => {

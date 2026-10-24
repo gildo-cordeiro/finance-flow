@@ -48,6 +48,19 @@ describe('contas', () => {
     expect(screen.queryByText('Conta antiga')).not.toBeInTheDocument();
   });
 
+  it('cartões ficam fora da lista de contas', async () => {
+    const cartao: Account = { ...corrente, id: 'card-1', name: 'Cartão Nubank', type: 'CREDIT_CARD', bank: null };
+    stubFetch(({ path }) => {
+      if (path === '/auth/refresh') return json(200, session());
+      if (path === '/accounts?includeArchived=false') return json(200, [corrente, cartao]);
+      return problem(404, 'NOT_FOUND');
+    });
+    renderApp('/contas');
+
+    expect(await screen.findByText('Conta do dia a dia')).toBeInTheDocument();
+    expect(screen.queryByText('Cartão Nubank')).not.toBeInTheDocument();
+  });
+
   it('mostra no topo o saldo total calculado pela API', async () => {
     stubAccountsApi();
     renderApp('/contas');

@@ -27,8 +27,11 @@ data class TransactionView(
     val categoryName: String?,
     val parentCategoryName: String?,
     val competenceDate: LocalDate,
+    val competenceInformed: Boolean,
     val dueDate: LocalDate?,
     val paymentDate: LocalDate?,
+    val purchaseDate: LocalDate?,
+    val invoiceId: UUID?,
     val status: TransactionStatus,
     val visibility: Visibility,
     val installmentNumber: Int?,
@@ -67,3 +70,6 @@ data class Payable(
     val dueDate: LocalDate,
     val overdue: Boolean,
 )
+
+/** Soma e quantidade de itens de uma fatura. */
+data class InvoiceItemsTotal(val invoiceId: UUID, val total: BigDecimal, val count: Long)

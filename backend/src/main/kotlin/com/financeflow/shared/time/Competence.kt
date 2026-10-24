@@ -1,9 +1,12 @@
-package com.financeflow.transaction.domain
+package com.financeflow.shared.time
 
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** RN-03, ADR-0008: competência sugerida = mês da data de referência − deslocamento. */
+/**
+ * RN-03, ADR-0008: competência sugerida = mês da data de referência − deslocamento.
+ * Fica em `shared` porque transação e fatura usam a mesma regra (ADR-0038).
+ */
 object Competence {
 
     fun suggest(referenceDate: LocalDate, offset: Int): YearMonth =

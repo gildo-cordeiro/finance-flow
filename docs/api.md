@@ -113,6 +113,125 @@ Corpo: [RegisterRequest](#registerrequest)
 | 409 | [ProblemDetail](#problemdetail): `EMAIL_ALREADY_USED` |
 | 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
 
+## Cartões
+
+Cartões de crédito. O fechamento decide a fatura de cada compra (RN-04), e a competência da fatura é o mês do vencimento menos o deslocamento do cartão (ADR-0008).
+
+### `GET /api/v1/cards`
+
+Lista os cartões.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `includeArchived` | query | boolean (padrão `false`) | não |
+
+| Status | Resposta |
+|---|---|
+| 200 | [CardResponse](#cardresponse)[] |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+
+### `POST /api/v1/cards`
+
+Cria um cartão.
+
+Exige `Authorization: Bearer`.
+
+Corpo: [SaveCardRequest](#savecardrequest)
+
+| Status | Resposta |
+|---|---|
+| 201 | [CardResponse](#cardresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
+
+### `GET /api/v1/cards/{id}`
+
+Detalha um cartão.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [CardResponse](#cardresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
+### `PUT /api/v1/cards/{id}`
+
+Altera um cartão.
+
+Novos dias de fechamento e vencimento valem a partir da próxima fatura: as já criadas mantêm as datas delas (ADR-0009).
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+Corpo: [SaveCardRequest](#savecardrequest)
+
+| Status | Resposta |
+|---|---|
+| 200 | [CardResponse](#cardresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
+
+### `DELETE /api/v1/cards/{id}`
+
+Exclui um cartão sem compras.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 204 | Sem conteúdo |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 409 | [ProblemDetail](#problemdetail): `ACCOUNT_IN_USE` |
+
+### `POST /api/v1/cards/{id}/archive`
+
+Arquiva um cartão.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [CardResponse](#cardresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
+### `POST /api/v1/cards/{id}/unarchive`
+
+Desarquiva um cartão.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [CardResponse](#cardresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
 ## Categorias
 
 Categorias de receita e despesa, em dois níveis.
@@ -374,6 +493,126 @@ Exige `Authorization: Bearer`.
 | 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
 | 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
 | 409 | [ProblemDetail](#problemdetail): `ACCOUNT_IS_CREDIT_CARD` |
+
+## Faturas
+
+Faturas por cartão e ciclo, com o total calculado dos itens (ADR-0009). Cada compra cai na fatura cujo ciclo contém a data da compra (RN-04) e herda a competência da fatura (ADR-0008).
+
+### `DELETE /api/v1/card-purchases/{itemId}`
+
+Exclui uma compra no cartão.
+
+Recebe o id de qualquer item e exclui a compra inteira, com todas as parcelas.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `itemId` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 204 | Sem conteúdo |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 409 | [ProblemDetail](#problemdetail): `PURCHASE_HAS_PAID_ITEMS` |
+
+### `GET /api/v1/cards/{cardId}/invoices`
+
+Lista as faturas do cartão.
+
+Faturas já criadas, passadas e futuras, por data de fechamento. `from` e `to` filtram o fechamento.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `cardId` | path | string (uuid) | sim |
+| `from` | query | string (date) | não |
+| `to` | query | string (date) | não |
+
+| Status | Resposta |
+|---|---|
+| 200 | [InvoiceResponse](#invoiceresponse)[] |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
+### `GET /api/v1/cards/{cardId}/invoices/current`
+
+Mostra a fatura atual do cartão.
+
+A fatura em que cai uma compra feita hoje, no fuso do usuário. Sem compras, ela ainda não existe: vem sem `id` e com total zero.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `cardId` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [InvoiceResponse](#invoiceresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
+### `GET /api/v1/cards/{cardId}/invoices/preview`
+
+Mostra em que fatura cai uma compra nesta data.
+
+Não grava nada.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `cardId` | path | string (uuid) | sim |
+| `purchaseDate` | query | string (date) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [InvoicePreviewResponse](#invoicepreviewresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
+### `POST /api/v1/cards/{cardId}/purchases`
+
+Lança uma compra no cartão.
+
+Parcelada, cada parcela cai numa fatura consecutiva (RN-05), com os centavos na última (RF-023). As faturas que faltam são criadas.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `cardId` | path | string (uuid) | sim |
+
+Corpo: [PurchaseRequest](#purchaserequest)
+
+| Status | Resposta |
+|---|---|
+| 201 | [PurchaseItemResponse](#purchaseitemresponse)[] |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 409 | [ProblemDetail](#problemdetail): `CARD_ARCHIVED` |
+| 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
+
+### `GET /api/v1/invoices/{id}`
+
+Detalha uma fatura com os itens.
+
+Traz também a fatura anterior e a seguinte.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [InvoiceDetailResponse](#invoicedetailresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
 
 ## Orçamento
 
@@ -734,6 +973,20 @@ Exige `Authorization: Bearer`.
 | `remaining` | number |  |
 | `percentUsed` | integer (int32) \| null |  |
 
+### CardResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `name` | string |  |
+| `brand` | string \| null |  |
+| `creditLimit` | number |  |
+| `closingDay` | integer (int32) |  |
+| `dueDay` | integer (int32) |  |
+| `competenceOffset` | integer (int32) |  |
+| `defaultPaymentAccountId` | string (uuid) \| null |  |
+| `archived` | boolean |  |
+
 ### CategoryResponse
 
 | Campo | Tipo | Observação |
@@ -794,6 +1047,54 @@ Exige `Authorization: Bearer`.
 | Campo | Tipo | Obrigatório | Observação |
 |---|---|---|---|
 | `email` | string | sim | máx. 255 caracteres |
+
+### InvoiceDetailResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `invoice` | [InvoiceResponse](#invoiceresponse) |  |
+| `cardName` | string |  |
+| `items` | [InvoiceItemResponse](#invoiceitemresponse)[] |  |
+| `previousInvoiceId` | string (uuid) \| null |  |
+| `nextInvoiceId` | string (uuid) \| null |  |
+
+### InvoiceItemResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `description` | string |  |
+| `amount` | number |  |
+| `categoryId` | string (uuid) \| null |  |
+| `categoryName` | string \| null |  |
+| `parentCategoryName` | string \| null |  |
+| `purchaseDate` | string (date) |  |
+| `installmentNumber` | integer (int32) \| null |  |
+| `totalInstallments` | integer (int32) \| null |  |
+| `paid` | boolean |  |
+| `recurring` | boolean |  |
+
+### InvoicePreviewResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `closingDate` | string (date) |  |
+| `dueDate` | string (date) |  |
+| `competenceMonth` | string (yyyy-MM) | ex.: `2026-10` |
+
+### InvoiceResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) \| null |  |
+| `cardId` | string (uuid) |  |
+| `closingDate` | string (date) |  |
+| `dueDate` | string (date) |  |
+| `competenceMonth` | string (yyyy-MM) | ex.: `2026-10` |
+| `status` | `OPEN` \| `CLOSED` \| `PAID` \| `PARTIALLY_PAID` |  |
+| `total` | number |  |
+| `paidAmount` | number |  |
+| `itemCount` | integer (int64) |  |
 
 ### LoginRequest
 
@@ -864,6 +1165,26 @@ Problem Details (RFC 9457) com o `code` estável do erro
 | `currency` | string |  |
 | `privacyVersion` | string \| null |  |
 
+### PurchaseItemResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `invoiceId` | string (uuid) |  |
+| `amount` | number |  |
+| `dueDate` | string (date) |  |
+| `competenceMonth` | string (yyyy-MM) | ex.: `2026-10` |
+
+### PurchaseRequest
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `description` | string | sim | máx. 255 caracteres |
+| `amount` | number | sim | mínimo 0.01 |
+| `categoryId` | string (uuid) | sim |  |
+| `purchaseDate` | string (date) | sim |  |
+| `installments` | integer (int32) | não | mínimo 1; máximo 48 |
+
 ### RegisterRequest
 
 | Campo | Tipo | Obrigatório | Observação |
@@ -895,6 +1216,18 @@ Problem Details (RFC 9457) com o `code` estável do erro
 | `bank` | string \| null | não | máx. 100 caracteres |
 | `initialBalance` | number | sim |  |
 | `competenceOffset` | integer (int32) | não | mínimo 0; máximo 12 |
+
+### SaveCardRequest
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `name` | string | sim | máx. 100 caracteres |
+| `brand` | string \| null | não | máx. 30 caracteres |
+| `creditLimit` | number | sim | mínimo 0 |
+| `closingDay` | integer (int32) | sim | mínimo 1; máximo 31 |
+| `dueDay` | integer (int32) | sim | mínimo 1; máximo 31 |
+| `competenceOffset` | integer (int32) | não | mínimo 0; máximo 12 |
+| `defaultPaymentAccountId` | string (uuid) \| null | não |  |
 
 ### SaveTransactionRequest
 
@@ -956,8 +1289,11 @@ Problem Details (RFC 9457) com o `code` estável do erro
 | `categoryName` | string \| null |  |
 | `parentCategoryName` | string \| null |  |
 | `competenceMonth` | string (yyyy-MM) | ex.: `2026-10` |
+| `competenceInformed` | boolean | Verdadeiro quando o usuário informou a competência; falso quando foi sugerida (ADR-0038) |
 | `dueDate` | string (date) \| null |  |
 | `paymentDate` | string (date) \| null |  |
+| `purchaseDate` | string (date) \| null | Só em compras no cartão: a data da compra, que escolhe a fatura (RN-04) |
+| `invoiceId` | string (uuid) \| null |  |
 | `status` | `PLANNED` \| `PENDING` \| `PAID` \| `OVERDUE` |  |
 | `visibility` | `PRIVATE` \| `VISIBLE` \| `SHARED` |  |
 | `installmentNumber` | integer (int32) \| null |  |

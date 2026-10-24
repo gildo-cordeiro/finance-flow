@@ -241,12 +241,14 @@ class SchemaV1Test(
         jdbc.update(
             """
             INSERT INTO transactions (
-                id, user_id, account_id, category_id, invoice_id, description, amount, type, status,
+                id, user_id, account_id, category_id, invoice_id, purchase_date, description, amount, type, status,
                 competence_date, due_date, payment_date,
                 installment_group_id, installment_number, total_installments, created_by, updated_by
-            ) VALUES (?, ?, ?, ?, ?, 'Mercado', ?, 'EXPENSE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, 'Mercado', ?, 'EXPENSE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
-            id, userId, accountId, categoryId, invoiceId, "120.50".toBigDecimal(), status,
+            // Desde a V3, item de fatura exige a data da compra (ADR-0038)
+            id, userId, accountId, categoryId, invoiceId, invoiceId?.let { LocalDate.of(2026, 6, 20) },
+            "120.50".toBigDecimal(), status,
             competenceDate, LocalDate.of(2026, 7, 5), paymentDate,
             installmentGroupId, installmentNumber, totalInstallments, userId, updatedBy ?: userId,
         )

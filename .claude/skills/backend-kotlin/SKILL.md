@@ -20,11 +20,11 @@ Monólito modular (ADR-0001): um pacote por domínio em `com.financeflow`. As fr
 | Lugar | O que entra | Pode depender de |
 |---|---|---|
 | `<módulo>/` (pacote raiz) | API pública do módulo: eventos (`UserRegistered`) e serviços/DTOs usados por outros módulos | `application`, `domain` |
-| `domain` | Regras puras: competência, fatura, parcelamento, políticas. `object` sem estado ou classes imutáveis | Só Kotlin, JDK e `shared.error` |
+| `domain` | Regras puras: competência, fatura, parcelamento, políticas. `object` sem estado ou classes imutáveis | Só Kotlin, JDK, `shared.error` e `shared.time.Competence` |
 | `application` | Casos de uso (`@Service`), `@Transactional`, filtro pelo usuário, interfaces de adaptadores (`TokenIssuer`), `@ConfigurationProperties` | `domain`; de `infra`, só entidades e repositórios |
 | `infra` | Entidades JPA, repositórios Spring Data, adaptadores (JWT, e-mail, agregador), `@Configuration` | `application`, `domain` |
 | `api` | Controllers e DTOs de requisição/resposta | `application`, `domain` |
-| `shared/` | `error`, `security`, `config`, `ratelimit`, `email` | Qualquer módulo pode usar |
+| `shared/` | `error`, `security`, `config`, `ratelimit`, `email`, `time` (`UserClock`, `Competence`) | Qualquer módulo pode usar |
 
 Regras:
 - Um módulo nunca importa subpacotes de outro. Precisa de dados de outro módulo: chame um serviço do pacote raiz dele, que devolve um DTO. Precisa reagir a algo: ouça um `ApplicationEvent`.
@@ -57,7 +57,8 @@ Regras:
   - Arredonde para 2 casas com `RoundingMode.HALF_EVEN` só na exibição e ao gerar parcelas; a diferença de centavos vai na última parcela (ADR-0010).
 - **Datas** (ADR-0007, ADR-0008):
   - `competence_date` é `LocalDate` sempre no dia 1; `due_date` e `payment_date` são `LocalDate`; `payment_date` existe se, e somente se, `status = PAID`.
-  - Competência sugerida = mês da data de referência − `competence_offset`. A sugestão nunca sobrescreve um valor informado.
+  - Competência sugerida = mês da data de referência − `competence_offset`, sempre por `shared/time/Competence` (ADR-0038). A sugestão nunca sobrescreve um valor informado: `competence_informed` diz se o usuário informou, e só a sugerida é recalculada quando a data de referência muda.
+  - Compra no cartão guarda `purchase_date` e herda a competência da fatura; a fatura sai de `InvoiceCycle` (RN-04, ADR-0009).
   - Instantes (criação, expiração de token) são `Instant`.
   - Pegue a hora do `Clock` injetado (`clock.instant()`, `LocalDate.now(clock)`), nunca `now()` sem argumento.
 - **Valores derivados** (saldo, realizado do orçamento, total da fatura) são calculados em consulta, nunca guardados em coluna (ADR-0009, ADR-0011).

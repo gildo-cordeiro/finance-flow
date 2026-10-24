@@ -38,6 +38,20 @@ class AccountEntity(
     @Column(nullable = false)
     var archived: Boolean = false,
 
+    @Column(name = "credit_limit")
+    var creditLimit: BigDecimal? = null,
+
+    @Column(name = "closing_day")
+    var closingDay: Short? = null,
+
+    @Column(name = "due_day")
+    var dueDay: Short? = null,
+
+    var brand: String? = null,
+
+    @Column(name = "default_payment_account_id")
+    var defaultPaymentAccountId: UUID? = null,
+
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant,
 )

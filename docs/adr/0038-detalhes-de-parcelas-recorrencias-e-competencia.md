@@ -1,6 +1,6 @@
 # ADR-0038 — Regras de detalhe de parcelas, recorrências e competência sugerida (complementa 0008 e 0010)
 
-- Status: Proposto
+- Status: Aceito (2026-10-24, junto com a F1-14)
 - Data: 2026-10-24
 - Origem do 'porquê': especificação (RN-03, RN-04, RN-05, RN-06, RN-12, RF-022, RF-023, RF-024, D-01, D-08) e sugestão (lacunas encontradas ao confrontar a `V1` com os cards F1-10, F1-11, F1-13, F1-14 e F2-01).
 

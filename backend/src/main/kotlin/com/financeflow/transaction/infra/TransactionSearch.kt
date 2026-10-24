@@ -2,6 +2,7 @@ package com.financeflow.transaction.infra
 
 import com.financeflow.transaction.domain.CategoryTotal
 import com.financeflow.transaction.domain.DateField
+import com.financeflow.transaction.domain.InvoiceItemsTotal
 import com.financeflow.transaction.domain.MonthTotals
 import com.financeflow.transaction.domain.Payable
 import com.financeflow.transaction.domain.TransactionFilter
@@ -32,6 +33,10 @@ interface TransactionSearch {
     fun payables(userId: UUID, today: LocalDate, until: LocalDate, limit: Int): List<Payable>
 
     fun countOverdue(userId: UUID, today: LocalDate): Long
+
+    fun findByInvoice(userId: UUID, invoiceId: UUID): List<TransactionView>
+
+    fun invoiceTotals(userId: UUID, invoiceIds: Collection<UUID>): List<InvoiceItemsTotal>
 }
 
 /** SQL montado conforme os filtros presentes; nomes da conta e da categoria vêm no mesmo SELECT. */
@@ -145,6 +150,27 @@ class TransactionSearchImpl(private val jdbc: NamedParameterJdbcTemplate) : Tran
         Long::class.java,
     ) ?: 0
 
+    override fun findByInvoice(userId: UUID, invoiceId: UUID): List<TransactionView> = jdbc.query(
+        "$SELECT_VIEW WHERE t.user_id = :userId AND t.invoice_id = :invoiceId ORDER BY t.purchase_date DESC, t.created_at DESC, t.id",
+        MapSqlParameterSource().addValue("userId", userId).addValue("invoiceId", invoiceId),
+        VIEW_MAPPER,
+    )
+
+    override fun invoiceTotals(userId: UUID, invoiceIds: Collection<UUID>): List<InvoiceItemsTotal> {
+        if (invoiceIds.isEmpty()) return emptyList()
+        return jdbc.query(
+            """
+            SELECT invoice_id, SUM(amount) AS total, COUNT(*) AS items
+            FROM transactions
+            WHERE user_id = :userId AND invoice_id IN (:invoiceIds)
+            GROUP BY invoice_id
+            """,
+            MapSqlParameterSource().addValue("userId", userId).addValue("invoiceIds", invoiceIds),
+        ) { rs, _ ->
+            InvoiceItemsTotal(rs.getObject("invoice_id", UUID::class.java), rs.getBigDecimal("total"), rs.getLong("items"))
+        }
+    }
+
     private fun where(userId: UUID, filter: TransactionFilter): Pair<String, MapSqlParameterSource> {
         val column = dateColumn(filter.dateField)
         val conditions = mutableListOf("t.user_id = :userId", "$column BETWEEN :from AND :to")
@@ -193,7 +219,8 @@ class TransactionSearchImpl(private val jdbc: NamedParameterJdbcTemplate) : Tran
         const val SELECT_VIEW = """
             SELECT t.id, t.type, t.description, t.amount, t.account_id, a.name AS account_name,
                    t.category_id, c.name AS category_name, p.name AS parent_category_name,
-                   t.competence_date, t.due_date, t.payment_date, t.status, t.visibility,
+                   t.competence_date, t.competence_informed, t.due_date, t.payment_date, t.purchase_date,
+                   t.invoice_id, t.status, t.visibility,
                    t.installment_number, t.total_installments, t.transfer_group_id, t.transfer_direction,
                    t.recurrence_id
             $FROM_VIEW
@@ -211,8 +238,11 @@ class TransactionSearchImpl(private val jdbc: NamedParameterJdbcTemplate) : Tran
                 categoryName = rs.getString("category_name"),
                 parentCategoryName = rs.getString("parent_category_name"),
                 competenceDate = rs.getObject("competence_date", LocalDate::class.java),
+                competenceInformed = rs.getBoolean("competence_informed"),
                 dueDate = rs.getObject("due_date", LocalDate::class.java),
                 paymentDate = rs.getObject("payment_date", LocalDate::class.java),
+                purchaseDate = rs.getObject("purchase_date", LocalDate::class.java),
+                invoiceId = rs.getObject("invoice_id", UUID::class.java),
                 status = TransactionStatus.valueOf(rs.getString("status")),
                 visibility = Visibility.valueOf(rs.getString("visibility")),
                 installmentNumber = (rs.getObject("installment_number") as? Number)?.toInt(),

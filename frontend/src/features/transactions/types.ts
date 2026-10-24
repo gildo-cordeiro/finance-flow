@@ -21,8 +21,11 @@ export interface Transaction {
   categoryName: string | null;
   parentCategoryName: string | null;
   competenceMonth: string;
+  competenceInformed: boolean;
   dueDate: string | null;
   paymentDate: string | null;
+  purchaseDate: string | null;
+  invoiceId: string | null;
   status: TransactionStatus;
   visibility: Visibility;
   installmentNumber: number | null;
