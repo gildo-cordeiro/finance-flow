@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Check, Pencil, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import type { Transaction } from '../types';
 
 /** Parcelas, transferências e compras no cartão têm fluxos próprios (F1-12 a F1-14). */
 function isEditableHere(transaction: Transaction) {
-  return transaction.type !== 'TRANSFER' && transaction.totalInstallments === null;
+  return transaction.type !== 'TRANSFER' && transaction.totalInstallments === null && transaction.invoiceId === null;
 }
 
 interface TransactionActionsProps {
@@ -23,6 +24,15 @@ export function TransactionActions({ transaction, onEdit }: TransactionActionsPr
   const busy = setPaid.isPending || remove.isPending;
   const paid = transaction.status === 'PAID';
 
+  if (transaction.invoiceId) {
+    return (
+      <div className="flex justify-end">
+        <Button asChild variant="ghost" size="sm">
+          <Link to={`/cartoes/${transaction.accountId}/faturas/${transaction.invoiceId}`}>Ver fatura</Link>
+        </Button>
+      </div>
+    );
+  }
   if (!isEditableHere(transaction)) return null;
 
   const togglePaid = async () => {

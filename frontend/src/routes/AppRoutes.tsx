@@ -4,6 +4,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { NAV_ITEMS } from '@/components/layout/navItems';
 import { UnderConstruction } from '@/components/layout/UnderConstruction';
 import { AccountsPage } from '@/features/accounts/components/AccountsPage';
+import { CardsSection } from '@/features/cards/components/CardsSection';
+import { InvoicePage } from '@/features/cards/components/InvoicePage';
 import { BudgetPage } from '@/features/budget/components/BudgetPage';
 import { DashboardPage } from '@/features/dashboard/components/DashboardPage';
 import { ForgotPasswordPage } from '@/features/auth/components/ForgotPasswordPage';
@@ -19,7 +21,7 @@ import { PublicOnlyRoute } from './PublicOnlyRoute';
 const PAGES: Record<string, ReactNode> = {
   '/': <DashboardPage />,
   '/transacoes': <TransactionsPage />,
-  '/contas': <AccountsPage />,
+  '/contas': <AccountsPage cards={<CardsSection />} />,
   '/orcamento': <BudgetPage />,
   '/configuracoes': <SettingsPage />,
 };
@@ -40,6 +42,8 @@ export function AppRoutes() {
           {NAV_ITEMS.map(({ path, label }) => (
             <Route key={path} path={path} element={PAGES[path] ?? <UnderConstruction title={label} />} />
           ))}
+          <Route path="/cartoes/:cardId/fatura" element={<InvoicePage />} />
+          <Route path="/cartoes/:cardId/faturas/:invoiceId" element={<InvoicePage />} />
           <Route path="*" element={<UnderConstruction title="Página não encontrada" />} />
         </Route>
       </Route>

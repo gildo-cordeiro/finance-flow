@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { CircleAlert, Plus, Wallet } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,16 @@ import { AccountsSummaryCard } from './AccountsSummaryCard';
 
 type Editing = { account?: Account } | null;
 
-export function AccountsPage() {
+interface AccountsPageProps {
+  /** Seção dos cartões, que vem da feature própria (F1-14). */
+  cards?: ReactNode;
+}
+
+export function AccountsPage({ cards }: AccountsPageProps) {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const accounts = useAccounts(includeArchived);
+  const bankAccounts = accounts.data?.filter((account) => account.type !== 'CREDIT_CARD');
 
   return (
     <PageContainer>
@@ -60,27 +66,28 @@ export function AccountsPage() {
               </Alert>
             </div>
           )}
-          {accounts.data?.length === 0 && (
+          {bankAccounts?.length === 0 && (
             <EmptyState
               icon={<Wallet className="h-6 w-6" />}
               title="Nenhuma conta cadastrada"
               description="Cadastre sua conta corrente ou poupança para começar a lançar transações."
             />
           )}
-          {accounts.data && accounts.data.length > 0 && (
+          {bankAccounts && bankAccounts.length > 0 && (
             <ul className="divide-y divide-border-subtle">
-              {accounts.data.map((account) => (
+              {bankAccounts.map((account) => (
                 <AccountRow key={account.id} account={account} onEdit={() => setEditing({ account })} />
               ))}
             </ul>
           )}
         </CardContent>
       </Card>
+      {cards}
       <Sheet open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader className="mb-6">
             <SheetTitle>{editing?.account ? 'Editar conta' : 'Nova conta'}</SheetTitle>
-            <SheetDescription>Conta corrente ou poupança. Cartões de crédito chegam em breve.</SheetDescription>
+            <SheetDescription>Conta corrente ou poupança. Cartões de crédito têm cadastro próprio, logo abaixo.</SheetDescription>
           </SheetHeader>
           {editing && <AccountForm account={editing.account} onDone={() => setEditing(null)} />}
         </SheetContent>
