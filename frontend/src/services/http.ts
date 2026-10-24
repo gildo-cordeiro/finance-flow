@@ -36,14 +36,23 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 
 /**
- * Renova o access token pelo cookie. Chamadas simultâneas compartilham um único refresh, porque
- * reapresentar um refresh token já rotacionado revoga todas as sessões (ADR-0005).
+ * Renova o access token pelo cookie. Reapresentar um refresh token já rotacionado revoga todas as
+ * sessões (ADR-0005), então chamadas simultâneas da aba compartilham um único refresh, e abas
+ * diferentes esperam a vez numa trava: a segunda aba só envia o cookie depois que a primeira já o
+ * trocou.
  */
 export function refreshSession<T extends { accessToken: string }>(): Promise<T | null> {
-  refreshing ??= doRefresh().finally(() => {
+  refreshing ??= withRefreshLock(doRefresh).finally(() => {
     refreshing = null;
   });
   return refreshing as Promise<T | null>;
+}
+
+export const REFRESH_LOCK = 'financeflow-refresh';
+
+function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+  if (typeof navigator === 'undefined' || !navigator.locks) return task();
+  return navigator.locks.request(REFRESH_LOCK, task);
 }
 
 async function doRefresh(): Promise<{ accessToken: string } | null> {

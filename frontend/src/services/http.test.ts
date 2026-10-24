@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { authHeader, callsTo, json, noContent, problem, session, stubFetch } from '@/test/fetchMock';
 import { ApiError, errorMessage } from './errors';
-import { refreshSession, request, setAccessToken, setSessionExpiredHandler } from './http';
+import { REFRESH_LOCK, refreshSession, request, setAccessToken, setSessionExpiredHandler } from './http';
 
 describe('request', () => {
   it('envia o access token, os cookies e o corpo em JSON', async () => {
@@ -92,6 +92,28 @@ describe('refreshSession', () => {
   it('devolve null quando não há sessão', async () => {
     stubFetch(() => problem(401, 'INVALID_REFRESH_TOKEN'));
     await expect(refreshSession()).resolves.toBeNull();
+  });
+
+  it('renova dentro da trava compartilhada entre abas', async () => {
+    const order: string[] = [];
+    const request = vi.fn(async (name: string, task: () => Promise<unknown>) => {
+      order.push(`trava ${name}`);
+      const result = await task();
+      order.push('libera');
+      return result;
+    });
+    Object.defineProperty(navigator, 'locks', { value: { request }, configurable: true });
+    stubFetch(() => {
+      order.push('refresh');
+      return json(200, session());
+    });
+
+    try {
+      await expect(refreshSession()).resolves.toMatchObject({ accessToken: 'access-1' });
+      expect(order).toEqual([`trava ${REFRESH_LOCK}`, 'refresh', 'libera']);
+    } finally {
+      Reflect.deleteProperty(navigator, 'locks');
+    }
   });
 });
 

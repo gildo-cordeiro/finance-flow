@@ -16,7 +16,8 @@ import org.springframework.web.servlet.HandlerExceptionResolver
 /**
  * Segurança sem estado com filtro JWT (ADR-0005): o `sub` do access token vira o id do usuário
  * no `SecurityContext`. Só o health check e as rotas de `/api/v1/auth` que não dependem do
- * access token (cadastro, login, refresh, logout e recuperação de senha) são públicos.
+ * access token (cadastro, login, refresh, logout, recuperação de senha e versão da política de
+ * privacidade) são públicos.
  */
 @Configuration
 class SecurityConfig(
@@ -45,6 +46,7 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health").permitAll()
                 it.requestMatchers(HttpMethod.POST, *PUBLIC_AUTH_ROUTES.toTypedArray()).permitAll()
+                it.requestMatchers(HttpMethod.GET, *PUBLIC_GET_ROUTES.toTypedArray()).permitAll()
                 it.anyRequest().authenticated()
             }
             .build()
@@ -55,7 +57,8 @@ class SecurityConfig(
     private fun bearerTokenResolver(): BearerTokenResolver {
         val default = DefaultBearerTokenResolver()
         return BearerTokenResolver { request ->
-            if (request.requestURI in PUBLIC_AUTH_ROUTES) null else default.resolve(request)
+            val uri = request.requestURI
+            if (uri in PUBLIC_AUTH_ROUTES || uri in PUBLIC_GET_ROUTES) null else default.resolve(request)
         }
     }
 
@@ -68,5 +71,6 @@ class SecurityConfig(
             "/api/v1/auth/password/forgot",
             "/api/v1/auth/password/reset",
         )
+        private val PUBLIC_GET_ROUTES = setOf("/api/v1/auth/privacy-policy")
     }
 }

@@ -1,5 +1,5 @@
 import { request } from '@/services/http';
-import type { AuthResponse, LoginRequest, RegisterRequest } from '../types';
+import type { AuthResponse, LoginRequest, PrivacyPolicy, RegisterRequest } from '../types';
 
 export const authApi = {
   login: (data: LoginRequest) =>
@@ -9,4 +9,6 @@ export const authApi = {
     request<AuthResponse>('/auth/register', { method: 'POST', body: data, authenticated: false }),
 
   logout: () => request<void>('/auth/logout', { method: 'POST', authenticated: false }),
+
+  privacyPolicy: () => request<PrivacyPolicy>('/auth/privacy-policy', { authenticated: false }),
 };

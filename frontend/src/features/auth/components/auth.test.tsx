@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { request } from '@/services/http';
 import { callsTo, json, noContent, problem, session, stubFetch } from '@/test/fetchMock';
@@ -94,20 +94,30 @@ describe('login', () => {
 });
 
 describe('cadastro', () => {
-  async function fillRegister(acceptPrivacy = true) {
+  // A versão vem do backend; um valor diferente do padrão mostra que o front não tem a sua própria
+  const withPolicy = (handler: Parameters<typeof stubFetch>[0]): Parameters<typeof stubFetch>[0] => (call) =>
+    call.path === '/auth/privacy-policy' ? json(200, { version: '2027-01' }) : handler(call);
+
+  async function submitButton() {
+    const button = await screen.findByRole('button', { name: 'Criar conta' });
+    await waitFor(() => expect(button).toBeEnabled());
+    return button;
+  }
+
+  async function fillRegister() {
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Nome'), 'Maria Silva');
     await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
     await user.type(screen.getByLabelText('Senha'), 'senhasemnumero');
-    if (acceptPrivacy) await user.click(screen.getByRole('checkbox', { name: /política de privacidade/ }));
-    await user.click(screen.getByRole('button', { name: 'Criar conta' }));
+    await user.click(screen.getByRole('checkbox', { name: /política de privacidade/ }));
+    await user.click(await submitButton());
   }
 
   it('exige nome, e-mail, senha e o aceite da política de privacidade', async () => {
-    const fetchMock = stubFetch(noSession);
+    const fetchMock = stubFetch(withPolicy(noSession));
     renderApp('/cadastrar');
 
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Criar conta' }));
+    await userEvent.setup().click(await submitButton());
 
     expect(await screen.findByText('Informe seu nome')).toBeInTheDocument();
     expect(screen.getByText('Informe o e-mail')).toBeInTheDocument();
@@ -116,11 +126,21 @@ describe('cadastro', () => {
     expect(callsTo(fetchMock, '/auth/register')).toHaveLength(0);
   });
 
+  it('sem a versão da política, avisa e não deixa enviar', async () => {
+    stubFetch(({ path }) => (path === '/auth/privacy-policy' ? problem(500, 'INTERNAL_ERROR') : noSession()));
+    renderApp('/cadastrar');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar a política de privacidade');
+    expect(screen.getByRole('button', { name: 'Criar conta' })).toBeDisabled();
+  });
+
   it('marca no formulário os campos recusados pela API', async () => {
-    stubFetch(({ path }) =>
-      path === '/auth/register'
-        ? problem(422, 'VALIDATION_FAILED', [{ field: 'password', message: 'A senha precisa ter ao menos um número' }])
-        : noSession()
+    stubFetch(
+      withPolicy(({ path }) =>
+        path === '/auth/register'
+          ? problem(422, 'VALIDATION_FAILED', [{ field: 'password', message: 'A senha precisa ter ao menos um número' }])
+          : noSession()
+      )
     );
     renderApp('/cadastrar');
 
@@ -131,7 +151,7 @@ describe('cadastro', () => {
   });
 
   it('e-mail já cadastrado aparece no campo de e-mail', async () => {
-    stubFetch(({ path }) => (path === '/auth/register' ? problem(409, 'EMAIL_ALREADY_USED') : noSession()));
+    stubFetch(withPolicy(({ path }) => (path === '/auth/register' ? problem(409, 'EMAIL_ALREADY_USED') : noSession())));
     renderApp('/cadastrar');
 
     await fillRegister();
@@ -139,8 +159,10 @@ describe('cadastro', () => {
     expect(await screen.findByText('Já existe uma conta com este e-mail.')).toBeInTheDocument();
   });
 
-  it('cadastro aceito envia a versão da política e abre o painel', async () => {
-    const fetchMock = stubFetch(({ path }) => (path === '/auth/register' ? json(201, session()) : noSession()));
+  it('cadastro aceito envia a versão da política informada pelo backend e abre o painel', async () => {
+    const fetchMock = stubFetch(
+      withPolicy(({ path }) => (path === '/auth/register' ? json(201, session()) : noSession()))
+    );
     renderApp('/cadastrar');
 
     await fillRegister();
@@ -151,7 +173,7 @@ describe('cadastro', () => {
       name: 'Maria Silva',
       email: 'maria@exemplo.com',
       password: 'senhasemnumero',
-      acceptedPrivacyVersion: '2026-10',
+      acceptedPrivacyVersion: '2027-01',
     });
     expect(await screen.findByText('Conta criada. Boas-vindas ao FinanceFlow!')).toBeInTheDocument();
   });

@@ -10,6 +10,10 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface PrivacyPolicy {
+  version: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
