@@ -53,6 +53,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0036](0036-lado-da-transferencia-em-coluna-propria.md) | Lado da transferência em coluna própria (`transfer_direction`) | Aceito | 2026-10-24 |
 | [0037](0037-regras-de-cadastro-de-contas-e-categorias.md) | Regras de cadastro de contas e categorias (responde o 0013) | Aceito | 2026-10-24 |
 | [0038](0038-detalhes-de-parcelas-recorrencias-e-competencia.md) | Regras de detalhe de parcelas, recorrências e competência sugerida (complementa 0008 e 0010) | Aceito | 2026-10-24 |
+| [0039](0039-pagamento-de-fatura-como-transferencia.md) | Pagamento de fatura como transferência registrada em `invoice_payments` (complementa 0009) | Aceito | 2026-10-24 |
 
 ## Como criar um ADR
 

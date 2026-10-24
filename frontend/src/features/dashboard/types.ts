@@ -21,6 +21,17 @@ export interface Payable {
   overdue: boolean;
 }
 
+export interface UpcomingInvoice {
+  id: string;
+  cardId: string;
+  cardName: string;
+  dueDate: string;
+  total: number;
+  openAmount: number;
+  partiallyPaid: boolean;
+  overdue: boolean;
+}
+
 export interface BudgetCategoryUsage {
   categoryId: string;
   name: string;
@@ -37,5 +48,6 @@ export interface DashboardSummary {
   accountsBalance: number;
   accounts: AccountBalance[];
   payables: { items: Payable[]; overdueCount: number };
+  upcomingInvoices: UpcomingInvoice[];
   budget: { planned: number; realized: number; percentUsed: number | null; topCategories: BudgetCategoryUsage[] };
 }

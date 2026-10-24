@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { cardsApi } from '../api/cardsApi';
-import type { PurchaseRequest, SaveCardRequest } from '../types';
+import type { PayInvoiceRequest, PurchaseRequest, SaveCardRequest } from '../types';
 import { CARDS_KEY, INVOICES_KEY } from './useCards';
 
 function useInvalidateCards() {
@@ -8,12 +8,12 @@ function useInvalidateCards() {
   return () => Promise.all([CARDS_KEY, ['accounts']].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 }
 
-// Uma compra muda a fatura, a listagem de transações, o orçamento e o painel
+// Uma compra ou um pagamento muda a fatura, o limite, os saldos, as transações, o orçamento e o painel
 function useInvalidatePurchases() {
   const queryClient = useQueryClient();
   return () =>
     Promise.all(
-      [INVOICES_KEY, ['transactions'], ['budgets'], ['dashboard']].map((queryKey) =>
+      [INVOICES_KEY, CARDS_KEY, ['accounts'], ['transactions'], ['budgets'], ['dashboard']].map((queryKey) =>
         queryClient.invalidateQueries({ queryKey })
       )
     );
@@ -53,4 +53,21 @@ export function usePurchase() {
 export function useDeletePurchase() {
   const onSuccess = useInvalidatePurchases();
   return useMutation({ mutationFn: cardsApi.deletePurchase, onSuccess });
+}
+
+export function usePayInvoice() {
+  const onSuccess = useInvalidatePurchases();
+  return useMutation({
+    mutationFn: ({ invoiceId, data }: { invoiceId: string; data: PayInvoiceRequest }) => cardsApi.pay(invoiceId, data),
+    onSuccess,
+  });
+}
+
+export function useReversePayment() {
+  const onSuccess = useInvalidatePurchases();
+  return useMutation({
+    mutationFn: ({ invoiceId, paymentId }: { invoiceId: string; paymentId: string }) =>
+      cardsApi.reversePayment(invoiceId, paymentId),
+    onSuccess,
+  });
 }

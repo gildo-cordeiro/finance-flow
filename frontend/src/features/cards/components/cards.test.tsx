@@ -13,8 +13,10 @@ const nubank: Card = {
   closingDay: 25,
   dueDay: 5,
   competenceOffset: 1,
-  defaultPaymentAccountId: null,
+  defaultPaymentAccountId: 'acc-1',
   archived: false,
+  used: 1873.22,
+  available: 6126.78,
 };
 
 const outubro: Invoice = {
@@ -26,9 +28,10 @@ const outubro: Invoice = {
   status: 'OPEN',
   total: 1873.22,
   paidAmount: 0,
+  openAmount: 1873.22,
   itemCount: 2,
 };
-const setembro: Invoice = { ...outubro, id: 'inv-9', closingDate: '2026-09-25', dueDate: '2026-10-05', competenceMonth: '2026-09', status: 'CLOSED', total: 100, itemCount: 1 };
+const setembro: Invoice = { ...outubro, id: 'inv-9', closingDate: '2026-09-25', dueDate: '2026-10-05', competenceMonth: '2026-09', status: 'CLOSED', total: 100, openAmount: 100, itemCount: 1 };
 
 const detalheOutubro: InvoiceDetail = {
   invoice: outubro,
@@ -61,6 +64,7 @@ const detalheOutubro: InvoiceDetail = {
       recurring: false,
     },
   ],
+  payments: [],
   previousInvoiceId: 'inv-9',
   nextInvoiceId: null,
 };
@@ -79,7 +83,12 @@ const categories = [
 
 type Call = { method: string; path: string; init: RequestInit };
 
-function stubCardsApi(onWrite: (call: Call) => Response = () => problem(500, 'INTERNAL_ERROR')) {
+const itau = { id: 'acc-1', name: 'Itaú', type: 'CHECKING', bank: null, initialBalance: 0, balance: 0, competenceOffset: 0, archived: false };
+
+function stubCardsApi(
+  onWrite: (call: Call) => Response = () => problem(500, 'INTERNAL_ERROR'),
+  detail: InvoiceDetail = detalheOutubro
+) {
   return stubFetch((call) => {
     if (call.path === '/auth/refresh') return json(200, session());
     if (call.method !== 'GET') return onWrite(call);
@@ -89,10 +98,10 @@ function stubCardsApi(onWrite: (call: Call) => Response = () => problem(500, 'IN
     if (call.path.startsWith('/cards/card-1/invoices/preview')) {
       return json(200, { closingDate: '2026-10-25', dueDate: '2026-11-05', competenceMonth: '2026-10' });
     }
-    if (call.path === '/invoices/inv-10') return json(200, detalheOutubro);
+    if (call.path === '/invoices/inv-10') return json(200, detail);
     if (call.path === '/invoices/inv-9') return json(200, { ...detalheOutubro, invoice: setembro, items: [], previousInvoiceId: null, nextInvoiceId: 'inv-10' });
     if (call.path.startsWith('/accounts/summary')) return json(200, { balance: 0, accountCount: 0 });
-    if (call.path.startsWith('/accounts')) return json(200, []);
+    if (call.path.startsWith('/accounts')) return json(200, [itau]);
     if (call.path.startsWith('/categories')) return json(200, categories);
     return problem(404, 'NOT_FOUND');
   });
@@ -115,6 +124,9 @@ describe('cartões', () => {
     expect(invoice).toHaveAttribute('href', '/cartoes/card-1/fatura');
     expect(invoice).toHaveTextContent('R$ 1.873,22');
     expect(invoice).toHaveTextContent('Aberta');
+    const limit = within(section).getByRole('group', { name: 'Limite de Nubank' });
+    expect(limit).toHaveTextContent('23%');
+    expect(limit).toHaveTextContent('Disponível R$ 6.126,78');
   });
 
   it('cadastra um cartão com deslocamento 1 por padrão', async () => {
@@ -228,6 +240,72 @@ describe('fatura', () => {
 
     expect(await screen.findByText('Compra e parcelas excluídas.')).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([input, init]) => String(input) === '/api/v1/card-purchases/item-1' && init?.method === 'DELETE')).toBe(true);
+  });
+
+  it('paga a fatura com a conta sugerida do cartão e o saldo em aberto', async () => {
+    const fetchMock = stubCardsApi((call) =>
+      call.path === '/invoices/inv-10/payments'
+        ? json(201, { id: 'pay-1', fromAccountId: 'acc-1', fromAccountName: 'Itaú', amount: 1873.22, paymentDate: '2026-11-05' })
+        : problem(500, 'INTERNAL_ERROR')
+    );
+    renderApp('/cartoes/card-1/faturas/inv-10');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Pagar fatura' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByLabelText('Conta pagadora')).toHaveValue('acc-1');
+    expect(within(dialog).getByLabelText('Valor')).toHaveValue('R$ 1.873,22');
+    await user.clear(within(dialog).getByLabelText('Data do pagamento'));
+    await user.type(within(dialog).getByLabelText('Data do pagamento'), '2026-11-05');
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar pagamento' }));
+
+    expect(await screen.findByText('Fatura paga.')).toBeInTheDocument();
+    expect(bodyOf(fetchMock, '/invoices/inv-10/payments', 'POST')).toEqual({
+      fromAccountId: 'acc-1',
+      amount: 1873.22,
+      paymentDate: '2026-11-05',
+    });
+  });
+
+  it('não deixa pagar mais que o saldo em aberto', async () => {
+    const fetchMock = stubCardsApi();
+    renderApp('/cartoes/card-1/faturas/inv-10');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Pagar fatura' }));
+    const dialog = await screen.findByRole('dialog');
+    const amount = await within(dialog).findByLabelText('Valor');
+    await user.clear(amount);
+    await user.type(amount, '200000');
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar pagamento' }));
+
+    expect(await within(dialog).findByText('O valor passa do saldo em aberto (R$ 1.873,22)')).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/payments'))).toBe(false);
+  });
+
+  it('estorna um pagamento depois de confirmar', async () => {
+    const paga: InvoiceDetail = {
+      ...detalheOutubro,
+      invoice: { ...outubro, status: 'PARTIALLY_PAID', paidAmount: 500, openAmount: 1373.22 },
+      payments: [{ id: 'pay-1', fromAccountId: 'acc-1', fromAccountName: 'Itaú', amount: 500, paymentDate: '2026-11-01' }],
+    };
+    const fetchMock = stubCardsApi(
+      (call) => (call.path === '/invoices/inv-10/payments/pay-1' ? noContent() : problem(500, 'INTERNAL_ERROR')),
+      paga
+    );
+    renderApp('/cartoes/card-1/faturas/inv-10');
+    const user = userEvent.setup();
+
+    expect(await screen.findByText(/pago R\$ 500,00 · em aberto R\$ 1.373,22/)).toBeInTheDocument();
+    const payments = await screen.findByRole('list', { name: 'Pagamentos da fatura' });
+    expect(within(payments).getByText('Itaú')).toBeInTheDocument();
+    await user.click(within(payments).getByRole('button', { name: 'Estornar pagamento de 01/11/2026' }));
+    await user.click(within(payments).getByRole('button', { name: 'Confirmar estorno' }));
+
+    expect(await screen.findByText('Pagamento estornado.')).toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([input, init]) => String(input) === '/api/v1/invoices/inv-10/payments/pay-1' && init?.method === 'DELETE')
+    ).toBe(true);
   });
 
   it('mostra o erro de fatura de outro usuário', async () => {

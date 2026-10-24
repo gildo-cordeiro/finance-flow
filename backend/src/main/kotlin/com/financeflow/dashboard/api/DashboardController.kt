@@ -29,6 +29,17 @@ data class PayableResponse(
     val overdue: Boolean,
 )
 
+data class UpcomingInvoiceResponse(
+    val id: UUID,
+    val cardId: UUID,
+    val cardName: String,
+    val dueDate: LocalDate,
+    val total: BigDecimal,
+    val openAmount: BigDecimal,
+    val partiallyPaid: Boolean,
+    val overdue: Boolean,
+)
+
 data class PayablesResponse(val items: List<PayableResponse>, val overdueCount: Long)
 
 data class BudgetCategoryResponse(
@@ -54,6 +65,7 @@ data class DashboardResponse(
     val accountsBalance: BigDecimal,
     val accounts: List<AccountBalanceResponse>,
     val payables: PayablesResponse,
+    val upcomingInvoices: List<UpcomingInvoiceResponse>,
     val budget: DashboardBudgetResponse,
 )
 
@@ -66,7 +78,8 @@ class DashboardController(private val dashboardService: DashboardService) {
         summary = "Resumo do mês",
         description = "Sem `month`, usa o mês de hoje no fuso do usuário. Receitas, despesas e resultado são da " +
             "competência, sem transferências. `accountsBalance` soma as contas correntes e poupanças ativas. " +
-            "`payables` traz as despesas não pagas atrasadas ou com vencimento nos próximos 7 dias, fora do cartão.",
+            "`payables` traz as despesas não pagas atrasadas ou com vencimento nos próximos 7 dias, fora do cartão. " +
+            "`upcomingInvoices` traz as faturas com saldo em aberto vencidas ou que vencem nos próximos 30 dias.",
     )
     @ProblemResponse(400, "BAD_REQUEST")
     @GetMapping("/summary")
@@ -86,6 +99,11 @@ class DashboardController(private val dashboardService: DashboardService) {
             },
             payables.overdueCount,
         ),
+        upcomingInvoices = invoices.map {
+            UpcomingInvoiceResponse(
+                it.id, it.cardId, it.cardName, it.dueDate, it.total, it.openAmount, it.partiallyPaid, it.overdue,
+            )
+        },
         budget = DashboardBudgetResponse(
             planned = budget.planned,
             realized = budget.realized,

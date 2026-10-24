@@ -8,4 +8,8 @@ interface TransactionRepository : JpaRepository<TransactionEntity, UUID>, Transa
     fun findByIdAndUserId(id: UUID, userId: UUID): TransactionEntity?
 
     fun findByInstallmentGroupIdAndUserId(installmentGroupId: UUID, userId: UUID): List<TransactionEntity>
+
+    fun findByTransferGroupIdAndUserId(transferGroupId: UUID, userId: UUID): List<TransactionEntity>
+
+    fun findByInvoiceIdAndUserId(invoiceId: UUID, userId: UUID): List<TransactionEntity>
 }

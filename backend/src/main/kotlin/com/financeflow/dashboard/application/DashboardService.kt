@@ -4,6 +4,8 @@ import com.financeflow.account.AccountBalance
 import com.financeflow.account.AccountDirectory
 import com.financeflow.budget.BudgetOverview
 import com.financeflow.budget.ExpenseBudget
+import com.financeflow.invoice.InvoiceAgenda
+import com.financeflow.invoice.UpcomingInvoice
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.shared.time.UserClock
 import com.financeflow.transaction.MonthResult
@@ -19,6 +21,7 @@ data class DashboardSummary(
     val result: MonthResult,
     val accounts: List<AccountBalance>,
     val payables: Payables,
+    val invoices: List<UpcomingInvoice>,
     val budget: ExpenseBudget,
 ) {
     val balance: BigDecimal get() = result.income - result.expense
@@ -32,6 +35,7 @@ class DashboardService(
     private val ledger: TransactionLedger,
     private val accounts: AccountDirectory,
     private val budgets: BudgetOverview,
+    private val invoices: InvoiceAgenda,
     private val currentUser: CurrentUser,
     private val userClock: UserClock,
 ) {
@@ -45,6 +49,7 @@ class DashboardService(
             result = ledger.monthResult(competence),
             accounts = accounts.balances(),
             payables = ledger.payables(days = UPCOMING_DAYS, limit = PAYABLES_LIMIT),
+            invoices = invoices.upcoming(days = INVOICE_DAYS),
             budget = budgets.expenses(competence, highlights = BUDGET_HIGHLIGHTS),
         )
     }
@@ -52,6 +57,7 @@ class DashboardService(
     private companion object {
         const val UPCOMING_DAYS = 7L
         const val PAYABLES_LIMIT = 8
+        const val INVOICE_DAYS = 30L
         const val BUDGET_HIGHLIGHTS = 5
     }
 }

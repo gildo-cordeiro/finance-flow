@@ -1,9 +1,11 @@
 package com.financeflow.invoice.api
 
 import com.financeflow.invoice.application.InvoiceDetail
+import com.financeflow.invoice.application.InvoicePayment
 import com.financeflow.invoice.application.InvoicePreview
 import com.financeflow.invoice.application.InvoiceService
 import com.financeflow.invoice.application.InvoiceSummary
+import com.financeflow.invoice.application.PaymentCommand
 import com.financeflow.invoice.application.PurchaseCommand
 import com.financeflow.invoice.application.PurchaseItem
 import com.financeflow.invoice.domain.Installments
@@ -11,6 +13,7 @@ import com.financeflow.invoice.domain.InvoiceStatus
 import com.financeflow.shared.error.ProblemResponse
 import com.financeflow.transaction.CardItem
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
@@ -58,6 +61,24 @@ data class PurchaseRequest(
     )
 }
 
+data class PayInvoiceRequest(
+    @field:NotNull
+    val fromAccountId: UUID? = null,
+    @field:NotNull @field:DecimalMin("0.01") @field:Digits(integer = 15, fraction = 2)
+    val amount: BigDecimal? = null,
+    val paymentDate: LocalDate? = null,
+) {
+    fun toCommand() = PaymentCommand(checkNotNull(fromAccountId), checkNotNull(amount), paymentDate)
+}
+
+data class InvoicePaymentResponse(
+    val id: UUID,
+    val fromAccountId: UUID,
+    val fromAccountName: String?,
+    val amount: BigDecimal,
+    val paymentDate: LocalDate,
+)
+
 data class PurchaseItemResponse(
     val id: UUID,
     val invoiceId: UUID,
@@ -77,6 +98,8 @@ data class InvoiceResponse(
     val status: InvoiceStatus,
     val total: BigDecimal,
     val paidAmount: BigDecimal,
+    @field:Schema(description = "Total menos o que já foi pago, nunca negativo")
+    val openAmount: BigDecimal,
     val itemCount: Long,
 )
 
@@ -98,6 +121,7 @@ data class InvoiceDetailResponse(
     val invoice: InvoiceResponse,
     val cardName: String,
     val items: List<InvoiceItemResponse>,
+    val payments: List<InvoicePaymentResponse>,
     val previousInvoiceId: UUID?,
     val nextInvoiceId: UUID?,
 )
@@ -163,23 +187,50 @@ class InvoiceController(private val invoiceService: InvoiceService) {
         description = "Recebe o id de qualquer item e exclui a compra inteira, com todas as parcelas.",
     )
     @ProblemResponse(404, "NOT_FOUND")
-    @ProblemResponse(409, "PURCHASE_HAS_PAID_ITEMS")
+    @ProblemResponse(409, "PURCHASE_HAS_PAID_ITEMS", "INVOICE_HAS_PAYMENTS")
     @DeleteMapping("/card-purchases/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deletePurchase(@PathVariable itemId: UUID) = invoiceService.deletePurchase(itemId)
+
+    @Operation(
+        summary = "Paga a fatura, toda ou em parte",
+        description = "Gera uma transferência da conta pagadora para o cartão, que não entra no orçamento " +
+            "(ADR-0039). Quitada, a fatura e os itens ficam pagos; em parte, a fatura fica `PARTIALLY_PAID` e os " +
+            "itens continuam em aberto. Sem `paymentDate`, usa a data de hoje. Valor acima do saldo em aberto é 422.",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED")
+    @ProblemResponse(404, "NOT_FOUND")
+    @PostMapping("/invoices/{id}/payments")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun pay(@PathVariable id: UUID, @Valid @RequestBody request: PayInvoiceRequest) =
+        invoiceService.pay(id, request.toCommand()).toResponse()
+
+    @Operation(
+        summary = "Estorna um pagamento da fatura",
+        description = "Apaga a transferência, devolve o valor à conta pagadora e reabre a fatura e os itens.",
+    )
+    @ProblemResponse(404, "NOT_FOUND")
+    @DeleteMapping("/invoices/{id}/payments/{paymentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun reversePayment(@PathVariable id: UUID, @PathVariable paymentId: UUID) =
+        invoiceService.reversePayment(id, paymentId)
+
+    private fun InvoicePayment.toResponse() =
+        InvoicePaymentResponse(id, fromAccountId, fromAccountName, amount, paymentDate)
 
     private fun PurchaseItem.toResponse() = PurchaseItemResponse(id, invoiceId, amount, dueDate, competenceMonth)
 
     private fun InvoicePreview.toResponse() = InvoicePreviewResponse(closingDate, dueDate, competenceMonth)
 
     private fun InvoiceSummary.toResponse() = InvoiceResponse(
-        id, cardId, closingDate, dueDate, competenceMonth, status, total, paidAmount, itemCount,
+        id, cardId, closingDate, dueDate, competenceMonth, status, total, paidAmount, openAmount, itemCount,
     )
 
     private fun InvoiceDetail.toResponse() = InvoiceDetailResponse(
         invoice = summary.toResponse(),
         cardName = cardName,
         items = items.map { it.toResponse() },
+        payments = payments.map { it.toResponse() },
         previousInvoiceId = previousInvoiceId,
         nextInvoiceId = nextInvoiceId,
     )
