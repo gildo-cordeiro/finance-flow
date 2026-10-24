@@ -9,6 +9,8 @@ data class AuthProperties(
     val privacyVersion: String,
     val accessTokenTtl: Duration,
     val refreshTokenTtl: Duration,
+    val passwordResetTtl: Duration = Duration.ofHours(1),
+    val frontendUrl: String = "http://localhost:5173",
 ) {
     init {
         require(jwtSecret.toByteArray(Charsets.UTF_8).size >= MIN_SECRET_BYTES) {

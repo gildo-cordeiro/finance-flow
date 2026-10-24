@@ -8,12 +8,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.security.MessageDigest
-import java.security.SecureRandom
 import java.time.Clock
 import java.time.Duration
-import java.util.Base64
-import java.util.HexFormat
 import java.util.UUID
 
 data class RotatedSession(val userId: UUID, val refreshToken: String)
@@ -27,7 +23,6 @@ class SessionService(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
-    private val random = SecureRandom()
 
     /** Abre uma sessão e devolve o valor puro do refresh token, que só vai para o cookie. */
     @Transactional
@@ -39,7 +34,7 @@ class SessionService(
      */
     @Transactional(noRollbackFor = [UnauthorizedException::class])
     fun rotate(refreshToken: String): RotatedSession {
-        val current = repository.findByTokenHash(hash(refreshToken)) ?: throw invalidRefreshToken()
+        val current = repository.findByTokenHash(OpaqueToken.hash(refreshToken)) ?: throw invalidRefreshToken()
         val now = clock.instant()
         if (current.replacedBy != null) {
             log.warn("Refresh token reutilizado; revogando todas as sessões do usuário {}", current.userId)
@@ -57,7 +52,7 @@ class SessionService(
     /** Encerra a sessão do token, se ela existir e estiver ativa. */
     @Transactional
     fun revoke(refreshToken: String) {
-        val current = repository.findByTokenHash(hash(refreshToken)) ?: return
+        val current = repository.findByTokenHash(OpaqueToken.hash(refreshToken)) ?: return
         if (current.revokedAt == null) current.revokedAt = clock.instant()
     }
 
@@ -77,13 +72,12 @@ class SessionService(
     }
 
     private fun save(userId: UUID): Pair<RefreshTokenEntity, String> {
-        val bytes = ByteArray(TOKEN_BYTES).also(random::nextBytes)
-        val token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+        val token = OpaqueToken.generate()
         val entity = repository.save(
             RefreshTokenEntity(
                 id = UUID.randomUUID(),
                 userId = userId,
-                tokenHash = hash(token),
+                tokenHash = OpaqueToken.hash(token),
                 expiresAt = clock.instant().plus(properties.refreshTokenTtl),
             ),
         )
@@ -93,10 +87,6 @@ class SessionService(
     private fun invalidRefreshToken() = UnauthorizedException("Sessão inválida ou expirada", "INVALID_REFRESH_TOKEN")
 
     companion object {
-        private const val TOKEN_BYTES = 32
         private val RETENTION_AFTER_EXPIRY = Duration.ofDays(30)
-
-        fun hash(token: String): String =
-            HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(token.toByteArray(Charsets.UTF_8)))
     }
 }

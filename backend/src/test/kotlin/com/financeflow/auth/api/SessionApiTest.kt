@@ -1,5 +1,6 @@
 package com.financeflow.auth.api
 
+import com.financeflow.auth.application.OpaqueToken
 import com.financeflow.auth.application.SessionService
 import com.financeflow.support.ApiTest
 import jakarta.servlet.http.Cookie
@@ -46,9 +47,9 @@ class SessionApiTest : ApiTest() {
         assertNotEquals(old, new)
         assertTrue(result.response.getHeader("Set-Cookie")!!.contains("Path=/api/v1/auth"))
 
-        val oldRow = jdbc.queryForMap("SELECT * FROM refresh_tokens WHERE token_hash = ?", SessionService.hash(old))
+        val oldRow = jdbc.queryForMap("SELECT * FROM refresh_tokens WHERE token_hash = ?", OpaqueToken.hash(old))
         val newId = jdbc.queryForObject(
-            "SELECT id FROM refresh_tokens WHERE token_hash = ?", UUID::class.java, SessionService.hash(new),
+            "SELECT id FROM refresh_tokens WHERE token_hash = ?", UUID::class.java, OpaqueToken.hash(new),
         )
         assertNotNull(oldRow["revoked_at"])
         assertEquals(newId, oldRow["replaced_by"])
@@ -213,7 +214,7 @@ class SessionApiTest : ApiTest() {
         val id = UUID.randomUUID()
         jdbc.update(
             "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
-            id, userId, SessionService.hash(token), Timestamp.from(expiresAt),
+            id, userId, OpaqueToken.hash(token), Timestamp.from(expiresAt),
         )
         return id
     }

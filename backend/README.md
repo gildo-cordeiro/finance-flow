@@ -66,8 +66,10 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 - `POST /api/v1/auth/register`, `/login` e `/refresh` são públicos e devolvem `{accessToken, expiresIn, user}` no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`). Nessas rotas o cabeçalho `Authorization` é ignorado.
 - O refresh rotaciona o token a cada uso. Reapresentar um token já rotacionado revoga todas as sessões do usuário (`SessionService.revokeAll`, usado também na troca de senha). Erro → 401 `INVALID_REFRESH_TOKEN`.
 - `POST /api/v1/auth/logout` revoga o token do cookie, apaga o cookie e responde 204.
-- Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
-- Um job diário apaga os refresh tokens expirados há mais de 30 dias.
+- Recuperação de senha (RF-004), também pública: `POST /api/v1/auth/password/forgot` `{email}` responde sempre 204, exista ou não o e-mail; se existir, envia o link `${APP_FRONTEND_URL}/redefinir-senha?token=...`, de uso único e válido por 1 hora, e invalida os links anteriores ainda não usados. `POST /api/v1/auth/password/reset` `{token, newPassword}` aplica a política de senha, marca o link como usado e revoga todas as sessões (204). Link inválido, expirado ou já usado → 422 `INVALID_RESET_TOKEN`.
+- E-mail sai pela interface `EmailSender` (`shared/email`, [ADR-0031](../docs/adr/0031-email-transacional-por-interface-desde-a-fase-1.md)). Com `APP_EMAIL_PROVIDER=log` (padrão), o `LoggingEmailSender` só escreve a mensagem no log, com o link; nos testes de API, o `FakeEmailSender` captura as mensagens.
+- Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP; pedido de link 10/hora por IP e 3/hora por e-mail. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
+- Um job diário apaga os refresh tokens e os links de redefinição expirados há mais de 30 dias.
 - As demais rotas exigem `Authorization: Bearer <accessToken>`. O `sub` do token é o id do usuário, lido com `CurrentUser.id()`.
 - O cadastro publica `UserRegistered(userId)` (Spring `ApplicationEvent`) para outros módulos reagirem.
 
@@ -75,6 +77,8 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 |-----------------------|-------------------------------------------------------|-----------|
 | `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes). Defina sempre em produção | valor de dev |
 | `APP_PRIVACY_VERSION` | Versão vigente da política de privacidade (RF-102)    | `2026-10` |
+| `APP_FRONTEND_URL`    | Base do link de redefinição de senha                  | `http://localhost:5173` |
+| `APP_EMAIL_PROVIDER`  | Implementação do `EmailSender`. `log` só registra no log; não use em produção | `log` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
 
 ## Testes
