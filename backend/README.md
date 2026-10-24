@@ -4,7 +4,7 @@ Kotlin + Spring Boot 4 (JVM 21), PostgreSQL 16 e Flyway. As decisões estão em 
 
 ```bash
 docker compose up -d db   # na raiz do repositório
-export APP_JWT_SECRET=$(openssl rand -base64 48)   # obrigatório, mínimo 32 bytes
+# APP_JWT_SECRET tem um valor de desenvolvimento; em produção defina o seu (openssl rand -base64 48)
 ./gradlew bootRun
 ./gradlew test            # exige Docker (Testcontainers)
 ```
@@ -73,7 +73,7 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 
 | Variável              | Para quê                                              | Padrão    |
 |-----------------------|-------------------------------------------------------|-----------|
-| `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes)   | nenhum    |
+| `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes). Defina sempre em produção | valor de dev |
 | `APP_PRIVACY_VERSION` | Versão vigente da política de privacidade (RF-102)    | `2026-10` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
 
