@@ -15,6 +15,7 @@ import { useAccounts } from '../hooks/useAccounts';
 import type { Account } from '../types';
 import { AccountForm } from './AccountForm';
 import { AccountRow } from './AccountRow';
+import { AccountsSummaryCard } from './AccountsSummaryCard';
 
 type Editing = { account?: Account } | null;
 
@@ -34,6 +35,7 @@ export function AccountsPage() {
           </Button>
         }
       />
+      <AccountsSummaryCard />
       <div className="mb-4 flex items-center gap-2">
         <Checkbox
           id="show-archived-accounts"

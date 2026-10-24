@@ -22,6 +22,7 @@ type Call = { method: string; path: string; init: RequestInit };
 function stubAccountsApi(onWrite: (call: Call) => Response = () => problem(500, 'INTERNAL_ERROR')) {
   return stubFetch((call) => {
     if (call.path === '/auth/refresh') return json(200, session());
+    if (call.path === '/dashboard/summary') return json(200, { accountsBalance: 1234.5, accounts: [{}] });
     if (call.path === '/accounts?includeArchived=false') return json(200, [corrente]);
     if (call.path === '/accounts?includeArchived=true') return json(200, [antiga, corrente]);
     if (call.path.startsWith('/accounts')) return onWrite(call);
@@ -45,6 +46,14 @@ describe('contas', () => {
     expect(screen.getByText('Conta corrente · Nubank')).toBeInTheDocument();
     expect(screen.getByLabelText('Saldo de Conta do dia a dia')).toHaveTextContent('R$ 1.234,50');
     expect(screen.queryByText('Conta antiga')).not.toBeInTheDocument();
+  });
+
+  it('mostra no topo o saldo total calculado pela API', async () => {
+    stubAccountsApi();
+    renderApp('/contas');
+
+    expect(await screen.findByLabelText('Saldo em contas')).toHaveTextContent('R$ 1.234,50');
+    expect(screen.getByText('Hoje, em 1 conta ativa')).toBeInTheDocument();
   });
 
   it('mostra as arquivadas quando pedido', async () => {
@@ -156,9 +165,14 @@ describe('contas', () => {
   });
 
   it('mostra um estado vazio sem contas', async () => {
-    stubFetch(({ path }) => (path === '/auth/refresh' ? json(200, session()) : json(200, [])));
+    stubFetch(({ path }) => {
+      if (path === '/auth/refresh') return json(200, session());
+      if (path === '/dashboard/summary') return json(200, { accountsBalance: 0, accounts: [] });
+      return json(200, []);
+    });
     renderApp('/contas');
 
     expect(await screen.findByText('Nenhuma conta cadastrada')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Saldo em contas')).not.toBeInTheDocument();
   });
 });
