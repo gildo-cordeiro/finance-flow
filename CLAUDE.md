@@ -8,7 +8,7 @@ FinanceFlow: controle financeiro pessoal (com gestão em casal). Monorepo com `b
 
 - A especificação de requisitos (link no `README.md`) manda. Códigos como `RN-01`, `RF-025`, `RNF-09` vêm dela.
 - `docs/adr/` registra o porquê de cada decisão (índice em `docs/adr/README.md`, modelo em `_template.md`). ADR aceito não é reescrito: é substituído por um novo. Proponha um ADR quando a mudança envolver uma decisão; quem decide criar, aceitar ou dispensar é o desenvolvedor. Mudanças em `build.gradle.kts`, `package.json`, migrations, segurança, CI ou Dockerfile normalmente pedem essa avaliação.
-- Skills de agentes vão em `.agents/skills/` (ainda não existe), escritas a partir da especificação e dos ADRs, não do código.
+- Skills de agentes vão em `.agents/skills/` (`.claude/skills` é um link para lá), escritas a partir da especificação e dos ADRs, não do código: `backend-kotlin` e `frontend-react` trazem os padrões de cada ponta. Ao mudar um ADR, revise as skills que o citam.
 
 ## Comandos
 
