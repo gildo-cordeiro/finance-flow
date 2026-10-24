@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeftRight, CircleAlert, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +23,9 @@ type Editing = { transaction?: Transaction } | null;
 export function TransactionsPage() {
   const { filters, setFilters, hasExtraFilters } = useTransactionFilters();
   const transactions = useTransactions(filters);
-  const [editing, setEditing] = useState<Editing>(null);
+  // `?nova=1` abre o formulário direto, para o atalho "Nova transação" do Painel
+  const [params] = useSearchParams();
+  const [editing, setEditing] = useState<Editing>(() => (params.has('nova') ? {} : null));
   const items = transactions.data?.pages.flatMap((page) => page.items) ?? [];
   // Os totais vêm da API e valem para a seleção inteira, não só para as páginas carregadas
   const totals = transactions.data?.pages[0]?.totals;

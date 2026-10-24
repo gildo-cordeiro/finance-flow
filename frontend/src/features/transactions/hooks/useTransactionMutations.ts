@@ -3,7 +3,7 @@ import { transactionsApi } from '../api/transactionsApi';
 import type { SaveTransactionRequest } from '../types';
 import { TRANSACTIONS_KEY } from './useTransactions';
 
-// Uma transação muda a lista, o saldo das contas, o realizado do orçamento e, quando houver, o painel
+// Uma transação muda a lista, o saldo das contas, o realizado do orçamento e o painel
 function useInvalidate() {
   const queryClient = useQueryClient();
   return () =>
@@ -11,6 +11,7 @@ function useInvalidate() {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
       queryClient.invalidateQueries({ queryKey: ['accounts'] }),
       queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
     ]);
 }
 

@@ -45,3 +45,25 @@ data class TransactionTotals(val count: Long, val income: BigDecimal, val expens
 
 /** Soma da competência numa categoria, de todos os status, e quanto dela já foi pago. */
 data class CategoryTotal(val categoryId: UUID, val total: BigDecimal, val paid: BigDecimal)
+
+/** Receitas e despesas da competência, com quanto de cada uma já foi pago. Transferências ficam de fora (RF-013). */
+data class MonthTotals(
+    val income: BigDecimal,
+    val incomePaid: BigDecimal,
+    val expense: BigDecimal,
+    val expensePaid: BigDecimal,
+)
+
+/**
+ * Despesa não paga com vencimento, fora do cartão (a compra no cartão se paga pela fatura). `overdue` vale pelo
+ * "hoje" do usuário, não pelo status gravado (RN-06).
+ */
+data class Payable(
+    val id: UUID,
+    val description: String,
+    val amount: BigDecimal,
+    val accountName: String,
+    val categoryName: String?,
+    val dueDate: LocalDate,
+    val overdue: Boolean,
+)

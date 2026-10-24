@@ -81,6 +81,24 @@ class BudgetTreeTest {
         assertEquals(money("8000"), BudgetTree.totals(lines, income = true).planned)
     }
 
+    @Test
+    fun `destaques põem as planejadas mais usadas primeiro e as sem planejado por gasto`() {
+        val transporte = category("Transporte")
+        val lines = BudgetTree.build(
+            listOf(moradia, aluguel, lazer, transporte, salario),
+            planned = mapOf(aluguel.id to money("1000"), transporte.id to money("100"), salario.id to money("10")),
+            realized = mapOf(
+                aluguel.id to Realized(money("500"), money("0")),
+                transporte.id to Realized(money("120"), money("0")),
+                lazer.id to Realized(money("245"), money("0")),
+                salario.id to Realized(money("10"), money("10")),
+            ),
+        )
+
+        assertEquals(listOf(transporte, moradia, lazer), BudgetTree.highlights(lines, 5).map { it.category })
+        assertEquals(listOf(transporte), BudgetTree.highlights(lines, 1).map { it.category })
+    }
+
     private fun category(name: String, parent: BudgetCategory? = null, income: Boolean = false, archived: Boolean = false) =
         BudgetCategory(UUID.randomUUID(), name, income, archived, parent?.id)
 

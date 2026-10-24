@@ -12,6 +12,8 @@ import com.financeflow.shared.time.UserClock
 import com.financeflow.transaction.domain.CategoryTotal
 import com.financeflow.transaction.domain.Competence
 import com.financeflow.transaction.domain.Entry
+import com.financeflow.transaction.domain.MonthTotals
+import com.financeflow.transaction.domain.Payable
 import com.financeflow.transaction.domain.TransactionFilter
 import com.financeflow.transaction.domain.TransactionStatus
 import com.financeflow.transaction.domain.TransactionTotals
@@ -70,6 +72,17 @@ class TransactionService(
     @Transactional(readOnly = true)
     fun totalsByCategory(month: YearMonth): List<CategoryTotal> =
         transactions.totalsByCategory(currentUser.id(), month.atDay(1))
+
+    @Transactional(readOnly = true)
+    fun monthTotals(month: YearMonth): MonthTotals = transactions.monthTotals(currentUser.id(), month.atDay(1))
+
+    /** Despesas atrasadas e as que vencem até `days` dias a partir de hoje, no fuso do usuário. */
+    @Transactional(readOnly = true)
+    fun payables(days: Long, limit: Int): Pair<List<Payable>, Long> {
+        val userId = currentUser.id()
+        val today = userClock.today(userId)
+        return transactions.payables(userId, today, today.plusDays(days), limit) to transactions.countOverdue(userId, today)
+    }
 
     @Transactional(readOnly = true)
     fun get(id: UUID): TransactionView = transactions.findView(currentUser.id(), id) ?: throw NotFoundException()
