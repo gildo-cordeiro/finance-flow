@@ -1,4 +1,4 @@
-# ADR-0035 — Lado da transferência em coluna própria
+# ADR-0036 — Lado da transferência em coluna própria
 
 - Status: Proposto
 - Data: 2026-10-24

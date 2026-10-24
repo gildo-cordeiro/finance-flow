@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
-/** V2: lado da transferência (ADR-0035). */
+/** V2: lado da transferência (ADR-0036). */
 @SpringBootTest
 @Transactional
 class SchemaV2Test(@Autowired private val jdbc: JdbcTemplate) : IntegrationTest() {

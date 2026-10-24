@@ -11,7 +11,7 @@ interface AccountRepository : JpaRepository<AccountEntity, UUID> {
 
     fun findByUserId(userId: UUID): List<AccountEntity>
 
-    // O lado da transferência vem de transfer_direction (ADR-0035)
+    // O lado da transferência vem de transfer_direction (ADR-0036)
     @Query(
         """
         SELECT t.account_id AS "accountId",

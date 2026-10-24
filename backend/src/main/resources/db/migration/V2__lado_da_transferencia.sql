@@ -1,4 +1,4 @@
--- Lado de cada ponta de uma transferência (ADR-0035): OUT sai da conta, IN entra.
+-- Lado de cada ponta de uma transferência (ADR-0036): OUT sai da conta, IN entra.
 -- Sem ele o saldo calculado (RN-07, ADR-0011) não sabe se soma ou subtrai uma transferência.
 
 ALTER TABLE transactions ADD COLUMN transfer_direction VARCHAR(3);

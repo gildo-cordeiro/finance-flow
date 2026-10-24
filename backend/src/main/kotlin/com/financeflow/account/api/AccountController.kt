@@ -34,7 +34,7 @@ data class SaveAccountRequest(
     val bank: String? = null,
     @field:NotNull @field:Digits(integer = 15, fraction = 2)
     val initialBalance: BigDecimal? = null,
-    // ADR-0008: corrente e poupança usam 0 por padrão; limite de 12 meses pelo ADR-0036
+    // ADR-0008: corrente e poupança usam 0 por padrão; limite de 12 meses pelo ADR-0037
     @field:Min(0) @field:Max(12)
     val competenceOffset: Int = 0,
 ) {
