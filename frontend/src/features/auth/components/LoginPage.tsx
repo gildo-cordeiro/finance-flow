@@ -68,7 +68,12 @@ export function LoginPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Senha</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Senha</FormLabel>
+                  <Link to="/esqueci-senha" className="text-xs font-medium text-primary hover:underline">
+                    Esqueci minha senha
+                  </Link>
+                </div>
                 <FormControl>
                   <PasswordInput autoComplete="current-password" {...field} />
                 </FormControl>

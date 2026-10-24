@@ -26,6 +26,15 @@ export interface RegisterRequest {
   acceptedPrivacyVersion: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
 export interface AuthContextValue {
