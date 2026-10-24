@@ -38,7 +38,8 @@ data class SaveAccountRequest(
     @field:Min(0) @field:Max(12)
     val competenceOffset: Int = 0,
 ) {
-    fun toCommand() = SaveAccountCommand(name, type!!, bank, initialBalance!!, competenceOffset)
+    // Anuláveis só para o @NotNull responder 422; chegam aqui já validados
+    fun toCommand() = SaveAccountCommand(name, checkNotNull(type), bank, checkNotNull(initialBalance), competenceOffset)
 }
 
 data class AccountResponse(

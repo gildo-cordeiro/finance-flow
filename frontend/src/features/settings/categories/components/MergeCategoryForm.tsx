@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { applyFieldErrors, nativeSelectClass } from '@/lib/forms';
 import { errorMessage } from '@/services/errors';
-import { useCategoryMutations } from '../hooks/useCategoryMutations';
+import { useMergeCategory } from '../hooks/useCategoryMutations';
 import { mergeCategorySchema, type MergeCategoryForm as MergeCategoryValues } from '../schemas/categorySchema';
 import type { Category } from '../types';
 
@@ -20,7 +20,7 @@ interface MergeCategoryFormProps {
 }
 
 export function MergeCategoryForm({ source, tree, onDone }: MergeCategoryFormProps) {
-  const { merge } = useCategoryMutations();
+  const merge = useMergeCategory();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<MergeCategoryValues>({ resolver: zodResolver(mergeCategorySchema), defaultValues: { targetId: '' } });
   const { isSubmitting } = form.formState;

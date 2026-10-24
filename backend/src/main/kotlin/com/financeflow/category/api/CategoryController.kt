@@ -62,7 +62,7 @@ class CategoryController(private val categoryService: CategoryService) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateCategoryRequest) =
-        categoryService.create(CreateCategoryCommand(request.name, request.type!!, request.parentId)).toResponse()
+        categoryService.create(CreateCategoryCommand(request.name, checkNotNull(request.type), request.parentId)).toResponse()
 
     @PutMapping("/{id}")
     fun rename(@PathVariable id: UUID, @Valid @RequestBody request: RenameCategoryRequest) =
@@ -76,7 +76,7 @@ class CategoryController(private val categoryService: CategoryService) {
 
     @PostMapping("/{id}/merge")
     fun merge(@PathVariable id: UUID, @Valid @RequestBody request: MergeCategoryRequest) =
-        categoryService.merge(id, request.targetId!!).toResponse()
+        categoryService.merge(id, checkNotNull(request.targetId)).toResponse()
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

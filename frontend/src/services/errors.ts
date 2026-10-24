@@ -49,6 +49,9 @@ const MESSAGES: Record<string, string> = {
   CATEGORY_NAME_TAKEN: 'Já existe uma categoria com esse nome neste nível.',
   CATEGORY_HAS_SUBCATEGORIES: 'Exclua as subcategorias antes de excluir a categoria.',
   PARENT_CATEGORY_ARCHIVED: 'Desarquive a categoria pai primeiro.',
+  INVALID_CATEGORY_MERGE:
+    'Não é possível mesclar: escolha outra categoria ativa do mesmo tipo e mescle as subcategorias antes.',
+  ACCOUNT_IS_CREDIT_CARD: 'Cartões de crédito são alterados no cadastro de cartões.',
 };
 
 /** Mensagem para o usuário, escolhida pelo `code` do erro. */

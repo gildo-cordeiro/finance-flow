@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MoneyValue } from '@/components/ui/MoneyValue';
 import { errorMessage } from '@/services/errors';
-import { useAccountMutations } from '../hooks/useAccountMutations';
+import { useDeleteAccount, useSetAccountArchived } from '../hooks/useAccountMutations';
 import { ACCOUNT_TYPE_LABELS, type Account } from '../types';
 
 interface AccountRowProps {
@@ -13,7 +13,8 @@ interface AccountRowProps {
 }
 
 export function AccountRow({ account, onEdit }: AccountRowProps) {
-  const { setArchived, remove } = useAccountMutations();
+  const setArchived = useSetAccountArchived();
+  const remove = useDeleteAccount();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Cartões são editados no cadastro próprio (F1-14)
   const editable = account.type !== 'CREDIT_CARD';
