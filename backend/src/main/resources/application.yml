@@ -29,6 +29,14 @@ app:
   rate-limit:
     trusted-proxies: ${APP_TRUSTED_PROXIES:} # IPs separados por vírgula
 
+springdoc:
+  api-docs:
+    enabled: ${APP_API_DOCS_ENABLED:true} # desligue em produção (ADR-0037)
+  swagger-ui:
+    enabled: ${APP_API_DOCS_ENABLED:true}
+  writer-with-order-by-keys: true # saída estável para o docs/api.md
+  override-with-generic-response: false # os erros vêm de @DocumentedError, por endpoint
+
 management:
   endpoints:
     web:

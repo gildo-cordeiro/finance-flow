@@ -15,9 +15,9 @@ import org.springframework.web.servlet.HandlerExceptionResolver
 
 /**
  * Segurança sem estado com filtro JWT (ADR-0005): o `sub` do access token vira o id do usuário
- * no `SecurityContext`. Só o health check e as rotas de `/api/v1/auth` que não dependem do
- * access token (cadastro, login, refresh, logout, recuperação de senha e versão da política de
- * privacidade) são públicos.
+ * no `SecurityContext`. Só o health check, a documentação da API e as rotas de `/api/v1/auth` que
+ * não dependem do access token (cadastro, login, refresh, logout, recuperação de senha e versão da
+ * política de privacidade) são públicos.
  */
 @Configuration
 class SecurityConfig(
@@ -45,6 +45,8 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health").permitAll()
+                // Só respondem com APP_API_DOCS_ENABLED=true (ADR-0037)
+                it.requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 it.requestMatchers(HttpMethod.POST, *PUBLIC_AUTH_ROUTES.toTypedArray()).permitAll()
                 it.requestMatchers(HttpMethod.GET, *PUBLIC_GET_ROUTES.toTypedArray()).permitAll()
                 it.anyRequest().authenticated()

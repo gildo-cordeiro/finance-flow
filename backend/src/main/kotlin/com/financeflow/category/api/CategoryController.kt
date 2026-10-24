@@ -5,10 +5,15 @@ import com.financeflow.category.application.CreateCategoryCommand
 import com.financeflow.category.domain.CategoryBranch
 import com.financeflow.category.domain.CategoryItem
 import com.financeflow.category.domain.CategoryType
+import com.financeflow.shared.error.DocumentedError
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 data class CreateCategoryRequest(
     @field:NotBlank @field:Size(max = 100)
@@ -49,35 +53,49 @@ data class CategoryResponse(
     val subcategories: List<CategoryResponse> = emptyList(),
 )
 
+@Tag(name = "Categorias", description = "Dois níveis, com tipo (RF-012, ADR-0013, ADR-0036).")
 @RestController
 @RequestMapping("/api/v1/categories")
 class CategoryController(private val categoryService: CategoryService) {
 
+    @Operation(summary = "Árvore de categorias com as subcategorias, em ordem alfabética")
     @GetMapping
     fun tree(
-        @RequestParam(required = false) type: CategoryType?,
-        @RequestParam(defaultValue = "false") includeArchived: Boolean,
+        @Parameter(description = "Filtra pelo tipo; sem ele, todas") @RequestParam(required = false) type: CategoryType?,
+        @Parameter(description = "Inclui as arquivadas") @RequestParam(defaultValue = "false") includeArchived: Boolean,
     ) = categoryService.tree(type, includeArchived).map { it.toResponse() }
 
+    @Operation(summary = "Cria categoria ou subcategoria", description = "A subcategoria tem o tipo do pai, que precisa ser de primeiro nível e ativo.")
+    @DocumentedError(409, "CATEGORY_NAME_TAKEN", "Nome já usado no mesmo nível")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateCategoryRequest) =
         categoryService.create(CreateCategoryCommand(request.name, request.type!!, request.parentId)).toResponse()
 
+    @Operation(summary = "Renomeia a categoria")
+    @DocumentedError(409, "CATEGORY_NAME_TAKEN", "Nome já usado no mesmo nível")
     @PutMapping("/{id}")
     fun rename(@PathVariable id: UUID, @Valid @RequestBody request: RenameCategoryRequest) =
         categoryService.rename(id, request.name).toResponse()
 
+    @Operation(summary = "Arquiva a categoria e as subcategorias")
     @PostMapping("/{id}/archive")
     fun archive(@PathVariable id: UUID) = categoryService.archive(id).toResponse()
 
+    @Operation(summary = "Desarquiva a categoria (não as subcategorias)")
+    @DocumentedError(409, "PARENT_CATEGORY_ARCHIVED", "A categoria pai está arquivada")
     @PostMapping("/{id}/unarchive")
     fun unarchive(@PathVariable id: UUID) = categoryService.unarchive(id).toResponse()
 
+    @Operation(summary = "Mescla na categoria de destino", description = "Move transações e orçamentos (somando o planejado do mesmo mês) e arquiva a origem.")
+    @DocumentedError(409, "INVALID_CATEGORY_MERGE", "Destino igual, de outro tipo ou arquivado, ou origem com subcategorias")
     @PostMapping("/{id}/merge")
     fun merge(@PathVariable id: UUID, @Valid @RequestBody request: MergeCategoryRequest) =
         categoryService.merge(id, request.targetId!!).toResponse()
 
+    @Operation(summary = "Exclui a categoria sem uso")
+    @DocumentedError(409, "CATEGORY_IN_USE", "Tem transações ou orçamento; arquive ou mescle")
+    @DocumentedError(409, "CATEGORY_HAS_SUBCATEGORIES", "Tem subcategorias")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) = categoryService.delete(id)
