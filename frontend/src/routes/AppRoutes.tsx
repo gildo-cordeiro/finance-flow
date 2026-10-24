@@ -7,11 +7,13 @@ import { AccountsPage } from '@/features/accounts/components/AccountsPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
+import { TransactionsPage } from '@/features/transactions/components/TransactionsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 
 // Itens da navegação que já têm página; os demais mostram "Em construção"
 const PAGES: Record<string, ReactNode> = {
+  '/transacoes': <TransactionsPage />,
   '/contas': <AccountsPage />,
   '/configuracoes': <SettingsPage />,
 };
