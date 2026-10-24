@@ -1,6 +1,6 @@
 # ADR-0034 — Fronteiras de módulos e camadas verificadas nos testes
 
-- Status: Proposto
+- Status: Aceito
 - Data: 2026-10-24
 - Origem do 'porquê': sugestão, respondendo à pergunta em aberto do ADR-0001 e completando o ADR-0028.
 
@@ -50,4 +50,4 @@ As entidades não saem de `application`: o caso de uso devolve um tipo próprio 
 
 ## Perguntas em aberto
 
-- Ativar o registro de publicação de eventos do Spring Modulith quando a F1-09 passar a ouvir o `UserRegistered`?
+- Ativar o registro de publicação de eventos do Spring Modulith quando a F1-09 passar a ouvir o `UserRegistered`? Respondida em 2026-10-24: não por enquanto. O `DefaultCategoriesListener` roda síncrono na mesma transação do cadastro, e uma falha desfaz tudo. O registro passa a valer com o primeiro ouvinte assíncrono ou após o commit (envio de e-mail do ADR-0031, notificações), e deve ser avaliado nesse momento.

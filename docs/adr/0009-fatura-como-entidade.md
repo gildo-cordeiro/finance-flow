@@ -33,5 +33,5 @@ Pagar uma fatura, pagar parcialmente, navegar entre faturas e calcular o limite 
 
 ## Perguntas em aberto
 
-- Ao mudar o dia de fechamento, as faturas abertas são recalculadas ou só as novas usam o novo dia?
-- O cartão deve ter uma conta pagadora padrão, como `associated_account_id` no projeto anterior?
+- Ao mudar o dia de fechamento, as faturas abertas são recalculadas ou só as novas usam o novo dia? Respondida em 2026-10-24: só as novas. A fatura aberta mantém a `closing_date` que já tem, e o novo dia vale a partir do ciclo seguinte, como nos bancos. Recalcular moveria compras entre faturas e mudaria a competência delas, e portanto o orçamento de meses já vistos. O ciclo de transição fica mais curto ou mais longo que um mês, e a interface avisa. Recalcular faturas futuras sem pagamento pode ser avaliado depois.
+- O cartão deve ter uma conta pagadora padrão, como `associated_account_id` no projeto anterior? Respondida em 2026-10-24: sim, opcional e só como sugestão. Uma coluna nova (ex.: `default_payment_account_id`, `ON DELETE SET NULL`), criada em migration junto com a F1-14, preenche a conta no formulário de pagamento; o pagamento continua escolhendo a conta (RF-033).

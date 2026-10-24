@@ -32,4 +32,4 @@ O vínculo de casal chega na Fase 5, mas a especificação já define as regras:
 
 ## Perguntas em aberto
 
-- Confirmar o cabeçalho `X-View-Context`, que vem do projeto anterior e não está na especificação.
+- Confirmar o cabeçalho `X-View-Context`, que vem do projeto anterior e não está na especificação. Respondida em 2026-10-24: confirmado. No frontend, o contexto entra na chave das consultas do TanStack Query (ou o cache é limpo ao trocar de visão), para a tela não mostrar dados da visão anterior. Sem casal ativo, `COUPLE` é recusado com um `code` próprio (ADR-0027).

@@ -1,6 +1,6 @@
 # ADR-0030 — ADRs e skills de agentes versionados no repositório
 
-- Status: Aceito
+- Status: Aceito; o item "skills ficam em `.agents/skills/`" foi substituído pelo ADR-0035
 - Data: 2026-10-22
 - Origem do 'porquê': sugestão a partir do projeto anterior.
 

@@ -1,6 +1,6 @@
 # ADR-0037 — Regras de cadastro de contas e categorias
 
-- Status: Proposto
+- Status: Aceito
 - Data: 2026-10-24
 - Origem do 'porquê': sugestão (F1-09). Responde a pergunta em aberto do ADR-0013.
 
@@ -57,4 +57,4 @@ A F1-09 implementou contas (RF-010, RF-011) e categorias (RF-012). A especifica�
 
 ## Perguntas em aberto
 
-- Nenhuma.
+- Nenhuma. As consultas por SQL de `account/infra` e `category/infra` em `transactions` e `budgets` devem ser lembradas nos cards F1-11 e F1-17.
