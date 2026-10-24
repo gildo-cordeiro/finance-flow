@@ -73,7 +73,7 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 - Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP; pedido de link 10/hora por IP e 3/hora por e-mail. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
 - Um job diário apaga os refresh tokens e os links de redefinição expirados há mais de 30 dias.
 - As demais rotas exigem `Authorization: Bearer <accessToken>`. O `sub` do token é o id do usuário, lido com `CurrentUser.id()`.
-- O cadastro publica `UserRegistered(userId)` (Spring `ApplicationEvent`) para outros módulos reagirem.
+- O cadastro publica `UserRegistered(userId)` (Spring `ApplicationEvent`) para outros módulos reagirem. O módulo `category` o usa para copiar as categorias padrão (`DefaultCategories`) na mesma transação do cadastro.
 
 | Variável              | Para quê                                              | Padrão    |
 |-----------------------|-------------------------------------------------------|-----------|

@@ -98,7 +98,11 @@ describe('configurações: perfil', () => {
   });
 
   it('avisa quando o perfil não carrega', async () => {
-    stubFetch(({ path }) => (path === '/auth/refresh' ? json(200, session()) : problem(500, 'INTERNAL_ERROR')));
+    stubFetch(({ path }) => {
+      if (path === '/auth/refresh') return json(200, session());
+      if (path.startsWith('/categories')) return json(200, []);
+      return problem(500, 'INTERNAL_ERROR');
+    });
     renderApp('/configuracoes');
 
     expect(

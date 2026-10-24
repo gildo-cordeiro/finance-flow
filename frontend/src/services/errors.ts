@@ -44,6 +44,11 @@ const MESSAGES: Record<string, string> = {
   INVALID_REFRESH_TOKEN: 'Sua sessão expirou. Entre novamente.',
   INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
   EMAIL_ALREADY_USED: 'Já existe uma conta com este e-mail.',
+  ACCOUNT_IN_USE: 'Esta conta tem transações e não pode ser excluída. Arquive-a para escondê-la.',
+  CATEGORY_IN_USE: 'Esta categoria tem transações ou orçamento. Arquive ou mescle em outra.',
+  CATEGORY_NAME_TAKEN: 'Já existe uma categoria com esse nome neste nível.',
+  CATEGORY_HAS_SUBCATEGORIES: 'Exclua as subcategorias antes de excluir a categoria.',
+  PARENT_CATEGORY_ARCHIVED: 'Desarquive a categoria pai primeiro.',
 };
 
 /** Mensagem para o usuário, escolhida pelo `code` do erro. */

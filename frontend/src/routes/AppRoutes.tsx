@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { NAV_ITEMS } from '@/components/layout/navItems';
 import { UnderConstruction } from '@/components/layout/UnderConstruction';
+import { AccountsPage } from '@/features/accounts/components/AccountsPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -11,6 +12,7 @@ import { PublicOnlyRoute } from './PublicOnlyRoute';
 
 // Itens da navegação que já têm página; os demais mostram "Em construção"
 const PAGES: Record<string, ReactNode> = {
+  '/contas': <AccountsPage />,
   '/configuracoes': <SettingsPage />,
 };
 
