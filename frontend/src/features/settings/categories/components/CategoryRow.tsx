@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/services/errors';
-import { useCategoryMutations } from '../hooks/useCategoryMutations';
+import { useDeleteCategory, useSetCategoryArchived } from '../hooks/useCategoryMutations';
 import type { Category } from '../types';
 
 export type CategoryAction = 'addSubcategory' | 'rename' | 'merge';
@@ -15,7 +15,8 @@ interface CategoryRowProps {
 }
 
 export function CategoryRow({ category, onAction }: CategoryRowProps) {
-  const { setArchived, remove } = useCategoryMutations();
+  const setArchived = useSetCategoryArchived();
+  const remove = useDeleteCategory();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const isRoot = category.parentId === null;
   const busy = setArchived.isPending || remove.isPending;

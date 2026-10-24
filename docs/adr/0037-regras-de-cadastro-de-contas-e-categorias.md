@@ -1,4 +1,4 @@
-# ADR-0036 — Regras de cadastro de contas e categorias
+# ADR-0037 — Regras de cadastro de contas e categorias
 
 - Status: Proposto
 - Data: 2026-10-24

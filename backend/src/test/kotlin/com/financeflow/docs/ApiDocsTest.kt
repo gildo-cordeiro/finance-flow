@@ -9,7 +9,7 @@ import java.io.File
 import kotlin.test.assertEquals
 
 /**
- * O `docs/api.md` versionado precisa bater com o OpenAPI gerado do código (ADR-0033, ADR-0037).
+ * O `docs/api.md` versionado precisa bater com o OpenAPI gerado do código (ADR-0033, ADR-0038).
  * Para atualizar: `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'`.
  */
 class ApiDocsTest : ApiTest() {

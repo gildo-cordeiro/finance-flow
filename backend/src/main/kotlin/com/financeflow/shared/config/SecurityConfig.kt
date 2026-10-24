@@ -45,7 +45,7 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health").permitAll()
-                // Só respondem com APP_API_DOCS_ENABLED=true (ADR-0037)
+                // Só respondem com APP_API_DOCS_ENABLED=true (ADR-0038)
                 it.requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 it.requestMatchers(HttpMethod.POST, *PUBLIC_AUTH_ROUTES.toTypedArray()).permitAll()
                 it.requestMatchers(HttpMethod.GET, *PUBLIC_GET_ROUTES.toTypedArray()).permitAll()

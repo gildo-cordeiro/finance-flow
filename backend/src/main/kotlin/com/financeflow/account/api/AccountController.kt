@@ -41,12 +41,13 @@ data class SaveAccountRequest(
     @field:Schema(description = "Até duas casas decimais; pode ser negativo")
     @field:NotNull @field:Digits(integer = 15, fraction = 2)
     val initialBalance: BigDecimal? = null,
-    // ADR-0008: corrente e poupança usam 0 por padrão; limite de 12 meses pelo ADR-0036
+    // ADR-0008: corrente e poupança usam 0 por padrão; limite de 12 meses pelo ADR-0037
     @field:Schema(description = "Meses subtraídos da data de referência para sugerir a competência (ADR-0008)")
     @field:Min(0) @field:Max(12)
     val competenceOffset: Int = 0,
 ) {
-    fun toCommand() = SaveAccountCommand(name, type!!, bank, initialBalance!!, competenceOffset)
+    // Anuláveis só para o @NotNull responder 422; chegam aqui já validados
+    fun toCommand() = SaveAccountCommand(name, checkNotNull(type), bank, checkNotNull(initialBalance), competenceOffset)
 }
 
 data class AccountResponse(

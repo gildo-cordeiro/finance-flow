@@ -114,7 +114,7 @@ Cobertura mínima de 70%, verificada no CI com `./gradlew test koverVerify` (RNF
 
 ## Documentação da API
 
-O contrato da API fica em [`docs/api.md`](../docs/api.md), gerado do OpenAPI (springdoc, [ADR-0033](../docs/adr/0033-documentacao-da-api-pelo-openapi.md), [ADR-0037](../docs/adr/0037-geracao-e-exposicao-da-documentacao-da-api.md)). Com a aplicação rodando, o Swagger UI está em `http://localhost:8080/swagger-ui.html`.
+O contrato da API fica em [`docs/api.md`](../docs/api.md), gerado do OpenAPI (springdoc, [ADR-0033](../docs/adr/0033-documentacao-da-api-pelo-openapi.md), [ADR-0038](../docs/adr/0038-geracao-e-exposicao-da-documentacao-da-api.md)). Com a aplicação rodando, o Swagger UI está em `http://localhost:8080/swagger-ui.html`.
 
 - Cada endpoint tem `@Operation(summary = ...)`, e o controller tem `@Tag`. Campos que precisam de explicação levam `@field:Schema(description = ...)`.
 - Erros de regra de negócio são declarados com `@DocumentedError(409, "CODE", "quando acontece")`. 401, 404 (rota com id), 400 e 422 (corpo com `@Valid`) entram sozinhos; rotas públicas levam `@SecurityRequirements` vazio.

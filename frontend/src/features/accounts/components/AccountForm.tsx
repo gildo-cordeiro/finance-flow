@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { applyFieldErrors, nativeSelectClass } from '@/lib/forms';
 import { errorMessage } from '@/services/errors';
-import { useAccountMutations } from '../hooks/useAccountMutations';
+import { useSaveAccount } from '../hooks/useAccountMutations';
 import { accountSchema, toAccountRequest, type AccountForm as AccountFormValues } from '../schemas/accountSchema';
 import { ACCOUNT_TYPE_LABELS, type Account } from '../types';
 
@@ -29,7 +29,7 @@ interface AccountFormProps {
 }
 
 export function AccountForm({ account, onDone }: AccountFormProps) {
-  const { save } = useAccountMutations();
+  const save = useSaveAccount();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<AccountFormValues>({ resolver: zodResolver(accountSchema), defaultValues: defaults(account) });
   const { isSubmitting } = form.formState;

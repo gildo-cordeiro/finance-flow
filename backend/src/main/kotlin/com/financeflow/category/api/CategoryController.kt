@@ -70,7 +70,7 @@ class CategoryController(private val categoryService: CategoryService) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateCategoryRequest) =
-        categoryService.create(CreateCategoryCommand(request.name, request.type!!, request.parentId)).toResponse()
+        categoryService.create(CreateCategoryCommand(request.name, checkNotNull(request.type), request.parentId)).toResponse()
 
     @Operation(summary = "Renomeia a categoria")
     @DocumentedError(409, "CATEGORY_NAME_TAKEN", "Nome já usado no mesmo nível")
@@ -91,7 +91,7 @@ class CategoryController(private val categoryService: CategoryService) {
     @DocumentedError(409, "INVALID_CATEGORY_MERGE", "Destino igual, de outro tipo ou arquivado, ou origem com subcategorias")
     @PostMapping("/{id}/merge")
     fun merge(@PathVariable id: UUID, @Valid @RequestBody request: MergeCategoryRequest) =
-        categoryService.merge(id, request.targetId!!).toResponse()
+        categoryService.merge(id, checkNotNull(request.targetId)).toResponse()
 
     @Operation(summary = "Exclui a categoria sem uso")
     @DocumentedError(409, "CATEGORY_IN_USE", "Tem transações ou orçamento; arquive ou mescle")

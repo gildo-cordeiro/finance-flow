@@ -4,7 +4,7 @@ import tools.jackson.databind.JsonNode
 import java.text.Collator
 import java.util.Locale
 
-/** Monta o `docs/api.md` a partir da especificação OpenAPI (ADR-0033, ADR-0037). */
+/** Monta o `docs/api.md` a partir da especificação OpenAPI (ADR-0033, ADR-0038). */
 object OpenApiMarkdown {
 
     private val byName = Collator.getInstance(Locale.of("pt", "BR"))

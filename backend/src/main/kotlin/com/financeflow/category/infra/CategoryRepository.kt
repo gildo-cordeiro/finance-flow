@@ -8,7 +8,7 @@ import java.util.UUID
 
 /**
  * As consultas em `transactions` e `budgets` ficam aqui enquanto esses módulos não existem (F1-11, F1-17):
- * a mesclagem precisa movê-los na mesma transação de banco (ADR-0036).
+ * a mesclagem precisa movê-los na mesma transação de banco (ADR-0037).
  */
 interface CategoryRepository : JpaRepository<CategoryEntity, UUID> {
 

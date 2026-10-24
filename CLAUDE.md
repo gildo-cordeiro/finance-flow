@@ -8,7 +8,7 @@ FinanceFlow: controle financeiro pessoal (com gestão em casal). Monorepo com `b
 
 - A especificação de requisitos (link no `README.md`) manda. Códigos como `RN-01`, `RF-025`, `RNF-09` vêm dela.
 - `docs/adr/` registra o porquê de cada decisão (índice em `docs/adr/README.md`, modelo em `_template.md`). ADR aceito não é reescrito: é substituído por um novo. Proponha um ADR quando a mudança envolver uma decisão; quem decide criar, aceitar ou dispensar é o desenvolvedor. Mudanças em `build.gradle.kts`, `package.json`, migrations, segurança, CI ou Dockerfile normalmente pedem essa avaliação.
-- Skills de agentes vão em `.agents/skills/` (ainda não existe), escritas a partir da especificação e dos ADRs, não do código.
+- Skills de agentes vão em `.claude/skills/` (ADR-0035), escritas a partir da especificação e dos ADRs, não do código: `backend-kotlin` e `frontend-react` trazem os padrões de cada ponta. Ao mudar um ADR, revise as skills que o citam.
 
 ## Comandos
 
@@ -35,7 +35,7 @@ O hook `pre-push` (husky) roda lint e testes do frontend.
 
 Monólito modular (ADR-0001): um pacote por domínio em `com.financeflow` (`auth`, `account`, `transaction`, `invoice`, `budget`, ...). Um módulo usa outro só pelo pacote raiz dele (serviços e eventos públicos, ex.: `com.financeflow.auth.UserRegistered`), nunca pelos subpacotes; para reagir a eventos, use `ApplicationEvent`. `ModulesTest` (Spring Modulith) e `LayersTest` (ArchUnit) em `architecture/` verificam isso e a direção das camadas (ADR-0034).
 
-Rotas e contratos da API ficam em `docs/api.md`, gerado do OpenAPI (ADR-0033, ADR-0037), não nos READMEs nem neste arquivo. Mudou um controller ou DTO: regere com `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'` (o teste falha no CI se o arquivo ficar desatualizado). Erros de regra de negócio de cada endpoint são declarados com `@DocumentedError`.
+Rotas e contratos da API ficam em `docs/api.md`, gerado do OpenAPI (ADR-0033, ADR-0038), não nos READMEs nem neste arquivo. Mudou um controller ou DTO: regere com `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'` (o teste falha no CI se o arquivo ficar desatualizado). Erros de regra de negócio de cada endpoint são declarados com `@DocumentedError`.
 
 Camadas por módulo (ADR-0028): `domain` (regras puras, sem Spring/JPA, testadas sem banco), `application` (casos de uso, transação, filtro por usuário), `infra` (entidades JPA, Spring Data, adaptadores), `api` (controllers e DTOs). `api` não vê `infra`; `application` usa de `infra` só entidades e repositórios, e entidades não saem do caso de uso. O que é comum fica em `shared/` (`error`, `security`, `config`, `ratelimit`). O `backend/README.md` detalha erros, autenticação e testes.
 

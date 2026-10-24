@@ -1,4 +1,4 @@
-# ADR-0037 — Geração e exposição da documentação da API
+# ADR-0038 — Geração e exposição da documentação da API
 
 - Status: Proposto
 - Data: 2026-10-24

@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { applyFieldErrors } from '@/lib/forms';
 import { errorMessage } from '@/services/errors';
-import { useCategoryMutations } from '../hooks/useCategoryMutations';
+import { useCreateCategory, useRenameCategory } from '../hooks/useCategoryMutations';
 import { categoryNameSchema, type CategoryNameForm as CategoryNameValues } from '../schemas/categorySchema';
 import type { Category, CategoryType } from '../types';
 
@@ -19,7 +19,8 @@ type CategoryNameFormProps =
 
 /** Cria uma categoria (ou subcategoria de `parent`) ou renomeia uma existente. */
 export function CategoryNameForm(props: CategoryNameFormProps) {
-  const { create, rename } = useCategoryMutations();
+  const create = useCreateCategory();
+  const rename = useRenameCategory();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<CategoryNameValues>({
     resolver: zodResolver(categoryNameSchema),
