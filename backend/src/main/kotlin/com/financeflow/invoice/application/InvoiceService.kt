@@ -6,9 +6,12 @@ import com.financeflow.invoice.domain.Installments
 import com.financeflow.invoice.domain.InvoiceCycle
 import com.financeflow.invoice.domain.InvoiceStatus
 import com.financeflow.invoice.infra.InvoiceEntity
+import com.financeflow.invoice.infra.InvoicePaymentEntity
+import com.financeflow.invoice.infra.InvoicePaymentRepository
 import com.financeflow.invoice.infra.InvoiceRepository
 import com.financeflow.shared.error.BusinessRuleException
 import com.financeflow.shared.error.NotFoundException
+import com.financeflow.shared.error.ValidationException
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.shared.time.Competence
 import com.financeflow.shared.time.UserClock
@@ -16,6 +19,7 @@ import com.financeflow.transaction.CardItem
 import com.financeflow.transaction.CardLedger
 import com.financeflow.transaction.InvoiceTotal
 import com.financeflow.transaction.NewCardItem
+import com.financeflow.transaction.NewCardPayment
 import com.financeflow.transaction.NewCardPurchase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +37,8 @@ data class PurchaseCommand(
     val installments: Int,
 )
 
+data class PaymentCommand(val fromAccountId: UUID, val amount: BigDecimal, val paymentDate: LocalDate?)
+
 /** Fatura com o total calculado dos itens (ADR-0009). Sem `id`, é a fatura atual que ainda não tem compras. */
 data class InvoiceSummary(
     val id: UUID?,
@@ -44,15 +50,28 @@ data class InvoiceSummary(
     val total: BigDecimal,
     val paidAmount: BigDecimal,
     val itemCount: Long,
+) {
+    val openAmount: BigDecimal get() = (total - paidAmount).max(BigDecimal.ZERO)
+}
+
+data class InvoicePayment(
+    val id: UUID,
+    val fromAccountId: UUID,
+    val fromAccountName: String?,
+    val amount: BigDecimal,
+    val paymentDate: LocalDate,
 )
 
 data class InvoiceDetail(
     val summary: InvoiceSummary,
     val cardName: String,
     val items: List<CardItem>,
+    val payments: List<InvoicePayment>,
     val previousInvoiceId: UUID?,
     val nextInvoiceId: UUID?,
 )
+
+data class UpcomingInvoiceSummary(val summary: InvoiceSummary, val cardName: String, val overdue: Boolean)
 
 data class PurchaseItem(val id: UUID, val invoiceId: UUID, val amount: BigDecimal, val dueDate: LocalDate, val competenceMonth: YearMonth)
 
@@ -62,6 +81,7 @@ data class InvoicePreview(val closingDate: LocalDate, val dueDate: LocalDate, va
 @Service
 class InvoiceService(
     private val invoices: InvoiceRepository,
+    private val payments: InvoicePaymentRepository,
     private val accounts: AccountDirectory,
     private val cardLedger: CardLedger,
     private val currentUser: CurrentUser,
@@ -93,6 +113,13 @@ class InvoiceService(
         val ids = cardLedger.record(
             NewCardPurchase(card.id, command.description, command.categoryId, command.purchaseDate, drafts),
         )
+        // ADR-0039: a compra nova fica em aberto, e o que já foi pago continua valendo
+        invoices.findAllById(drafts.map { it.invoiceId }.toSet())
+            .filter { it.status == InvoiceStatus.PAID }
+            .forEach {
+                it.status = InvoiceStatus.PARTIALLY_PAID
+                it.updatedAt = clock.instant()
+            }
         return ids.zip(drafts) { id, item -> PurchaseItem(id, item.invoiceId, item.amount, item.dueDate, item.competence) }
     }
 
@@ -148,6 +175,12 @@ class InvoiceService(
             summary = summaries(listOf(invoice)).single(),
             cardName = card.name,
             items = cardLedger.items(invoice.id),
+            payments = payments.findByInvoiceIdOrderByPaymentDateAscIdAsc(invoice.id).map { payment ->
+                InvoicePayment(
+                    payment.id, payment.fromAccountId, accounts.find(payment.fromAccountId)?.name, payment.amount,
+                    payment.paymentDate,
+                )
+            },
             previousInvoiceId = all.getOrNull(index - 1)?.id,
             nextInvoiceId = all.getOrNull(index + 1)?.id,
         )
@@ -157,11 +190,91 @@ class InvoiceService(
     @Transactional
     fun deletePurchase(itemId: UUID) {
         val purchase = cardLedger.purchase(itemId) ?: throw NotFoundException()
+        // Sem isso o valor pago passaria do total da fatura (ADR-0039)
+        if (invoices.findAllById(purchase.invoiceIds).any { it.paidAmount.signum() > 0 }) {
+            throw BusinessRuleException(
+                "INVOICE_HAS_PAYMENTS",
+                "A compra está numa fatura com pagamento. Estorne o pagamento antes de excluir",
+            )
+        }
         cardLedger.deletePurchase(itemId)
         val remaining = cardLedger.totals(purchase.invoiceIds)
         val empty = invoices.findAllById(purchase.invoiceIds)
             .filter { it.id !in remaining && it.paidAmount.signum() == 0 }
         invoices.deleteAll(empty)
+    }
+
+    /**
+     * Paga a fatura, toda ou em parte, com uma transferência da conta pagadora para o cartão (RF-033, ADR-0039).
+     * Quitada, os itens ficam pagos; em parte, continuam em aberto.
+     */
+    @Transactional
+    fun pay(invoiceId: UUID, command: PaymentCommand): InvoicePayment {
+        val userId = currentUser.id()
+        invoices.findForUser(invoiceId, userId) ?: throw NotFoundException()
+        val invoice = checkNotNull(invoices.lockById(invoiceId))
+        val card = findCard(invoice.accountId)
+        val account = accounts.find(command.fromAccountId)
+        val accountError = when {
+            account == null -> "Conta não encontrada"
+            account.creditCard -> "A fatura é paga por uma conta corrente ou poupança"
+            account.archived -> "Conta arquivada"
+            else -> null
+        }
+        accountError?.let { throw ValidationException("fromAccountId", it) }
+        val total = cardLedger.totals(listOf(invoice.id))[invoice.id]?.total ?: BigDecimal.ZERO
+        val open = total - invoice.paidAmount
+        if (open.signum() <= 0) throw ValidationException("amount", "A fatura não tem saldo em aberto")
+        if (command.amount > open) throw ValidationException("amount", "O valor passa do saldo em aberto da fatura")
+        val paymentDate = command.paymentDate ?: userClock.today(userId)
+        val payment = InvoicePaymentEntity(
+            id = UUID.randomUUID(),
+            invoiceId = invoice.id,
+            fromAccountId = command.fromAccountId,
+            amount = command.amount,
+            paymentDate = paymentDate,
+            updatedAt = clock.instant(),
+        )
+        payments.saveAndFlush(payment)
+        cardLedger.recordPayment(
+            NewCardPayment(
+                payment.id, command.fromAccountId, card.id, command.amount, paymentDate, "Pagamento da fatura ${card.name}",
+            ),
+        )
+        invoice.paidAmount += command.amount
+        if (invoice.paidAmount.compareTo(total) == 0) {
+            invoice.status = InvoiceStatus.PAID
+            cardLedger.settle(invoice.id, paymentDate)
+        } else {
+            invoice.status = InvoiceStatus.PARTIALLY_PAID
+        }
+        invoice.updatedAt = clock.instant()
+        return InvoicePayment(payment.id, payment.fromAccountId, account?.name, payment.amount, payment.paymentDate)
+    }
+
+    /** Estorna um pagamento: a transferência some, e a fatura e os itens voltam a ficar em aberto (ADR-0039). */
+    @Transactional
+    fun reversePayment(invoiceId: UUID, paymentId: UUID) {
+        invoices.findForUser(invoiceId, currentUser.id()) ?: throw NotFoundException()
+        val invoice = checkNotNull(invoices.lockById(invoiceId))
+        val payment = payments.findByIdAndInvoiceId(paymentId, invoice.id) ?: throw NotFoundException()
+        cardLedger.deletePayment(payment.id)
+        payments.delete(payment)
+        invoice.paidAmount = (invoice.paidAmount - payment.amount).max(BigDecimal.ZERO)
+        invoice.status = if (invoice.paidAmount.signum() == 0) InvoiceStatus.OPEN else InvoiceStatus.PARTIALLY_PAID
+        invoice.updatedAt = clock.instant()
+        cardLedger.reopen(invoice.id)
+    }
+
+    /** Faturas com saldo em aberto que vencem nos próximos `days` dias, e as já vencidas, por vencimento. */
+    @Transactional(readOnly = true)
+    fun upcoming(days: Long): List<UpcomingInvoiceSummary> {
+        val today = userClock.today(currentUser.id())
+        val found = invoices.findUnpaidDueUntil(currentUser.id(), today.plusDays(days))
+        val cards = found.map { it.accountId }.distinct().associateWith { accounts.findCard(it) }
+        return summaries(found)
+            .filter { it.openAmount.signum() > 0 }
+            .map { UpcomingInvoiceSummary(it, cards[it.cardId]?.name.orEmpty(), it.dueDate.isBefore(today)) }
     }
 
     private fun findCard(cardId: UUID): CardInfo = accounts.findCard(cardId) ?: throw NotFoundException()

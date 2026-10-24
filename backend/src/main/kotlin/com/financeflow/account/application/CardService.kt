@@ -1,6 +1,7 @@
 package com.financeflow.account.application
 
 import com.financeflow.account.domain.AccountType
+import com.financeflow.account.domain.CreditLimit
 import com.financeflow.account.infra.AccountEntity
 import com.financeflow.account.infra.AccountRepository
 import com.financeflow.shared.error.BusinessRuleException
@@ -26,7 +27,10 @@ data class Card(
     val competenceOffset: Int,
     val defaultPaymentAccountId: UUID?,
     val archived: Boolean,
-)
+    val used: BigDecimal,
+) {
+    val available: BigDecimal get() = CreditLimit.available(creditLimit, used)
+}
 
 data class SaveCardCommand(
     val name: String,
@@ -52,18 +56,19 @@ class CardService(
     private val byName = Collator.getInstance(Locale.of("pt", "BR"))
 
     @Transactional(readOnly = true)
-    fun list(includeArchived: Boolean): List<Card> = accounts.findByUserId(currentUser.id())
-        .filter { it.type == AccountType.CREDIT_CARD && (includeArchived || !it.archived) }
-        .sortedWith(compareBy(byName) { it.name })
-        .map { it.toCard() }
+    fun list(includeArchived: Boolean): List<Card> = withUsage(
+        accounts.findByUserId(currentUser.id())
+            .filter { it.type == AccountType.CREDIT_CARD && (includeArchived || !it.archived) }
+            .sortedWith(compareBy(byName) { it.name }),
+    )
 
     @Transactional(readOnly = true)
-    fun get(id: UUID): Card = find(id).toCard()
+    fun get(id: UUID): Card = withUsage(listOf(find(id))).single()
 
     @Transactional(readOnly = true)
     fun lookup(id: UUID): Card? = accounts.findByIdAndUserId(id, currentUser.id())
         ?.takeIf { it.type == AccountType.CREDIT_CARD }
-        ?.toCard()
+        ?.toCard(BigDecimal.ZERO)
 
     @Transactional
     fun create(command: SaveCardCommand): Card {
@@ -81,7 +86,7 @@ class CardService(
         )
         card.apply(command)
         accounts.save(card)
-        return card.toCard()
+        return card.toCard(BigDecimal.ZERO)
     }
 
     @Transactional
@@ -92,7 +97,7 @@ class CardService(
         card.competenceOffset = command.competenceOffset.toShort()
         card.apply(command)
         card.updatedAt = clock.instant()
-        return card.toCard()
+        return withUsage(listOf(card)).single()
     }
 
     @Transactional
@@ -102,7 +107,7 @@ class CardService(
             card.archived = archived
             card.updatedAt = clock.instant()
         }
-        return card.toCard()
+        return withUsage(listOf(card)).single()
     }
 
     @Transactional
@@ -141,7 +146,13 @@ class CardService(
         defaultPaymentAccountId = command.defaultPaymentAccountId
     }
 
-    private fun AccountEntity.toCard() = Card(
+    private fun withUsage(cards: List<AccountEntity>): List<Card> {
+        if (cards.isEmpty()) return emptyList()
+        val usage = accounts.cardUsage(currentUser.id(), cards.map { it.id }).associate { it.cardId to it.used }
+        return cards.map { it.toCard(usage[it.id] ?: BigDecimal.ZERO) }
+    }
+
+    private fun AccountEntity.toCard(used: BigDecimal) = Card(
         id = id,
         name = name,
         brand = brand,
@@ -151,6 +162,7 @@ class CardService(
         competenceOffset = competenceOffset.toInt(),
         defaultPaymentAccountId = defaultPaymentAccountId,
         archived = archived,
+        used = used,
     )
 
     private fun cardInUse() =

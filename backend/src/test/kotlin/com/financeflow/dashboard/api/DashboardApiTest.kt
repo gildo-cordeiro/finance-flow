@@ -98,6 +98,37 @@ class DashboardApiTest : ApiTest() {
     }
 
     @Test
+    fun `faturas a vencer trazem só as com saldo em aberto nos próximos 30 dias`() {
+        val user = createUser()
+        val card = UUID.randomUUID()
+        jdbc.update(
+            "INSERT INTO accounts (id, user_id, name, type, closing_day, due_day) VALUES (?, ?, 'Nubank', 'CREDIT_CARD', 1, 10)",
+            card, user.id,
+        )
+        val category = createCategory(user, "Mercado")
+        val open = invoice(card, today.plusDays(10))
+        cardItem(user, card, category, open, "250.00")
+        jdbc.update("UPDATE invoices SET status = 'PARTIALLY_PAID', paid_amount = 50 WHERE id = ?", open)
+        cardItem(user, card, category, invoice(card, today.minusDays(2)), "90.00")
+        cardItem(user, card, category, invoice(card, today.plusDays(40)), "70.00")
+        val paid = invoice(card, today.plusDays(5))
+        cardItem(user, card, category, paid, "30.00")
+        jdbc.update("UPDATE invoices SET status = 'PAID', paid_amount = 30 WHERE id = ?", paid)
+
+        summary(user, "").andExpect {
+            jsonPath("$.upcomingInvoices.length()") { value(2) }
+            jsonPath("$.upcomingInvoices[0].cardName") { value("Nubank") }
+            jsonPath("$.upcomingInvoices[0].overdue") { value(true) }
+            jsonPath("$.upcomingInvoices[0].openAmount") { value(90.0) }
+            jsonPath("$.upcomingInvoices[1].id") { value(open.toString()) }
+            jsonPath("$.upcomingInvoices[1].total") { value(250.0) }
+            jsonPath("$.upcomingInvoices[1].openAmount") { value(200.0) }
+            jsonPath("$.upcomingInvoices[1].partiallyPaid") { value(true) }
+        }
+        summary(createUser(), "").andExpect { jsonPath("$.upcomingInvoices.length()") { value(0) } }
+    }
+
+    @Test
     fun `dados de outro usuário não entram no resumo`() {
         val alice = createUser()
         val bob = createUser()
@@ -121,6 +152,26 @@ class DashboardApiTest : ApiTest() {
             id, user.id, name, BigDecimal(initial),
         )
         return id
+    }
+
+    private fun invoice(card: UUID, due: LocalDate): UUID {
+        val id = UUID.randomUUID()
+        jdbc.update(
+            "INSERT INTO invoices (id, account_id, closing_date, due_date, competence_month) VALUES (?, ?, ?, ?, ?)",
+            id, card, due.minusDays(9), due, due.withDayOfMonth(1),
+        )
+        return id
+    }
+
+    private fun cardItem(user: TestUser, card: UUID, category: UUID, invoice: UUID, amount: String) {
+        jdbc.update(
+            """
+            INSERT INTO transactions (id, user_id, account_id, category_id, invoice_id, purchase_date, description, amount,
+                                      type, status, competence_date)
+            VALUES (?, ?, ?, ?, ?, DATE '2026-01-01', 'Compra', ?, 'EXPENSE', 'PENDING', DATE '2026-01-01')
+            """,
+            UUID.randomUUID(), user.id, card, category, invoice, BigDecimal(amount),
+        )
     }
 
     private fun createCategory(user: TestUser, name: String, type: String = "EXPENSE"): UUID {

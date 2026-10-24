@@ -38,6 +38,15 @@ data class CardPurchaseCommand(
     val items: List<CardItemCommand>,
 )
 
+data class CardPaymentCommand(
+    val paymentId: UUID,
+    val fromAccountId: UUID,
+    val cardId: UUID,
+    val amount: BigDecimal,
+    val paymentDate: LocalDate,
+    val description: String,
+)
+
 /** Uma compra no cartão, com a parcela de cada item quando for parcelada. */
 data class CardPurchaseRef(val cardId: UUID, val invoiceIds: Set<UUID>, val itemIds: List<UUID>, val anyPaid: Boolean)
 
@@ -120,6 +129,66 @@ class CardItemService(
         }
         transactions.deleteAll(items)
         transactions.flush()
+    }
+
+    /** As duas pontas do pagamento da fatura, já pagas; transferência não entra no orçamento (ADR-0039). */
+    @Transactional
+    fun recordPayment(command: CardPaymentCommand) {
+        val userId = currentUser.id()
+        val legs = listOf(command.fromAccountId to "OUT", command.cardId to "IN").map { (accountId, direction) ->
+            TransactionEntity(
+                id = UUID.randomUUID(),
+                userId = userId,
+                accountId = accountId,
+                categoryId = null,
+                description = command.description,
+                amount = command.amount,
+                type = TransactionType.TRANSFER,
+                status = TransactionStatus.PAID,
+                competenceDate = YearMonth.from(command.paymentDate).atDay(1),
+                competenceInformed = false,
+                dueDate = null,
+                paymentDate = command.paymentDate,
+                visibility = Visibility.PRIVATE,
+                createdBy = userId,
+                updatedBy = userId,
+                updatedAt = clock.instant(),
+                transferGroupId = command.paymentId,
+                transferDirection = direction,
+            )
+        }
+        transactions.saveAllAndFlush(legs)
+    }
+
+    @Transactional
+    fun deletePayment(paymentId: UUID) {
+        transactions.deleteAll(transactions.findByTransferGroupIdAndUserId(paymentId, currentUser.id()))
+        transactions.flush()
+    }
+
+    /** Fatura quitada: os itens em aberto ficam pagos na data do pagamento que a quitou (RN-01). */
+    @Transactional
+    fun settle(invoiceId: UUID, paymentDate: LocalDate) {
+        val userId = currentUser.id()
+        transactions.findByInvoiceIdAndUserId(invoiceId, userId).filter { it.status != TransactionStatus.PAID }.forEach {
+            it.status = TransactionStatus.PAID
+            it.paymentDate = paymentDate
+            it.updatedBy = userId
+            it.updatedAt = clock.instant()
+        }
+    }
+
+    /** Fatura que deixou de estar quitada: os itens voltam a pendentes ou atrasados pelo vencimento (RN-06). */
+    @Transactional
+    fun reopen(invoiceId: UUID) {
+        val userId = currentUser.id()
+        val today = userClock.today(userId)
+        transactions.findByInvoiceIdAndUserId(invoiceId, userId).filter { it.status == TransactionStatus.PAID }.forEach {
+            it.status = TransactionStatusPolicy.resolve(TransactionStatus.PENDING, null, it.dueDate, today)
+            it.paymentDate = null
+            it.updatedBy = userId
+            it.updatedAt = clock.instant()
+        }
     }
 
     private fun purchaseItems(userId: UUID, itemId: UUID): List<TransactionEntity>? {

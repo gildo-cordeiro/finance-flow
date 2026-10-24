@@ -5,6 +5,7 @@ import com.financeflow.account.application.CardService
 import com.financeflow.account.application.SaveCardCommand
 import com.financeflow.shared.error.ProblemResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
@@ -66,6 +67,10 @@ data class CardResponse(
     val competenceOffset: Int,
     val defaultPaymentAccountId: UUID?,
     val archived: Boolean,
+    @field:Schema(description = "Faturas não quitadas, atuais e futuras, menos o que já foi pago delas (RF-034)")
+    val used: BigDecimal,
+    @field:Schema(description = "Limite menos o usado; negativo quando as compras passam do limite")
+    val available: BigDecimal,
 )
 
 @Tag(
@@ -122,6 +127,7 @@ class CardController(private val cardService: CardService) {
     fun delete(@PathVariable id: UUID) = cardService.delete(id)
 
     private fun Card.toResponse() = CardResponse(
-        id, name, brand, creditLimit, closingDay, dueDay, competenceOffset, defaultPaymentAccountId, archived,
+        id, name, brand, creditLimit, closingDay, dueDay, competenceOffset, defaultPaymentAccountId, archived, used,
+        available,
     )
 }

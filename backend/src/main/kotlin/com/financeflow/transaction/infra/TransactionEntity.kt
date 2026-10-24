@@ -78,8 +78,12 @@ class TransactionEntity(
     @Column(name = "total_installments", updatable = false)
     val totalInstallments: Short? = null,
 
-    @Column(name = "transfer_group_id", insertable = false, updatable = false)
+    @Column(name = "transfer_group_id", updatable = false)
     val transferGroupId: UUID? = null,
+
+    // ADR-0036: OUT sai da conta, IN entra
+    @Column(name = "transfer_direction", updatable = false)
+    val transferDirection: String? = null,
 
     @Column(name = "invoice_id", updatable = false)
     val invoiceId: UUID? = null,

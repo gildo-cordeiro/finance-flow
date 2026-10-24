@@ -515,7 +515,7 @@ Exige `Authorization: Bearer`.
 | 204 | Sem conteúdo |
 | 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
 | 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
-| 409 | [ProblemDetail](#problemdetail): `PURCHASE_HAS_PAID_ITEMS` |
+| 409 | [ProblemDetail](#problemdetail): `PURCHASE_HAS_PAID_ITEMS`, `INVOICE_HAS_PAYMENTS` |
 
 ### `GET /api/v1/cards/{cardId}/invoices`
 
@@ -614,6 +614,46 @@ Exige `Authorization: Bearer`.
 | 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
 | 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
 
+### `POST /api/v1/invoices/{id}/payments`
+
+Paga a fatura, toda ou em parte.
+
+Gera uma transferência da conta pagadora para o cartão, que não entra no orçamento (ADR-0039). Quitada, a fatura e os itens ficam pagos; em parte, a fatura fica `PARTIALLY_PAID` e os itens continuam em aberto. Sem `paymentDate`, usa a data de hoje. Valor acima do saldo em aberto é 422.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+
+Corpo: [PayInvoiceRequest](#payinvoicerequest)
+
+| Status | Resposta |
+|---|---|
+| 201 | [InvoicePaymentResponse](#invoicepaymentresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
+
+### `DELETE /api/v1/invoices/{id}/payments/{paymentId}`
+
+Estorna um pagamento da fatura.
+
+Apaga a transferência, devolve o valor à conta pagadora e reabre a fatura e os itens.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `id` | path | string (uuid) | sim |
+| `paymentId` | path | string (uuid) | sim |
+
+| Status | Resposta |
+|---|---|
+| 204 | Sem conteúdo |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+
 ## Orçamento
 
 Planejado por categoria e mês, comparado ao realizado pela competência (RN-02).
@@ -688,7 +728,7 @@ Resumo da competência: receitas, despesas, contas, vencimentos e orçamento.
 
 Resumo do mês.
 
-Sem `month`, usa o mês de hoje no fuso do usuário. Receitas, despesas e resultado são da competência, sem transferências. `accountsBalance` soma as contas correntes e poupanças ativas. `payables` traz as despesas não pagas atrasadas ou com vencimento nos próximos 7 dias, fora do cartão.
+Sem `month`, usa o mês de hoje no fuso do usuário. Receitas, despesas e resultado são da competência, sem transferências. `accountsBalance` soma as contas correntes e poupanças ativas. `payables` traz as despesas não pagas atrasadas ou com vencimento nos próximos 7 dias, fora do cartão. `upcomingInvoices` traz as faturas com saldo em aberto vencidas ou que vencem nos próximos 30 dias.
 
 Exige `Authorization: Bearer`.
 
@@ -986,6 +1026,8 @@ Exige `Authorization: Bearer`.
 | `competenceOffset` | integer (int32) |  |
 | `defaultPaymentAccountId` | string (uuid) \| null |  |
 | `archived` | boolean |  |
+| `used` | number | Faturas não quitadas, atuais e futuras, menos o que já foi pago delas (RF-034) |
+| `available` | number | Limite menos o usado; negativo quando as compras passam do limite |
 
 ### CategoryResponse
 
@@ -1032,6 +1074,7 @@ Exige `Authorization: Bearer`.
 | `accountsBalance` | number |  |
 | `accounts` | [AccountBalanceResponse](#accountbalanceresponse)[] |  |
 | `payables` | [PayablesResponse](#payablesresponse) |  |
+| `upcomingInvoices` | [UpcomingInvoiceResponse](#upcominginvoiceresponse)[] |  |
 | `budget` | [DashboardBudgetResponse](#dashboardbudgetresponse) |  |
 
 ### FlowResponse
@@ -1055,6 +1098,7 @@ Exige `Authorization: Bearer`.
 | `invoice` | [InvoiceResponse](#invoiceresponse) |  |
 | `cardName` | string |  |
 | `items` | [InvoiceItemResponse](#invoiceitemresponse)[] |  |
+| `payments` | [InvoicePaymentResponse](#invoicepaymentresponse)[] |  |
 | `previousInvoiceId` | string (uuid) \| null |  |
 | `nextInvoiceId` | string (uuid) \| null |  |
 
@@ -1073,6 +1117,16 @@ Exige `Authorization: Bearer`.
 | `totalInstallments` | integer (int32) \| null |  |
 | `paid` | boolean |  |
 | `recurring` | boolean |  |
+
+### InvoicePaymentResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `fromAccountId` | string (uuid) |  |
+| `fromAccountName` | string \| null |  |
+| `amount` | number |  |
+| `paymentDate` | string (date) |  |
 
 ### InvoicePreviewResponse
 
@@ -1094,6 +1148,7 @@ Exige `Authorization: Bearer`.
 | `status` | `OPEN` \| `CLOSED` \| `PAID` \| `PARTIALLY_PAID` |  |
 | `total` | number |  |
 | `paidAmount` | number |  |
+| `openAmount` | number | Total menos o que já foi pago, nunca negativo |
 | `itemCount` | integer (int64) |  |
 
 ### LoginRequest
@@ -1108,6 +1163,14 @@ Exige `Authorization: Bearer`.
 | Campo | Tipo | Obrigatório | Observação |
 |---|---|---|---|
 | `targetId` | string (uuid) | sim |  |
+
+### PayInvoiceRequest
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `fromAccountId` | string (uuid) | sim |  |
+| `amount` | number | sim | mínimo 0.01 |
+| `paymentDate` | string (date) \| null | não |  |
 
 ### PayTransactionRequest
 
@@ -1301,6 +1364,19 @@ Problem Details (RFC 9457) com o `code` estável do erro
 | `transferGroupId` | string (uuid) \| null |  |
 | `transferDirection` | string \| null |  |
 | `recurring` | boolean |  |
+
+### UpcomingInvoiceResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `cardId` | string (uuid) |  |
+| `cardName` | string |  |
+| `dueDate` | string (date) |  |
+| `total` | number |  |
+| `openAmount` | number |  |
+| `partiallyPaid` | boolean |  |
+| `overdue` | boolean |  |
 
 ### UpdateProfileRequest
 

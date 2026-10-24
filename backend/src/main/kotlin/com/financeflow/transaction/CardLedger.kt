@@ -2,6 +2,7 @@ package com.financeflow.transaction
 
 import com.financeflow.transaction.application.CardItemCommand
 import com.financeflow.transaction.application.CardItemService
+import com.financeflow.transaction.application.CardPaymentCommand
 import com.financeflow.transaction.application.CardPurchaseCommand
 import com.financeflow.transaction.domain.TransactionStatus
 import org.springframework.stereotype.Service
@@ -42,6 +43,16 @@ data class CardItem(
 )
 
 data class InvoiceTotal(val total: BigDecimal, val itemCount: Long)
+
+/** Pagamento de fatura: o `paymentId` vira o grupo das duas pontas da transferência (ADR-0039). */
+data class NewCardPayment(
+    val paymentId: UUID,
+    val fromAccountId: UUID,
+    val cardId: UUID,
+    val amount: BigDecimal,
+    val paymentDate: LocalDate,
+    val description: String,
+)
 
 data class CardPurchase(val cardId: UUID, val invoiceIds: Set<UUID>, val itemIds: List<UUID>, val anyPaid: Boolean)
 
@@ -86,4 +97,16 @@ class CardLedger(private val cardItems: CardItemService) {
         cardItems.purchase(itemId)?.let { CardPurchase(it.cardId, it.invoiceIds, it.itemIds, it.anyPaid) }
 
     fun deletePurchase(itemId: UUID) = cardItems.deletePurchase(itemId)
+
+    fun recordPayment(payment: NewCardPayment) = cardItems.recordPayment(
+        CardPaymentCommand(
+            payment.paymentId, payment.fromAccountId, payment.cardId, payment.amount, payment.paymentDate, payment.description,
+        ),
+    )
+
+    fun deletePayment(paymentId: UUID) = cardItems.deletePayment(paymentId)
+
+    fun settle(invoiceId: UUID, paymentDate: LocalDate) = cardItems.settle(invoiceId, paymentDate)
+
+    fun reopen(invoiceId: UUID) = cardItems.reopen(invoiceId)
 }
