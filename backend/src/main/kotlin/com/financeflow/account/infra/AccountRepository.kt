@@ -11,12 +11,12 @@ interface AccountRepository : JpaRepository<AccountEntity, UUID> {
 
     fun findByUserId(userId: UUID): List<AccountEntity>
 
-    // Transferências entram com a F1-12, que define o lado de cada ponta
+    // O lado da transferência vem de transfer_direction (ADR-0035)
     @Query(
         """
         SELECT t.account_id AS "accountId",
-               COALESCE(SUM(t.amount) FILTER (WHERE t.type = 'INCOME'), 0) AS "income",
-               COALESCE(SUM(t.amount) FILTER (WHERE t.type = 'EXPENSE'), 0) AS "expense"
+               COALESCE(SUM(t.amount) FILTER (WHERE t.type = 'INCOME' OR t.transfer_direction = 'IN'), 0) AS "inflow",
+               COALESCE(SUM(t.amount) FILTER (WHERE t.type = 'EXPENSE' OR t.transfer_direction = 'OUT'), 0) AS "outflow"
         FROM transactions t
         WHERE t.user_id = :userId AND t.status = 'PAID' AND t.account_id IN (:accountIds)
         GROUP BY t.account_id

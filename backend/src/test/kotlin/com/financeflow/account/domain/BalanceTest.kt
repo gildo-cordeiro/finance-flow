@@ -13,8 +13,8 @@ class BalanceTest {
     }
 
     @Test
-    fun `receitas pagas somam e despesas pagas subtraem`() {
-        assertEquals(BigDecimal("-30.00"), Balance.of(BigDecimal("100.00"), totals(income = "20.00", expense = "150.00")))
+    fun `entradas pagas somam e saídas pagas subtraem`() {
+        assertEquals(BigDecimal("-30.00"), Balance.of(BigDecimal("100.00"), totals(inflow = "20.00", outflow = "150.00")))
     }
 
     @Test
@@ -22,9 +22,9 @@ class BalanceTest {
         assertEquals(listOf(AccountType.CHECKING, AccountType.SAVINGS), AccountType.entries.filter { it.isBankAccount })
     }
 
-    private fun totals(income: String, expense: String) = object : PaidTotals {
+    private fun totals(inflow: String, outflow: String) = object : PaidTotals {
         override val accountId: UUID = UUID.randomUUID()
-        override val income = BigDecimal(income)
-        override val expense = BigDecimal(expense)
+        override val inflow = BigDecimal(inflow)
+        override val outflow = BigDecimal(outflow)
     }
 }

@@ -57,6 +57,22 @@ class AccountApiTest : ApiTest() {
     }
 
     @Test
+    fun `transferência paga sai da conta de origem e entra na de destino`() {
+        val user = createUser()
+        val origem = createAccount(user, initialBalance = "1000.00")
+        val destino = createAccount(user, initialBalance = "0")
+        val group = UUID.randomUUID()
+        insertTransaction(user, origem, "TRANSFER", "300.00", "PAID", transferGroup = group, direction = "OUT")
+        insertTransaction(user, destino, "TRANSFER", "300.00", "PAID", transferGroup = group, direction = "IN")
+        val pendente = UUID.randomUUID()
+        insertTransaction(user, origem, "TRANSFER", "50.00", "PENDING", transferGroup = pendente, direction = "OUT")
+        insertTransaction(user, destino, "TRANSFER", "50.00", "PENDING", transferGroup = pendente, direction = "IN")
+
+        mockMvc.get("/api/v1/accounts/$origem") { with(user.auth()) }.andExpect { jsonPath("$.balance") { value(700.0) } }
+        mockMvc.get("/api/v1/accounts/$destino") { with(user.auth()) }.andExpect { jsonPath("$.balance") { value(300.0) } }
+    }
+
+    @Test
     fun `lista em ordem alfabética e esconde arquivadas, a menos que pedidas`() {
         val user = createUser()
         val poupanca = createAccount(user, name = "Poupança", type = "SAVINGS")
@@ -216,15 +232,24 @@ class AccountApiTest : ApiTest() {
             mockMvc.post(path) { with(user.auth()); contentType = MediaType.APPLICATION_JSON; content = body }
         }
 
-    private fun insertTransaction(user: TestUser, accountId: UUID, type: String, amount: String, status: String) {
+    private fun insertTransaction(
+        user: TestUser,
+        accountId: UUID,
+        type: String,
+        amount: String,
+        status: String,
+        transferGroup: UUID? = null,
+        direction: String? = null,
+    ) {
         val today = LocalDate.of(2026, 10, 10)
         jdbc.update(
             """
-            INSERT INTO transactions (id, user_id, account_id, description, amount, type, status, competence_date, payment_date)
-            VALUES (?, ?, ?, 'teste', ?, ?, ?, ?, ?)
+            INSERT INTO transactions (id, user_id, account_id, description, amount, type, status, competence_date,
+                                      payment_date, transfer_group_id, transfer_direction)
+            VALUES (?, ?, ?, 'teste', ?, ?, ?, ?, ?, ?, ?)
             """,
             UUID.randomUUID(), user.id, accountId, BigDecimal(amount), type, status,
-            today.withDayOfMonth(1), if (status == "PAID") today else null,
+            today.withDayOfMonth(1), if (status == "PAID") today else null, transferGroup, direction,
         )
     }
 }
