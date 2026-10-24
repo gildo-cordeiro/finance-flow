@@ -1,6 +1,7 @@
 package com.financeflow.transaction.domain
 
 import com.financeflow.shared.error.ValidationException
+import com.financeflow.shared.time.Competence
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -16,6 +17,7 @@ data class Entry(
     val dueDate: LocalDate?,
     val paymentDate: LocalDate?,
     val status: TransactionStatus,
+    val competenceInformed: Boolean = false,
 ) {
 
     fun paid(on: LocalDate) = copy(status = TransactionStatus.PAID, paymentDate = on)
@@ -50,7 +52,7 @@ data class Entry(
             // ADR-0008: a sugestão nunca sobrescreve uma competência informada
             val competence = informedCompetence ?: Competence.suggest(reference, competenceOffset)
             val status = TransactionStatusPolicy.resolve(requestedStatus, paymentDate, dueDate, today)
-            return Entry(type, amount, competence, dueDate, paymentDate, status)
+            return Entry(type, amount, competence, dueDate, paymentDate, status, informedCompetence != null)
         }
     }
 }

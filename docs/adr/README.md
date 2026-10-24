@@ -52,7 +52,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0035](0035-skills-em-claude-skills.md) | Skills de agentes em `.claude/skills/` (substitui parte do 0030) | Aceito | 2026-10-24 |
 | [0036](0036-lado-da-transferencia-em-coluna-propria.md) | Lado da transferência em coluna própria (`transfer_direction`) | Aceito | 2026-10-24 |
 | [0037](0037-regras-de-cadastro-de-contas-e-categorias.md) | Regras de cadastro de contas e categorias (responde o 0013) | Aceito | 2026-10-24 |
-| [0038](0038-detalhes-de-parcelas-recorrencias-e-competencia.md) | Regras de detalhe de parcelas, recorrências e competência sugerida (complementa 0008 e 0010) | Proposto | 2026-10-24 |
+| [0038](0038-detalhes-de-parcelas-recorrencias-e-competencia.md) | Regras de detalhe de parcelas, recorrências e competência sugerida (complementa 0008 e 0010) | Aceito | 2026-10-24 |
 
 ## Como criar um ADR
 
@@ -89,7 +89,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | 0021 | Competência do cartão pelo fechamento, regra de 7 dias | Substituído por 0008 e 0009 |
 | 0022 | Spring Boot 4 | Incorporado em 0002 |
 | 0023 | React Hook Form e Zod | Incorporado em 0018 |
-| 0024 | Cartão associado a conta de pagamento | Pergunta em aberto em 0009 |
+| 0024 | Cartão associado a conta de pagamento | Respondido em 0009: conta pagadora padrão opcional |
 | 0025 | Fluxo de caixa projetado | Descartado como ADR: o comportamento está em RF-051 a RF-053 |
 | 0026 | Parcelas e recorrências materializadas | Mantido em 0010, com `Recurrence` e horizonte configurável |
 | 0027 | Vínculo de casal por convite | Mantido em 0022 |

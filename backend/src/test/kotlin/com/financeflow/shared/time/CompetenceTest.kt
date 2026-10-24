@@ -1,4 +1,4 @@
-package com.financeflow.transaction.domain
+package com.financeflow.shared.time
 
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
