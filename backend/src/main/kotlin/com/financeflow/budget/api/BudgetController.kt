@@ -50,6 +50,7 @@ data class BudgetTotalsResponse(
     val realized: BigDecimal,
     val realizedPaid: BigDecimal,
     val remaining: BigDecimal,
+    val percentUsed: Int?,
 )
 
 data class TotalsByTypeResponse(val income: BudgetTotalsResponse, val expense: BudgetTotalsResponse)
@@ -122,5 +123,5 @@ class BudgetController(private val budgetService: BudgetService) {
         children = children.map { it.toResponse() },
     )
 
-    private fun BudgetTotals.toResponse() = BudgetTotalsResponse(planned, realized.total, realized.paid, remaining)
+    private fun BudgetTotals.toResponse() = BudgetTotalsResponse(planned, realized.total, realized.paid, remaining, percentUsed)
 }

@@ -33,19 +33,21 @@ data class BudgetLine(
 ) {
     val remaining: BigDecimal? get() = planned?.minus(realized.total)
 
-    val percentUsed: Int? get() = planned?.takeIf { it.signum() > 0 }?.let {
-        realized.total.multiply(HUNDRED).divide(it, 0, RoundingMode.HALF_UP).toInt()
-    }
+    val percentUsed: Int? get() = percent(realized.total, planned)
 
     val hasActivity: Boolean get() = planned != null || realized.total.signum() != 0
-
-    private companion object {
-        val HUNDRED = BigDecimal(100)
-    }
 }
 
 data class BudgetTotals(val planned: BigDecimal, val realized: Realized) {
     val remaining: BigDecimal get() = planned - realized.total
+
+    val percentUsed: Int? get() = percent(realized.total, planned)
+}
+
+private val HUNDRED = BigDecimal(100)
+
+private fun percent(value: BigDecimal, of: BigDecimal?): Int? = of?.takeIf { it.signum() > 0 }?.let {
+    value.multiply(HUNDRED).divide(it, 0, RoundingMode.HALF_UP).toInt()
 }
 
 object BudgetTree {

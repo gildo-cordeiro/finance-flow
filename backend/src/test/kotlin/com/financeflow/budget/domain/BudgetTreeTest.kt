@@ -77,6 +77,7 @@ class BudgetTreeTest {
         assertEquals(money("2050"), expense.planned)
         assertEquals(money("1750"), expense.realized.total)
         assertEquals(money("300"), expense.remaining)
+        kotlin.test.assertEquals(85, expense.percentUsed)
         assertEquals(money("8000"), BudgetTree.totals(lines, income = true).planned)
     }
 

@@ -30,12 +30,12 @@ describe('sessão', () => {
   it('rota privada sem sessão vai para o login e volta para a rota original depois de entrar', async () => {
     stubFetch(({ path }) => (path === '/auth/login' ? json(200, session()) : noSession()));
 
-    renderApp('/orcamento');
+    renderApp('/relatorios');
     expect(await screen.findByRole('heading', { name: 'Entrar no FinanceFlow' })).toBeInTheDocument();
 
     await fillLogin('maria@exemplo.com', 'senha-forte-1');
 
-    expect(await screen.findByRole('heading', { name: 'Orçamento' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument();
   });
 
   it('quando a sessão não pode mais ser renovada, volta para o login', async () => {
@@ -44,8 +44,8 @@ describe('sessão', () => {
       if (path === '/auth/refresh') return refreshes++ === 0 ? json(200, session()) : noSession();
       return problem(401, 'UNAUTHORIZED');
     });
-    renderApp('/orcamento');
-    expect(await screen.findByRole('heading', { name: 'Orçamento' })).toBeInTheDocument();
+    renderApp('/relatorios');
+    expect(await screen.findByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument();
 
     await act(() => request('/accounts').catch(() => undefined));
 

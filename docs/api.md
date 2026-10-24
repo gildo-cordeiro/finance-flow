@@ -671,6 +671,7 @@ Exige `Authorization: Bearer`.
 | `realized` | number |  |
 | `realizedPaid` | number |  |
 | `remaining` | number |  |
+| `percentUsed` | integer (int32) \| null |  |
 
 ### CategoryResponse
 
