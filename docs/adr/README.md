@@ -8,7 +8,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 
 ## Status
 
-- **Aceito**: decisão em vigor. O campo 'Origem do porquê' de cada ADR diz se ela vem da especificação, do projeto anterior ou de uma sugestão nova. Os ADRs 0001 a 0030 foram aceitos em 2026-10-22; as perguntas em aberto continuam valendo.
+- **Aceito**: decisão em vigor. O campo 'Origem do porquê' de cada ADR diz se ela vem da especificação, do projeto anterior ou de uma sugestão nova. Os ADRs 0001 a 0030 foram aceitos em 2026-10-22, e os 0031 a 0037 em 2026-10-24. As perguntas em aberto continuam valendo até serem respondidas no próprio ADR.
 - **Proposto**: ainda espera a decisão do desenvolvedor.
 
 ## Índice
@@ -44,14 +44,14 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0027](0027-erros-da-api-em-problem-details.md) | Erros da API em Problem Details, por um handler global | Aceito | 2026-10-22 |
 | [0028](0028-organizacao-interna-dos-modulos-do-backend.md) | Organização interna dos módulos do backend | Aceito | 2026-10-22 |
 | [0029](0029-frontend-organizado-por-features.md) | Frontend organizado por features | Aceito | 2026-10-22 |
-| [0030](0030-adrs-e-skills-de-agentes-no-repositorio.md) | ADRs e skills de agentes versionados no repositório | Aceito | 2026-10-22 |
-| [0031](0031-email-transacional-por-interface-desde-a-fase-1.md) | E-mail transacional desde a Fase 1, pela interface `EmailSender` | Proposto | 2026-10-24 |
+| [0030](0030-adrs-e-skills-de-agentes-no-repositorio.md) | ADRs e skills de agentes versionados no repositório (pasta das skills substituída pelo 0035) | Aceito | 2026-10-22 |
+| [0031](0031-email-transacional-por-interface-desde-a-fase-1.md) | E-mail transacional desde a Fase 1, pela interface `EmailSender` | Aceito | 2026-10-24 |
 | [0032](0032-componentes-de-interface-pelo-shadcn-ui.md) | Componentes de interface pelo shadcn/ui (substitui parte do 0018) | Aceito | 2026-10-24 |
 | [0033](0033-documentacao-da-api-pelo-openapi.md) | Documentação da API pelo OpenAPI (Swagger), não nos READMEs | Aceito | 2026-10-24 |
-| [0034](0034-fronteiras-de-modulos-e-camadas-verificadas-nos-testes.md) | Fronteiras de módulos (Spring Modulith) e camadas (ArchUnit) verificadas nos testes | Proposto | 2026-10-24 |
-| [0035](0035-skills-em-claude-skills.md) | Skills de agentes em `.claude/skills/` (substitui parte do 0030) | Proposto | 2026-10-24 |
-| [0036](0036-lado-da-transferencia-em-coluna-propria.md) | Lado da transferência em coluna própria (`transfer_direction`) | Proposto | 2026-10-24 |
-| [0037](0037-regras-de-cadastro-de-contas-e-categorias.md) | Regras de cadastro de contas e categorias (responde o 0013) | Proposto | 2026-10-24 |
+| [0034](0034-fronteiras-de-modulos-e-camadas-verificadas-nos-testes.md) | Fronteiras de módulos (Spring Modulith) e camadas (ArchUnit) verificadas nos testes | Aceito | 2026-10-24 |
+| [0035](0035-skills-em-claude-skills.md) | Skills de agentes em `.claude/skills/` (substitui parte do 0030) | Aceito | 2026-10-24 |
+| [0036](0036-lado-da-transferencia-em-coluna-propria.md) | Lado da transferência em coluna própria (`transfer_direction`) | Aceito | 2026-10-24 |
+| [0037](0037-regras-de-cadastro-de-contas-e-categorias.md) | Regras de cadastro de contas e categorias (responde o 0013) | Aceito | 2026-10-24 |
 
 ## Como criar um ADR
 

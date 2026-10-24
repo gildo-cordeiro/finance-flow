@@ -55,7 +55,7 @@ export const transactionsApi = {
 };
 ```
 
-- Visão Casal: o contexto vai no cabeçalho `X-View-Context` em cada requisição (ADR-0022). Ele entra no `services/http.ts`, uma vez só, não em cada objeto de `api/`.
+- Visão Casal: o contexto vai no cabeçalho `X-View-Context` em cada requisição (ADR-0022). Ele entra no `services/http.ts`, uma vez só, não em cada objeto de `api/`. O contexto também entra na `queryKey` das consultas que dependem dele, para a troca de visão não mostrar dados em cache da outra.
 
 ## Estado do servidor (TanStack Query)
 

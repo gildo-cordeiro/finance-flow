@@ -1,6 +1,6 @@
 # ADR-0035 — Skills de agentes em `.claude/skills/`
 
-- Status: Proposto (substitui, no ADR-0030, só o item "skills ficam em `.agents/skills/`")
+- Status: Aceito (substitui, no ADR-0030, só o item "skills ficam em `.agents/skills/`")
 - Data: 2026-10-24
 - Origem do 'porquê': pedido do desenvolvedor.
 

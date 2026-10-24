@@ -1,6 +1,6 @@
 # ADR-0036 — Lado da transferência em coluna própria
 
-- Status: Proposto
+- Status: Aceito
 - Data: 2026-10-24
 - Origem do 'porquê': sugestão (F1-09, ao implementar o saldo calculado).
 
@@ -38,4 +38,4 @@ O saldo da conta é calculado (RN-07, ADR-0011) e a F1-09 pede que as transferê
 
 ## Perguntas em aberto
 
-- A F1-12 também deve exigir `transfer_group_id` em toda transferência (um CHECK como o do lado)?
+- A F1-12 também deve exigir `transfer_group_id` em toda transferência (um CHECK como o do lado)? Respondida em 2026-10-24: sim. A F1-12 cria, numa migration nova, o CHECK `(type = 'TRANSFER') = (transfer_group_id IS NOT NULL)`. Um extrato importado com transferência para uma conta que não está no app entra como despesa ou receita, não como transferência.
