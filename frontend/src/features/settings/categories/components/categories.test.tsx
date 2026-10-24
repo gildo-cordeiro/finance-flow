@@ -45,7 +45,7 @@ function writes(fetchMock: ReturnType<typeof stubFetch>) {
 }
 
 async function openSettings() {
-  renderApp('/configuracoes');
+  renderApp('/configuracoes?aba=categorias');
   return within(await screen.findByRole('list', { name: 'Categorias de despesas' }));
 }
 
