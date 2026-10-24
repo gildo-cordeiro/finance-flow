@@ -16,7 +16,7 @@
 - [ ] Realizei um auto-review no código antes de enviar.
 
 ## Skills e decisões
-- [ ] Revisei se esta mudança afeta alguma skill em `.agents/skills/` e atualizei na mesma PR (ou justifiquei abaixo).
+- [ ] Revisei se esta mudança afeta alguma skill em `.claude/skills/` e atualizei na mesma PR (ou justifiquei abaixo).
 - [ ] ADR: criado/proposto, ou o desenvolvedor foi consultado e dispensou, ou não se aplica.
 - Skills atualizadas ou revisadas: [liste]
 - ADRs pendentes ou decisões em aberto: [liste ou 'nenhum']

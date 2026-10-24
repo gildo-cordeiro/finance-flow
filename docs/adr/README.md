@@ -49,6 +49,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0032](0032-componentes-de-interface-pelo-shadcn-ui.md) | Componentes de interface pelo shadcn/ui (substitui parte do 0018) | Aceito | 2026-10-24 |
 | [0033](0033-documentacao-da-api-pelo-openapi.md) | Documentação da API pelo OpenAPI (Swagger), não nos READMEs | Aceito | 2026-10-24 |
 | [0034](0034-fronteiras-de-modulos-e-camadas-verificadas-nos-testes.md) | Fronteiras de módulos (Spring Modulith) e camadas (ArchUnit) verificadas nos testes | Proposto | 2026-10-24 |
+| [0035](0035-skills-em-claude-skills.md) | Skills de agentes em `.claude/skills/` (substitui parte do 0030) | Proposto | 2026-10-24 |
 
 ## Como criar um ADR
 
