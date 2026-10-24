@@ -18,7 +18,7 @@ spring:
 
 app:
   auth:
-    jwt-secret: ${APP_JWT_SECRET:} # obrigatório, mínimo 32 bytes
+    jwt-secret: ${APP_JWT_SECRET:dev-secret-local-nao-usar-em-producao} # mínimo 32 bytes; defina em produção
     privacy-version: ${APP_PRIVACY_VERSION:2026-10}
     access-token-ttl: 15m
     refresh-token-ttl: 30d
