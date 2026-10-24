@@ -1,7 +1,7 @@
 package com.financeflow.support
 
 import com.financeflow.IntegrationTest
-import com.financeflow.auth.infra.AccessTokenIssuer
+import com.financeflow.auth.application.TokenIssuer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -30,7 +30,7 @@ abstract class ApiTest : IntegrationTest() {
     protected lateinit var emailSender: FakeEmailSender
 
     @Autowired
-    private lateinit var accessTokens: AccessTokenIssuer
+    private lateinit var accessTokens: TokenIssuer
 
     protected fun createUser(name: String = "Usuário de teste"): TestUser {
         val id = UUID.randomUUID()

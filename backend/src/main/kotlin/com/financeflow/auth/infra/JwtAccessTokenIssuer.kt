@@ -1,5 +1,8 @@
 package com.financeflow.auth.infra
 
+import com.financeflow.auth.application.AccessToken
+import com.financeflow.auth.application.AuthProperties
+import com.financeflow.auth.application.TokenIssuer
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
 import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
@@ -9,16 +12,14 @@ import org.springframework.stereotype.Component
 import java.time.Clock
 import java.util.UUID
 
-data class AccessToken(val value: String, val expiresInSeconds: Long)
-
 @Component
-class AccessTokenIssuer(
+class JwtAccessTokenIssuer(
     private val encoder: JwtEncoder,
     private val properties: AuthProperties,
     private val clock: Clock,
-) {
+) : TokenIssuer {
 
-    fun issue(userId: UUID): AccessToken {
+    override fun issue(userId: UUID): AccessToken {
         val now = clock.instant()
         val claims = JwtClaimsSet.builder()
             .subject(userId.toString())

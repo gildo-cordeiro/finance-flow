@@ -1,7 +1,7 @@
 package com.financeflow.auth.api
 
 import com.financeflow.auth.application.OpaqueToken
-import com.financeflow.auth.domain.UserRegistered
+import com.financeflow.auth.UserRegistered
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.support.ApiTest
 import com.nimbusds.jose.jwk.source.ImmutableSecret

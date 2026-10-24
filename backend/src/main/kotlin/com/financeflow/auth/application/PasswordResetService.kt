@@ -1,7 +1,7 @@
 package com.financeflow.auth.application
 
+import com.financeflow.auth.domain.EmailAddress
 import com.financeflow.auth.domain.PasswordPolicy
-import com.financeflow.auth.infra.AuthProperties
 import com.financeflow.auth.infra.PasswordResetTokenEntity
 import com.financeflow.auth.infra.PasswordResetTokenRepository
 import com.financeflow.auth.infra.UserRepository
@@ -35,7 +35,7 @@ class PasswordResetService(
     /** Envia o link se o e-mail estiver cadastrado; caso contrário, não faz nada, sem revelar isso a quem pediu. */
     @Transactional
     fun requestReset(email: String) {
-        val user = users.findByEmail(email.trim().lowercase()) ?: return
+        val user = users.findByEmail(EmailAddress.normalize(email)) ?: return
         repository.deleteUnusedByUserId(user.id)
 
         val token = OpaqueToken.generate()

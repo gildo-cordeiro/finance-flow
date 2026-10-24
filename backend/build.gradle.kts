@@ -33,6 +33,13 @@ repositories {
     mavenCentral()
 }
 
+// Linha 2.0 do Spring Modulith, a que acompanha o Spring Boot 4.0 (ADR-0034)
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.8")
+    }
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -49,6 +56,8 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // Fronteiras entre módulos verificadas nos testes (ADR-0034)
+    implementation("org.springframework.modulith:spring-modulith-api")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -58,6 +67,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql:1.20.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("io.mockk:mockk:1.14.5")
+    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

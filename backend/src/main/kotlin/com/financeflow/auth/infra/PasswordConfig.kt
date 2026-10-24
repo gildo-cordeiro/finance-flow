@@ -1,4 +1,4 @@
-package com.financeflow.auth.application
+package com.financeflow.auth.infra
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

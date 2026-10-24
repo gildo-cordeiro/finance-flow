@@ -1,4 +1,4 @@
-package com.financeflow.auth.infra
+package com.financeflow.auth.application
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration

@@ -1,10 +1,11 @@
 package com.financeflow.auth.api
 
+import com.financeflow.auth.application.AuthProperties
 import com.financeflow.auth.application.AuthResult
 import com.financeflow.auth.application.AuthService
 import com.financeflow.auth.application.PasswordResetService
 import com.financeflow.auth.application.RegisterCommand
-import com.financeflow.auth.infra.AuthProperties
+import com.financeflow.auth.domain.EmailAddress
 import com.financeflow.shared.error.UnauthorizedException
 import com.financeflow.shared.ratelimit.ClientIp
 import com.financeflow.shared.ratelimit.RateLimit
@@ -86,7 +87,7 @@ class AuthController(
         servletRequest: HttpServletRequest,
     ): ResponseEntity<AuthResponse> {
         rateLimiter.consume(LOGIN_PER_IP, clientIp.of(servletRequest))
-        rateLimiter.consume(LOGIN_PER_EMAIL, request.email.trim().lowercase())
+        rateLimiter.consume(LOGIN_PER_EMAIL, EmailAddress.normalize(request.email))
         return respond(HttpStatus.OK, authService.login(request.email, request.password))
     }
 
@@ -117,7 +118,7 @@ class AuthController(
         servletRequest: HttpServletRequest,
     ): ResponseEntity<Unit> {
         rateLimiter.consume(FORGOT_PER_IP, clientIp.of(servletRequest))
-        rateLimiter.consume(FORGOT_PER_EMAIL, request.email.trim().lowercase())
+        rateLimiter.consume(FORGOT_PER_EMAIL, EmailAddress.normalize(request.email))
         passwordResetService.requestReset(request.email)
         return ResponseEntity.noContent().build()
     }
