@@ -34,4 +34,6 @@ export interface AuthContextValue {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  /** Atualiza os dados do usuário da sessão depois de uma alteração de perfil. */
+  updateUser: (user: User) => void;
 }
