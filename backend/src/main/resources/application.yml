@@ -22,6 +22,10 @@ app:
     privacy-version: ${APP_PRIVACY_VERSION:2026-10}
     access-token-ttl: 15m
     refresh-token-ttl: 30d
+    password-reset-ttl: 1h
+    frontend-url: ${APP_FRONTEND_URL:http://localhost:5173} # base do link de redefinição de senha
+  email:
+    provider: ${APP_EMAIL_PROVIDER:log} # "log" só registra a mensagem no log (desenvolvimento)
   rate-limit:
     trusted-proxies: ${APP_TRUSTED_PROXIES:} # IPs separados por vírgula
 

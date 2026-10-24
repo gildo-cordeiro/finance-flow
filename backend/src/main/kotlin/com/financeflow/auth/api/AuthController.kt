@@ -2,6 +2,7 @@ package com.financeflow.auth.api
 
 import com.financeflow.auth.application.AuthResult
 import com.financeflow.auth.application.AuthService
+import com.financeflow.auth.application.PasswordResetService
 import com.financeflow.auth.application.RegisterCommand
 import com.financeflow.auth.infra.AuthProperties
 import com.financeflow.shared.error.UnauthorizedException
@@ -42,6 +43,18 @@ data class LoginRequest(
     val password: String = "",
 )
 
+data class ForgotPasswordRequest(
+    @field:NotBlank @field:Size(max = 255)
+    val email: String = "",
+)
+
+data class ResetPasswordRequest(
+    @field:NotBlank
+    val token: String = "",
+    @field:NotBlank
+    val newPassword: String = "",
+)
+
 data class UserResponse(val id: UUID, val name: String, val email: String)
 
 data class AuthResponse(val accessToken: String, val expiresIn: Long, val user: UserResponse)
@@ -50,6 +63,7 @@ data class AuthResponse(val accessToken: String, val expiresIn: Long, val user: 
 @RequestMapping("/api/v1/auth")
 class AuthController(
     private val authService: AuthService,
+    private val passwordResetService: PasswordResetService,
     private val properties: AuthProperties,
     private val rateLimiter: RateLimiter,
     private val clientIp: ClientIp,
@@ -93,6 +107,24 @@ class AuthController(
             .build()
     }
 
+    /** Sempre 204, exista ou não o e-mail, para não revelar o cadastro (RF-004). */
+    @PostMapping("/password/forgot")
+    fun forgotPassword(
+        @Valid @RequestBody request: ForgotPasswordRequest,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<Unit> {
+        rateLimiter.consume(FORGOT_PER_IP, clientIp.of(servletRequest))
+        rateLimiter.consume(FORGOT_PER_EMAIL, request.email.trim().lowercase())
+        passwordResetService.requestReset(request.email)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/password/reset")
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Unit> {
+        passwordResetService.reset(request.token, request.newPassword)
+        return ResponseEntity.noContent().build()
+    }
+
     // ADR-0026: access token no corpo, refresh token só em cookie HttpOnly
     private fun respond(status: HttpStatus, result: AuthResult): ResponseEntity<AuthResponse> {
         val cookie = refreshCookie(result.refreshToken, properties.refreshTokenTtl)
@@ -121,5 +153,7 @@ class AuthController(
         val LOGIN_PER_IP = RateLimit("login-ip", 5, Duration.ofMinutes(1))
         val LOGIN_PER_EMAIL = RateLimit("login-email", 10, Duration.ofHours(1))
         val REFRESH_PER_IP = RateLimit("refresh-ip", 30, Duration.ofMinutes(1))
+        val FORGOT_PER_IP = RateLimit("forgot-ip", 10, Duration.ofHours(1))
+        val FORGOT_PER_EMAIL = RateLimit("forgot-email", 3, Duration.ofHours(1))
     }
 }

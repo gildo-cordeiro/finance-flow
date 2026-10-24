@@ -45,6 +45,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0028](0028-organizacao-interna-dos-modulos-do-backend.md) | Organização interna dos módulos do backend | Aceito | 2026-10-22 |
 | [0029](0029-frontend-organizado-por-features.md) | Frontend organizado por features | Aceito | 2026-10-22 |
 | [0030](0030-adrs-e-skills-de-agentes-no-repositorio.md) | ADRs e skills de agentes versionados no repositório | Aceito | 2026-10-22 |
+| [0031](0031-email-transacional-por-interface-desde-a-fase-1.md) | E-mail transacional desde a Fase 1, pela interface `EmailSender` | Proposto | 2026-10-24 |
 
 ## Como criar um ADR
 

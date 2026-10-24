@@ -1,6 +1,6 @@
 package com.financeflow.auth.api
 
-import com.financeflow.auth.application.SessionService
+import com.financeflow.auth.application.OpaqueToken
 import com.financeflow.auth.domain.UserRegistered
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.support.ApiTest
@@ -88,7 +88,7 @@ class AuthApiTest : ApiTest() {
         val userId = UUID.fromString(read(result.response.contentAsString, "/user/id"))
 
         val hashes = jdbc.queryForList("SELECT token_hash FROM refresh_tokens WHERE user_id = ?", String::class.java, userId)
-        assertEquals(listOf(SessionService.hash(token)), hashes)
+        assertEquals(listOf(OpaqueToken.hash(token)), hashes)
         assertNotEquals(token, hashes.single())
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM refresh_tokens WHERE token_hash = ?", Int::class.java, token))
     }
