@@ -45,16 +45,24 @@ A tipografia utiliza a fonte **Outfit** (ou **Inter** como fallback) para garant
 
 ## 3. Componentes Base e Exemplos de Código
 
-### Card
+### Componentes do shadcn/ui
 
-Componente padrão para agrupar informações sem a utilização de sombras.
+Os componentes básicos (botão, campo, rótulo, checkbox, card, alerta, avatar, sheet, formulário e toasts) são os do shadcn/ui ([ADR-0032](adr/0032-componentes-de-interface-pelo-shadcn-ui.md)). Ficam em `components/ui` com nomes em minúsculas e usam as mesmas variáveis HSL desta paleta: `bg-primary` = `brand`, `bg-card` = `bg-surface`, `bg-popover` = `bg-elevated`, `border` = `border-subtle`, `text-muted-foreground` = `text-muted`. Para adicionar um componente novo, use `npx shadcn@2 add <componente>` (versão para Tailwind v3).
+
 ```tsx
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
-<Card className="hover:border-brand/20 transition-all duration-300">
-  Conteúdo do Card
+<Card>
+  <CardHeader><CardTitle>Saldo</CardTitle></CardHeader>
+  <CardContent>Conteúdo do card</CardContent>
 </Card>
+
+<Button variant="outline" onClick={() => toast.success('Salvo')}>Salvar</Button>
 ```
+
+Formulários usam `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl` e `FormMessage` (`components/ui/form`) sobre React Hook Form e Zod. Assim o rótulo, o `aria-invalid` e a mensagem de erro já saem ligados ao campo.
 
 ### Badge
 
@@ -125,7 +133,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 Ao construir ou modificar telas do FinanceFlow, observe rigorosamente as seguintes diretrizes:
 
 1. **Sem Preto Absoluto**: Nunca use `#000` como plano de fundo. Utilize sempre o token `bg-bg-base`.
-2. **Sem Sombras Desnecessárias**: Cards nunca devem utilizar classes de sombra (`shadow-xl`, etc.). O design é minimalista e flat dark, delimitado por `border border-border-subtle`.
+2. **Sem Sombras Desnecessárias**: Cards nunca devem utilizar classes de sombra (`shadow-xl`, etc.). O design é minimalista e flat dark, delimitado por `border border-border-subtle`. O `Card` do shadcn já vem sem sombra.
 3. **Uso de MoneyValue**: Nunca formate valores monetários diretamente usando tags `<span>` ou aplicando cores hardcoded. Utilize sempre o componente `<MoneyValue>`.
 4. **Sem Limite Definido**: Sempre inclua um estado visual claro para limites de orçamento ausentes através da barra tracejada no `<ProgressBar>`.
 5. **Labels de Cards**: Todos os mini-títulos de cards devem usar `<SectionLabel>` (13px, `font-semibold`, `text-text-label`), em sentence case, sem `uppercase` nem `tracking-widest`.

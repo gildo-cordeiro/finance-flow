@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { App } from './App';
+import { screen } from '@testing-library/react';
+import { problem, stubFetch } from '@/test/fetchMock';
+import { renderApp } from '@/test/renderApp';
 
 describe('App', () => {
-  it('renderiza a página inicial', () => {
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    );
-    expect(screen.getByRole('heading', { name: 'FinanceFlow' })).toBeInTheDocument();
+  it('sem sessão, abre a tela de login', async () => {
+    stubFetch(() => problem(401, 'INVALID_REFRESH_TOKEN'));
+    renderApp('/');
+    expect(await screen.findByRole('heading', { name: 'Entrar no FinanceFlow' })).toBeInTheDocument();
   });
 });

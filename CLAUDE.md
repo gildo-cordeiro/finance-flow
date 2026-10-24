@@ -35,6 +35,8 @@ O hook `pre-push` (husky) roda lint e testes do frontend.
 
 Monólito modular (ADR-0001): um pacote por domínio em `com.financeflow` (`auth`, `account`, `transaction`, `invoice`, `budget`, ...). Um módulo usa outro só pelos serviços públicos, nunca pelos repositórios ou entidades dele; para reagir a eventos, use `ApplicationEvent` (ex.: `UserRegistered`).
 
+Rotas e contratos da API ficam na documentação gerada pelo OpenAPI (ADR-0033), não nos READMEs nem neste arquivo.
+
 Camadas por módulo (ADR-0028): `domain` (regras puras, sem Spring/JPA, testadas sem banco), `application` (casos de uso, transação, filtro por usuário), `infra` (entidades JPA, Spring Data, adaptadores), `api` (controllers e DTOs). O que é comum fica em `shared/` (`error`, `security`, `config`, `ratelimit`). O `backend/README.md` detalha erros, autenticação e testes.
 
 Regras que atravessam o código:

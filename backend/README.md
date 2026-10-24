@@ -61,12 +61,12 @@ val account = repository.findByIdAndUserId(id, currentUser.id()) ?: throw NotFou
 
 ## Autenticação
 
-JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-rotativo.md), [ADR-0026](../docs/adr/0026-armazenamento-de-tokens-no-frontend.md)):
+JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-rotativo.md), [ADR-0026](../docs/adr/0026-armazenamento-de-tokens-no-frontend.md)). Os endpoints, com corpo, respostas e códigos de erro, ficam na documentação da API gerada pelo OpenAPI ([ADR-0033](../docs/adr/0033-documentacao-da-api-pelo-openapi.md)), não neste README. Aqui ficam as regras que atravessam o código:
 
-- `POST /api/v1/auth/register`, `/login` e `/refresh` são públicos e devolvem `{accessToken, expiresIn, user}` no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`). Nessas rotas o cabeçalho `Authorization` é ignorado.
-- O refresh rotaciona o token a cada uso. Reapresentar um token já rotacionado revoga todas as sessões do usuário (`SessionService.revokeAll`, usado também na troca de senha). Erro → 401 `INVALID_REFRESH_TOKEN`.
-- `POST /api/v1/auth/logout` revoga o token do cookie, apaga o cookie e responde 204.
-- Recuperação de senha (RF-004), também pública: `POST /api/v1/auth/password/forgot` `{email}` responde sempre 204, exista ou não o e-mail; se existir, envia o link `${APP_FRONTEND_URL}/redefinir-senha?token=...`, de uso único e válido por 1 hora, e invalida os links anteriores ainda não usados. `POST /api/v1/auth/password/reset` `{token, newPassword}` aplica a política de senha, marca o link como usado e revoga todas as sessões (204). Link inválido, expirado ou já usado → 422 `INVALID_RESET_TOKEN`.
+- Cadastro, login e refresh devolvem o access token no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`). Nas rotas públicas de autenticação, o cabeçalho `Authorization` é ignorado.
+- O refresh rotaciona o token a cada uso. Reapresentar um token já rotacionado revoga todas as sessões do usuário (`SessionService.revokeAll`, usado também na troca de senha).
+- A versão vigente da política de privacidade (`APP_PRIVACY_VERSION`) é exposta por um endpoint público, e o frontend a envia no cadastro (RF-102).
+- Recuperação de senha (RF-004): o pedido do link responde igual exista ou não o e-mail; o link é de uso único, vale 1 hora e invalida os anteriores ainda não usados; a troca de senha revoga todas as sessões.
 - E-mail sai pela interface `EmailSender` (`shared/email`, [ADR-0031](../docs/adr/0031-email-transacional-por-interface-desde-a-fase-1.md)). Com `APP_EMAIL_PROVIDER=log` (padrão), o `LoggingEmailSender` só escreve a mensagem no log, com o link; nos testes de API, o `FakeEmailSender` captura as mensagens.
 - Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP; pedido de link 10/hora por IP e 3/hora por e-mail. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
 - Um job diário apaga os refresh tokens e os links de redefinição expirados há mais de 30 dias.

@@ -175,6 +175,16 @@ class AuthApiTest : ApiTest() {
     }
 
     @Test
+    fun `versão da política de privacidade é pública e ignora token inválido`() {
+        mockMvc.get("/api/v1/auth/privacy-policy").andExpect {
+            status { isOk() }
+            jsonPath("$.version") { value("2026-10") }
+        }
+        mockMvc.get("/api/v1/auth/privacy-policy") { header("Authorization", "Bearer token.invalido.qualquer") }
+            .andExpect { status { isOk() } }
+    }
+
+    @Test
     fun `rota protegida sem token retorna 401`() {
         mockMvc.get("/test/me").andExpectUnauthorized()
     }

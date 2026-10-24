@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CookieValue
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -58,6 +59,8 @@ data class ResetPasswordRequest(
 data class UserResponse(val id: UUID, val name: String, val email: String)
 
 data class AuthResponse(val accessToken: String, val expiresIn: Long, val user: UserResponse)
+
+data class PrivacyPolicyResponse(val version: String)
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -124,6 +127,10 @@ class AuthController(
         passwordResetService.reset(request.token, request.newPassword)
         return ResponseEntity.noContent().build()
     }
+
+    /** Versão vigente da política de privacidade, que o cadastro precisa aceitar (RF-102). */
+    @GetMapping("/privacy-policy")
+    fun privacyPolicy() = PrivacyPolicyResponse(properties.privacyVersion)
 
     // ADR-0026: access token no corpo, refresh token só em cookie HttpOnly
     private fun respond(status: HttpStatus, result: AuthResult): ResponseEntity<AuthResponse> {
