@@ -9,7 +9,7 @@ Escrita a partir da especificação, dos ADRs e de `docs/design-system.md` (ADR-
 
 ## Antes de escrever código
 
-1. Ache os IDs da especificação (RF, RNF) e os ADRs que a tarefa toca. Consulte o contrato da API na documentação do OpenAPI (ADR-0033), não nos controllers.
+1. Ache os IDs da especificação (RF, RNF) e os ADRs que a tarefa toca. Consulte o contrato da API em `docs/api.md`, gerado do OpenAPI (ADR-0033, ADR-0038), não nos controllers. Os `code` de erro de cada rota estão lá.
 2. Lembre que regra de negócio é do backend: o frontend exibe e sugere (ex.: competência sugerida), nunca decide (ADR-0017). Saldos, totais de fatura e realizado do orçamento vêm da API (ADR-0011).
 3. Dependência nova no `package.json` pede avaliação de ADR (ADR-0030). Pergunte antes de adicionar.
 

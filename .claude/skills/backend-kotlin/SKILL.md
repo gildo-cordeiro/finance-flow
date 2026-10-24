@@ -77,7 +77,10 @@ Regras:
 - DTOs de requisição são `data class` com valor padrão e Bean Validation (`@field:NotBlank`, `@field:Size`), validados com `@Valid`. Regra de negócio fica no caso de uso ou no domínio, não em anotação.
 - DTOs de resposta nunca expõem entidade, hash ou campos internos.
 - 201 ao criar, 204 sem corpo, 200 no resto.
-- O contrato é documentado pelo OpenAPI (ADR-0033), não em README.
+- O contrato é documentado pelo OpenAPI (ADR-0033, ADR-0038), não em README:
+  - `@Tag` no controller e `@Operation(summary = ...)` em cada endpoint; campo que precisa de explicação leva `@field:Schema(description = ...)`.
+  - Erro de regra de negócio que o endpoint pode responder: `@DocumentedError(409, "CODE", "quando acontece")`. 401, 404 (rota com id), 400 e 422 (corpo com `@Valid`) entram sozinhos; rota pública leva `@SecurityRequirements` vazio.
+  - Mudou controller ou DTO: regere o `docs/api.md` com `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'`. O teste falha no CI se ele ficar desatualizado.
 - Rate limit nas rotas sensíveis com `RateLimiter.consume` (ADR-0006).
 
 ## Banco
@@ -106,6 +109,7 @@ Checklist:
 - [ ] Camadas e módulos no lugar certo (`ModulesTest` e `LayersTest` passam).
 - [ ] Toda consulta filtra pelo usuário; testes de isolamento escritos.
 - [ ] Erros por exceções de `shared/error` com `code` estável.
+- [ ] Endpoint novo com `@Operation` e `@DocumentedError`; `docs/api.md` regerado.
 - [ ] Dinheiro em `BigDecimal` comparado com `compareTo`; datas pelo `Clock`.
 - [ ] Migration nova, se o schema mudou; nenhuma editada.
 - [ ] ADR proposto, se houve decisão nova.
