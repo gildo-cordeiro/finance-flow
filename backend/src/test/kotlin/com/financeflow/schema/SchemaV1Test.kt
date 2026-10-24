@@ -21,10 +21,10 @@ class SchemaV1Test(
 ) : IntegrationTest() {
 
     @Test
-    fun `flyway valida e não reaplica a V1 numa segunda inicialização`() {
+    fun `flyway valida e não reaplica as migrations numa segunda inicialização`() {
         flyway.validate()
         assertEquals(0, flyway.migrate().migrationsExecuted)
-        assertEquals("1", flyway.info().current().version.version)
+        assertEquals(flyway.info().all().last().version, flyway.info().current().version)
     }
 
     @Test

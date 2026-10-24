@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { errorMessage } from '@/services/errors';
+import { CategoriesSection } from '../categories/components/CategoriesSection';
 import { useProfile } from '../hooks/useProfile';
 import { ProfileForm } from './ProfileForm';
 
@@ -36,6 +37,16 @@ export function SettingsPage() {
             </Alert>
           )}
           {profile.data && <ProfileForm profile={profile.data} />}
+        </CardContent>
+      </Card>
+      <Card className="mt-6 max-w-2xl border-border-subtle">
+        <CardHeader>
+          <h2>
+            <SectionLabel>Categorias</SectionLabel>
+          </h2>
+        </CardHeader>
+        <CardContent>
+          <CategoriesSection />
         </CardContent>
       </Card>
     </PageContainer>

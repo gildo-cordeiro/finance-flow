@@ -44,8 +44,8 @@ describe('sessão', () => {
       if (path === '/auth/refresh') return refreshes++ === 0 ? json(200, session()) : noSession();
       return problem(401, 'UNAUTHORIZED');
     });
-    renderApp('/contas');
-    expect(await screen.findByRole('heading', { name: 'Contas e cartões' })).toBeInTheDocument();
+    renderApp('/orcamento');
+    expect(await screen.findByRole('heading', { name: 'Orçamento' })).toBeInTheDocument();
 
     await act(() => request('/accounts').catch(() => undefined));
 

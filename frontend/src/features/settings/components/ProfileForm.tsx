@@ -8,15 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { applyFieldErrors } from '@/lib/forms';
+import { applyFieldErrors, nativeSelectClass } from '@/lib/forms';
 import { errorMessage } from '@/services/errors';
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
 import { profileSchema, type ProfileForm as ProfileFormValues } from '../schemas/profileSchema';
 import { timezoneGroups } from '../timezones';
 import type { Profile } from '../types';
-
-const selectClass =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive md:text-sm';
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const updateProfile = useUpdateProfile();
@@ -73,7 +70,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             <FormItem>
               <FormLabel>Fuso horário</FormLabel>
               <FormControl>
-                <select className={selectClass} {...field}>
+                <select className={nativeSelectClass} {...field}>
                   <optgroup label="Brasil">
                     {groups.brazil.map(({ id, label }) => (
                       <option key={id} value={id}>
