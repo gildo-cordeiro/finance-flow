@@ -28,10 +28,15 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             is BusinessRuleException -> HttpStatus.CONFLICT
             is ValidationException -> HttpStatus.UNPROCESSABLE_CONTENT
             is UnauthorizedException -> HttpStatus.UNAUTHORIZED
+            is TooManyRequestsException -> HttpStatus.TOO_MANY_REQUESTS
             is ForbiddenException -> HttpStatus.FORBIDDEN
         }
         val fields = (ex as? ValidationException)?.fields
-        return problem(status, ex.code, ex.message, fields)
+        val response = problem(status, ex.code, ex.message, fields)
+        if (ex !is TooManyRequestsException) return response
+        return ResponseEntity.status(status)
+            .header(HttpHeaders.RETRY_AFTER, ex.retryAfterSeconds.toString())
+            .body(response.body)
     }
 
     @ExceptionHandler(AuthenticationException::class)
