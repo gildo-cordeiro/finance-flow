@@ -10,12 +10,15 @@ export function useBudget(month: string) {
   return useQuery({ queryKey: budgetKey(month), queryFn: () => budgetApi.get(month) });
 }
 
-// As duas mutações devolvem o orçamento do mês já recalculado; o próximo mês depende do planejado deste
+// As duas mutações devolvem o orçamento do mês já recalculado; o mês seguinte e o painel dependem do planejado deste
 function useStoreBudget(month: string) {
   const queryClient = useQueryClient();
   return (budget: Budget) => {
     queryClient.setQueryData(budgetKey(month), budget);
-    return queryClient.invalidateQueries({ queryKey: BUDGETS_KEY, predicate: (query) => query.queryKey[1] !== month });
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: BUDGETS_KEY, predicate: (query) => query.queryKey[1] !== month }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    ]);
   };
 }
 

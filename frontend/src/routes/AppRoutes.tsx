@@ -5,6 +5,7 @@ import { NAV_ITEMS } from '@/components/layout/navItems';
 import { UnderConstruction } from '@/components/layout/UnderConstruction';
 import { AccountsPage } from '@/features/accounts/components/AccountsPage';
 import { BudgetPage } from '@/features/budget/components/BudgetPage';
+import { DashboardPage } from '@/features/dashboard/components/DashboardPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -14,6 +15,7 @@ import { PublicOnlyRoute } from './PublicOnlyRoute';
 
 // Itens da navegação que já têm página; os demais mostram "Em construção"
 const PAGES: Record<string, ReactNode> = {
+  '/': <DashboardPage />,
   '/transacoes': <TransactionsPage />,
   '/contas': <AccountsPage />,
   '/orcamento': <BudgetPage />,

@@ -7,6 +7,19 @@ import { renderApp } from '@/test/renderApp';
 
 const noSession = () => problem(401, 'INVALID_REFRESH_TOKEN');
 
+// O Painel, rota inicial depois do login, busca o resumo do mês
+const emptyDashboard = () =>
+  json(200, {
+    month: '2026-10',
+    income: { realized: 0, paid: 0, pending: 0 },
+    expense: { realized: 0, paid: 0, pending: 0 },
+    balance: 0,
+    accountsBalance: 0,
+    accounts: [],
+    payables: { items: [], overdueCount: 0 },
+    budget: { planned: 0, realized: 0, percentUsed: null, topCategories: [] },
+  });
+
 async function fillLogin(email: string, password: string) {
   const user = userEvent.setup();
   await user.type(await screen.findByLabelText('E-mail'), email);
@@ -16,7 +29,11 @@ async function fillLogin(email: string, password: string) {
 
 describe('sessão', () => {
   it('ao abrir a página, recupera a sessão pelo refresh sem guardar token no navegador', async () => {
-    const fetchMock = stubFetch(({ path }) => (path === '/auth/refresh' ? json(200, session()) : noSession()));
+    const fetchMock = stubFetch(({ path }) => {
+      if (path === '/auth/refresh') return json(200, session());
+      if (path.startsWith('/dashboard')) return emptyDashboard();
+      return noSession();
+    });
 
     renderApp('/');
 
@@ -56,6 +73,7 @@ describe('sessão', () => {
     const fetchMock = stubFetch(({ path }) => {
       if (path === '/auth/refresh') return json(200, session());
       if (path === '/auth/logout') return noContent();
+      if (path.startsWith('/dashboard')) return emptyDashboard();
       return noSession();
     });
     renderApp('/');
@@ -161,7 +179,11 @@ describe('cadastro', () => {
 
   it('cadastro aceito envia a versão da política informada pelo backend e abre o painel', async () => {
     const fetchMock = stubFetch(
-      withPolicy(({ path }) => (path === '/auth/register' ? json(201, session()) : noSession()))
+      withPolicy(({ path }) => {
+        if (path === '/auth/register') return json(201, session());
+        if (path.startsWith('/dashboard')) return emptyDashboard();
+        return noSession();
+      })
     );
     renderApp('/cadastrar');
 
