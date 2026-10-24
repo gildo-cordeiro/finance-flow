@@ -1,6 +1,5 @@
 package com.financeflow.auth.application
 
-import com.financeflow.auth.infra.AuthProperties
 import com.financeflow.auth.infra.RefreshTokenEntity
 import com.financeflow.auth.infra.RefreshTokenRepository
 import com.financeflow.shared.error.UnauthorizedException

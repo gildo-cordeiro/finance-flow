@@ -1,4 +1,4 @@
-package com.financeflow.auth.infra
+package com.financeflow.auth.application
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

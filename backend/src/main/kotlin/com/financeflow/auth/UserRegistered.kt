@@ -1,4 +1,4 @@
-package com.financeflow.auth.domain
+package com.financeflow.auth
 
 import java.util.UUID
 

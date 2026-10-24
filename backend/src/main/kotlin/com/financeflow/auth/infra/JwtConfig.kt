@@ -1,5 +1,6 @@
 package com.financeflow.auth.infra
 
+import com.financeflow.auth.application.AuthProperties
 import com.nimbusds.jose.jwk.source.ImmutableSecret
 import com.nimbusds.jose.proc.SecurityContext
 import org.springframework.context.annotation.Bean

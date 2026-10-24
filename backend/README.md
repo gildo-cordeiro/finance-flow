@@ -20,7 +20,9 @@ Um pacote por domínio em `com.financeflow` (`auth`, `account`, `category`, `tra
 | `infra`       | Entidades JPA, repositórios Spring Data, adaptadores externos  | Sim                   |
 | `api`         | Controllers e DTOs                                            | Sim                   |
 
-Módulos sem regra de domínio relevante podem usar a entidade direto em `application`.
+Módulos sem regra de domínio relevante podem usar a entidade direto em `application`, mas ela não passa para `api` nem sai do módulo. Adaptadores externos (JWT, e-mail) ficam atrás de uma interface em `application` ou `shared`.
+
+Só o pacote raiz de cada módulo (ex.: `com.financeflow.auth`) é visível para os outros: é ali que ficam eventos e serviços públicos. Os testes em `architecture/` (Spring Modulith e ArchUnit, [ADR-0034](../docs/adr/0034-fronteiras-de-modulos-e-camadas-verificadas-nos-testes.md)) quebram o build se um módulo usar o interno de outro ou se as camadas dependerem na direção errada.
 
 O que é comum a todos fica em `shared`:
 

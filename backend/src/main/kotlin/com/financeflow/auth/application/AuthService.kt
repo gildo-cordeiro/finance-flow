@@ -1,10 +1,8 @@
 package com.financeflow.auth.application
 
+import com.financeflow.auth.UserRegistered
+import com.financeflow.auth.domain.EmailAddress
 import com.financeflow.auth.domain.PasswordPolicy
-import com.financeflow.auth.domain.UserRegistered
-import com.financeflow.auth.infra.AccessToken
-import com.financeflow.auth.infra.AccessTokenIssuer
-import com.financeflow.auth.infra.AuthProperties
 import com.financeflow.auth.infra.UserEntity
 import com.financeflow.auth.infra.UserRepository
 import com.financeflow.shared.error.BusinessRuleException
@@ -25,13 +23,15 @@ data class RegisterCommand(
     val acceptedPrivacyVersion: String,
 )
 
-data class AuthResult(val accessToken: AccessToken, val refreshToken: String, val user: UserEntity)
+data class AuthenticatedUser(val id: UUID, val name: String, val email: String)
+
+data class AuthResult(val accessToken: AccessToken, val refreshToken: String, val user: AuthenticatedUser)
 
 @Service
 class AuthService(
     private val users: UserRepository,
     private val sessions: SessionService,
-    private val accessTokens: AccessTokenIssuer,
+    private val accessTokens: TokenIssuer,
     private val passwordEncoder: PasswordEncoder,
     private val events: ApplicationEventPublisher,
     private val properties: AuthProperties,
@@ -48,8 +48,8 @@ class AuthService(
         }
         PasswordPolicy.violation(command.password)?.let { throw ValidationException("password", it) }
 
-        val email = normalizeEmail(command.email)
-        if (!EMAIL_FORMAT.matches(email)) throw ValidationException("email", "E-mail inválido")
+        val email = EmailAddress.normalize(command.email)
+        if (!EmailAddress.isValid(email)) throw ValidationException("email", "E-mail inválido")
         if (users.existsByEmail(email)) throw emailAlreadyUsed()
 
         val user = UserEntity(
@@ -71,7 +71,7 @@ class AuthService(
 
     @Transactional
     fun login(email: String, password: String): AuthResult {
-        val user = users.findByEmail(normalizeEmail(email))
+        val user = users.findByEmail(EmailAddress.normalize(email))
         val matches = !PasswordPolicy.exceedsMaxBytes(password) &&
             passwordEncoder.matches(password, user?.passwordHash ?: dummyHash)
         if (user == null || !matches) {
@@ -85,19 +85,15 @@ class AuthService(
     fun refresh(refreshToken: String): AuthResult {
         val session = sessions.rotate(refreshToken)
         val user = users.findById(session.userId).orElseThrow()
-        return AuthResult(accessTokens.issue(user.id), session.refreshToken, user)
+        return AuthResult(accessTokens.issue(user.id), session.refreshToken, user.toAuthenticated())
     }
 
     fun logout(refreshToken: String) = sessions.revoke(refreshToken)
 
     private fun issueTokens(user: UserEntity) =
-        AuthResult(accessTokens.issue(user.id), sessions.create(user.id), user)
+        AuthResult(accessTokens.issue(user.id), sessions.create(user.id), user.toAuthenticated())
 
-    private fun normalizeEmail(email: String) = email.trim().lowercase()
+    private fun UserEntity.toAuthenticated() = AuthenticatedUser(id, name, email)
 
     private fun emailAlreadyUsed() = BusinessRuleException("EMAIL_ALREADY_USED", "E-mail já cadastrado")
-
-    companion object {
-        private val EMAIL_FORMAT = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
-    }
 }
