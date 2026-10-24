@@ -11,6 +11,8 @@ import org.testcontainers.containers.PostgreSQLContainer
 abstract class IntegrationTest {
 
     companion object {
+        const val JWT_SECRET = "segredo-de-teste-com-mais-de-32-bytes"
+
         private val postgres = PostgreSQLContainer("postgres:16-alpine").apply { start() }
 
         @JvmStatic
@@ -19,6 +21,7 @@ abstract class IntegrationTest {
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
+            registry.add("app.auth.jwt-secret") { JWT_SECRET }
         }
     }
 }

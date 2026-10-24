@@ -17,6 +17,11 @@ class ValidationException(
     constructor(field: String, message: String) : this(listOf(FieldError(field, message)))
 }
 
+class UnauthorizedException(
+    message: String = "Autenticação necessária",
+    code: String = "UNAUTHORIZED",
+) : ApiException(code, message)
+
 class ForbiddenException(
     message: String = "Acesso negado",
     code: String = "FORBIDDEN",

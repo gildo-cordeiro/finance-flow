@@ -11,7 +11,7 @@ No projeto anterior os dois tokens ficavam no `localStorage`, o que expõe o ref
 ## Decisão
 
 - O access token fica só em memória no frontend e vai no cabeçalho `Authorization: Bearer` (RES-04 continua valendo).
-- O refresh token vai em cookie `HttpOnly`, `Secure`, `SameSite=Strict`, restrito ao caminho `/api/v1/auth/refresh`.
+- O refresh token vai em cookie `HttpOnly`, `Secure`, `SameSite=Strict`, restrito ao caminho `/api/v1/auth` (o refresh e o logout precisam dele).
 - Ao recarregar a página, o frontend chama o refresh para obter um novo access token.
 - O cliente HTTP renova o access token ao receber 401 e repete a chamada uma vez.
 
