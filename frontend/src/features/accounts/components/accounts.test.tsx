@@ -22,7 +22,7 @@ type Call = { method: string; path: string; init: RequestInit };
 function stubAccountsApi(onWrite: (call: Call) => Response = () => problem(500, 'INTERNAL_ERROR')) {
   return stubFetch((call) => {
     if (call.path === '/auth/refresh') return json(200, session());
-    if (call.path === '/dashboard/summary') return json(200, { accountsBalance: 1234.5, accounts: [{}] });
+    if (call.path === '/accounts/summary') return json(200, { balance: 1234.5, accountCount: 1 });
     if (call.path === '/accounts?includeArchived=false') return json(200, [corrente]);
     if (call.path === '/accounts?includeArchived=true') return json(200, [antiga, corrente]);
     if (call.path.startsWith('/accounts')) return onWrite(call);
@@ -167,7 +167,7 @@ describe('contas', () => {
   it('mostra um estado vazio sem contas', async () => {
     stubFetch(({ path }) => {
       if (path === '/auth/refresh') return json(200, session());
-      if (path === '/dashboard/summary') return json(200, { accountsBalance: 0, accounts: [] });
+      if (path === '/accounts/summary') return json(200, { balance: 0, accountCount: 0 });
       return json(200, []);
     });
     renderApp('/contas');

@@ -2,8 +2,7 @@ import { request } from '@/services/http';
 import type { Account, AccountsSummary, SaveAccountRequest } from '../types';
 
 export const accountsApi = {
-  // O total das contas vem do resumo do painel: a API soma em BigDecimal (ADR-0011)
-  summary: () => request<AccountsSummary>('/dashboard/summary'),
+  summary: () => request<AccountsSummary>('/accounts/summary'),
 
   list: (includeArchived: boolean) => request<Account[]>(`/accounts?includeArchived=${includeArchived}`),
 

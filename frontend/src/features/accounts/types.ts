@@ -14,8 +14,8 @@ export interface Account {
 }
 
 export interface AccountsSummary {
-  accountsBalance: number;
-  accounts: unknown[];
+  balance: number;
+  accountCount: number;
 }
 
 export interface SaveAccountRequest {

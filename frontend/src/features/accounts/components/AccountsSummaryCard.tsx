@@ -6,7 +6,7 @@ import { useAccountsSummary } from '../hooks/useAccounts';
 
 export function AccountsSummaryCard() {
   const summary = useAccountsSummary();
-  const count = summary.data?.accounts.length ?? 0;
+  const count = summary.data?.accountCount ?? 0;
   if (summary.isError || (summary.data && count === 0)) return null;
 
   return (
@@ -17,9 +17,9 @@ export function AccountsSummaryCard() {
           <>
             <p className="text-2xl font-bold">
               <MoneyValue
-                amount={summary.data.accountsBalance}
-                showSign={summary.data.accountsBalance < 0}
-                className={summary.data.accountsBalance < 0 ? undefined : 'text-text-primary'}
+                amount={summary.data.balance}
+                showSign={summary.data.balance < 0}
+                className={summary.data.balance < 0 ? undefined : 'text-text-primary'}
                 aria-label="Saldo em contas"
               />
             </p>
