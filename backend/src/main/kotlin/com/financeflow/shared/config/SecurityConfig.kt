@@ -45,6 +45,8 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health").permitAll()
+                // Desligados em produção por APP_API_DOCS=false (ADR-0033)
+                it.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 it.requestMatchers(HttpMethod.POST, *PUBLIC_AUTH_ROUTES.toTypedArray()).permitAll()
                 it.requestMatchers(HttpMethod.GET, *PUBLIC_GET_ROUTES.toTypedArray()).permitAll()
                 it.anyRequest().authenticated()
@@ -63,6 +65,9 @@ class SecurityConfig(
     }
 
     companion object {
+        fun isPublic(method: String, path: String) =
+            (method == "POST" && path in PUBLIC_AUTH_ROUTES) || (method == "GET" && path in PUBLIC_GET_ROUTES)
+
         private val PUBLIC_AUTH_ROUTES = setOf(
             "/api/v1/auth/register",
             "/api/v1/auth/login",

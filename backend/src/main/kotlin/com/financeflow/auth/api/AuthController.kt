@@ -6,10 +6,14 @@ import com.financeflow.auth.application.AuthService
 import com.financeflow.auth.application.PasswordResetService
 import com.financeflow.auth.application.RegisterCommand
 import com.financeflow.auth.domain.EmailAddress
+import com.financeflow.shared.error.ProblemResponse
 import com.financeflow.shared.error.UnauthorizedException
 import com.financeflow.shared.ratelimit.ClientIp
 import com.financeflow.shared.ratelimit.RateLimit
 import com.financeflow.shared.ratelimit.RateLimiter
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -63,6 +67,10 @@ data class AuthResponse(val accessToken: String, val expiresIn: Long, val user: 
 
 data class PrivacyPolicyResponse(val version: String)
 
+@Tag(
+    name = "Autenticação",
+    description = "Cadastro, login e sessão. O refresh token vai só no cookie HttpOnly `refresh_token` (ADR-0026).",
+)
 @RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
@@ -73,6 +81,14 @@ class AuthController(
     private val clientIp: ClientIp,
 ) {
 
+    @ApiResponse(responseCode = "201", description = "Conta criada e sessão aberta")
+    @Operation(
+        summary = "Cria a conta e abre a sessão",
+        description = "A senha precisa de ao menos 8 caracteres, uma letra e um número. " +
+            "`acceptedPrivacyVersion` deve ser a versão vigente da política.",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED")
+    @ProblemResponse(409, "EMAIL_ALREADY_USED")
     @PostMapping("/register")
     fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
         val result = authService.register(
@@ -81,6 +97,10 @@ class AuthController(
         return respond(HttpStatus.CREATED, result)
     }
 
+    @Operation(summary = "Entra com e-mail e senha")
+    @ProblemResponse(422, "VALIDATION_FAILED")
+    @ProblemResponse(401, "INVALID_CREDENTIALS")
+    @ProblemResponse(429, "TOO_MANY_REQUESTS")
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
@@ -91,6 +111,12 @@ class AuthController(
         return respond(HttpStatus.OK, authService.login(request.email, request.password))
     }
 
+    @Operation(
+        summary = "Renova o access token",
+        description = "Usa o cookie `refresh_token` e devolve um novo par de tokens (rotação).",
+    )
+    @ProblemResponse(401, "INVALID_REFRESH_TOKEN")
+    @ProblemResponse(429, "TOO_MANY_REQUESTS")
     @PostMapping("/refresh")
     fun refresh(
         @CookieValue(REFRESH_COOKIE, required = false) refreshToken: String?,
@@ -103,6 +129,8 @@ class AuthController(
         return respond(HttpStatus.OK, authService.refresh(refreshToken))
     }
 
+    @ApiResponse(responseCode = "204", description = "Sem conteúdo")
+    @Operation(summary = "Encerra a sessão", description = "Revoga o refresh token do cookie e apaga o cookie.")
     @PostMapping("/logout")
     fun logout(@CookieValue(REFRESH_COOKIE, required = false) refreshToken: String?): ResponseEntity<Unit> {
         if (!refreshToken.isNullOrBlank()) authService.logout(refreshToken)
@@ -112,6 +140,13 @@ class AuthController(
     }
 
     /** Sempre 204, exista ou não o e-mail, para não revelar o cadastro (RF-004). */
+    @ApiResponse(responseCode = "204", description = "Sem conteúdo")
+    @Operation(
+        summary = "Pede o link de redefinição de senha",
+        description = "Responde 204 exista ou não o e-mail, para não revelar o cadastro (RF-004).",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED")
+    @ProblemResponse(429, "TOO_MANY_REQUESTS")
     @PostMapping("/password/forgot")
     fun forgotPassword(
         @Valid @RequestBody request: ForgotPasswordRequest,
@@ -123,6 +158,9 @@ class AuthController(
         return ResponseEntity.noContent().build()
     }
 
+    @ApiResponse(responseCode = "204", description = "Sem conteúdo")
+    @Operation(summary = "Redefine a senha com o token do e-mail")
+    @ProblemResponse(422, "VALIDATION_FAILED", "INVALID_RESET_TOKEN")
     @PostMapping("/password/reset")
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Unit> {
         passwordResetService.reset(request.token, request.newPassword)
@@ -130,6 +168,7 @@ class AuthController(
     }
 
     /** Versão vigente da política de privacidade, que o cadastro precisa aceitar (RF-102). */
+    @Operation(summary = "Versão vigente da política de privacidade")
     @GetMapping("/privacy-policy")
     fun privacyPolicy() = PrivacyPolicyResponse(properties.privacyVersion)
 

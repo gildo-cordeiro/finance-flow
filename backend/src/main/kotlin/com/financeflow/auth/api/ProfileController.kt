@@ -3,6 +3,9 @@ package com.financeflow.auth.api
 import com.financeflow.auth.application.Profile
 import com.financeflow.auth.application.ProfileService
 import com.financeflow.auth.application.UpdateProfileCommand
+import com.financeflow.shared.error.ProblemResponse
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -29,13 +32,17 @@ data class ProfileResponse(
     val privacyVersion: String?,
 )
 
+@Tag(name = "Perfil", description = "Dados do usuário autenticado.")
 @RestController
 @RequestMapping("/api/v1/me")
 class ProfileController(private val profileService: ProfileService) {
 
+    @Operation(summary = "Perfil do usuário autenticado")
     @GetMapping
     fun get() = profileService.get().toResponse()
 
+    @Operation(summary = "Altera nome e fuso horário")
+    @ProblemResponse(422, "VALIDATION_FAILED")
     @PutMapping
     fun update(@Valid @RequestBody request: UpdateProfileRequest) =
         profileService.update(UpdateProfileCommand(request.name, request.timezone)).toResponse()

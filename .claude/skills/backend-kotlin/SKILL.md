@@ -77,7 +77,7 @@ Regras:
 - DTOs de requisição são `data class` com valor padrão e Bean Validation (`@field:NotBlank`, `@field:Size`), validados com `@Valid`. Regra de negócio fica no caso de uso ou no domínio, não em anotação.
 - DTOs de resposta nunca expõem entidade, hash ou campos internos.
 - 201 ao criar, 204 sem corpo, 200 no resto.
-- O contrato é documentado pelo OpenAPI (ADR-0033), não em README.
+- O contrato é documentado pelo OpenAPI (ADR-0033), não em README: `@Tag` no controller, `@Operation` em cada endpoint e `@ProblemResponse` com os `code` de erro possíveis. Regere o `docs/api.md` com `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'`.
 - Rate limit nas rotas sensíveis com `RateLimiter.consume` (ADR-0006).
 
 ## Banco

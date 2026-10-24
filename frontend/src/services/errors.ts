@@ -51,6 +51,8 @@ const MESSAGES: Record<string, string> = {
   PARENT_CATEGORY_ARCHIVED: 'Desarquive a categoria pai primeiro.',
   INVALID_CATEGORY_MERGE:
     'Não é possível mesclar: escolha outra categoria ativa do mesmo tipo e mescle as subcategorias antes.',
+  USE_CARD_ENDPOINT: 'Compras no cartão são lançadas pelo cadastro de cartões.',
+  TRANSACTION_NOT_EDITABLE_HERE: 'Parcelas, transferências e compras no cartão são alteradas pelos fluxos próprios.',
   ACCOUNT_IS_CREDIT_CARD: 'Cartões de crédito são alterados no cadastro de cartões.',
 };
 

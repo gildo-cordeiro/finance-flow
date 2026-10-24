@@ -29,6 +29,14 @@ app:
   rate-limit:
     trusted-proxies: ${APP_TRUSTED_PROXIES:} # IPs separados por vírgula
 
+# Contrato em /v3/api-docs e Swagger UI em /swagger-ui.html (ADR-0033). Desligue em produção: APP_API_DOCS=false
+springdoc:
+  api-docs:
+    enabled: ${APP_API_DOCS:true}
+  swagger-ui:
+    enabled: ${APP_API_DOCS:true}
+  default-produces-media-type: application/json
+
 management:
   endpoints:
     web:

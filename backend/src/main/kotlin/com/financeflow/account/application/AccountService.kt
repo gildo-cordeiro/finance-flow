@@ -59,6 +59,10 @@ class AccountService(
     @Transactional(readOnly = true)
     fun get(id: UUID): Account = find(id).let { withBalances(it.userId, listOf(it)).single() }
 
+    @Transactional(readOnly = true)
+    fun lookup(id: UUID): Account? =
+        accounts.findByIdAndUserId(id, currentUser.id())?.let { withBalances(it.userId, listOf(it)).single() }
+
     @Transactional
     fun create(command: SaveAccountCommand): Account {
         requireBankAccount(command.type)

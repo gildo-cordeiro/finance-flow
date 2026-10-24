@@ -36,6 +36,9 @@ class CategoryService(
         return CategoryTree.of(found.filter { includeArchived || !it.archived }.map { it.toItem() })
     }
 
+    @Transactional(readOnly = true)
+    fun lookup(id: UUID): CategoryItem? = categories.findByIdAndUserId(id, currentUser.id())?.toItem()
+
     @Transactional
     fun createDefaults(userId: UUID) {
         val now = clock.instant()
