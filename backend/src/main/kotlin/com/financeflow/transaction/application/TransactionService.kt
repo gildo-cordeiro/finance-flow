@@ -10,9 +10,9 @@ import com.financeflow.shared.error.ValidationException
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.shared.time.UserClock
 import com.financeflow.transaction.domain.Competence
+import com.financeflow.transaction.domain.Entry
 import com.financeflow.transaction.domain.TransactionFilter
 import com.financeflow.transaction.domain.TransactionStatus
-import com.financeflow.transaction.domain.TransactionStatusPolicy
 import com.financeflow.transaction.domain.TransactionTotals
 import com.financeflow.transaction.domain.TransactionType
 import com.financeflow.transaction.domain.TransactionView
@@ -77,19 +77,19 @@ class TransactionService(
     @Transactional
     fun create(command: SaveTransactionCommand): TransactionView {
         val userId = currentUser.id()
-        val valid = validate(userId, command, current = null)
+        val entry = validEntry(userId, command, current = null)
         val transaction = TransactionEntity(
             id = UUID.randomUUID(),
             userId = userId,
             accountId = command.accountId,
             categoryId = command.categoryId,
             description = command.description.trim(),
-            amount = command.amount,
-            type = command.type,
-            status = valid.status,
-            competenceDate = valid.competence.atDay(1),
-            dueDate = command.dueDate,
-            paymentDate = command.paymentDate,
+            amount = entry.amount,
+            type = entry.type,
+            status = entry.status,
+            competenceDate = entry.competence.atDay(1),
+            dueDate = entry.dueDate,
+            paymentDate = entry.paymentDate,
             visibility = command.visibility,
             createdBy = userId,
             updatedBy = userId,
@@ -103,20 +103,12 @@ class TransactionService(
     fun update(id: UUID, command: SaveTransactionCommand): TransactionView {
         val userId = currentUser.id()
         val transaction = findEditable(userId, id)
-        val valid = validate(userId, command, transaction)
+        val entry = validEntry(userId, command, transaction)
         transaction.accountId = command.accountId
         transaction.categoryId = command.categoryId
         transaction.description = command.description.trim()
-        transaction.amount = command.amount
-        transaction.type = command.type
-        transaction.status = valid.status
-        transaction.competenceDate = valid.competence.atDay(1)
-        transaction.dueDate = command.dueDate
-        transaction.paymentDate = command.paymentDate
         transaction.visibility = command.visibility
-        transaction.touch(userId)
-        transactions.flush()
-        return get(id)
+        return save(userId, transaction, entry)
     }
 
     @Transactional
@@ -130,55 +122,54 @@ class TransactionService(
     fun pay(id: UUID, paymentDate: LocalDate?): TransactionView {
         val userId = currentUser.id()
         val transaction = findEditable(userId, id)
-        transaction.status = TransactionStatus.PAID
-        transaction.paymentDate = paymentDate ?: userClock.today(userId)
-        transaction.touch(userId)
-        transactions.flush()
-        return get(id)
+        return save(userId, transaction, transaction.toEntry().paid(paymentDate ?: userClock.today(userId)))
     }
 
-    /** Desfaz o pagamento: volta a pendente, ou atrasado se o vencimento já passou (RN-06). */
     @Transactional
     fun unpay(id: UUID): TransactionView {
         val userId = currentUser.id()
         val transaction = findEditable(userId, id)
-        if (transaction.status == TransactionStatus.PAID) {
-            transaction.status = TransactionStatusPolicy.resolve(
-                TransactionStatus.PENDING, null, transaction.dueDate, userClock.today(userId),
-            )
-            transaction.paymentDate = null
-            transaction.touch(userId)
-            transactions.flush()
-        }
-        return get(id)
+        return save(userId, transaction, transaction.toEntry().unpaid(userClock.today(userId)))
     }
 
-    private data class Valid(val status: TransactionStatus, val competence: YearMonth)
-
-    private fun validate(userId: UUID, command: SaveTransactionCommand, current: TransactionEntity?): Valid {
-        if (command.type == TransactionType.TRANSFER) {
-            throw ValidationException("type", "Transferências têm cadastro próprio")
-        }
+    private fun validEntry(userId: UUID, command: SaveTransactionCommand, current: TransactionEntity?): Entry {
         val account = validAccount(command.accountId, current)
         val category = categories.find(command.categoryId)
             ?: throw ValidationException("categoryId", "Categoria não encontrada")
         if (category.archived && command.categoryId != current?.categoryId) {
             throw ValidationException("categoryId", "Categoria arquivada")
         }
-        if (category.income != (command.type == TransactionType.INCOME)) {
+        if (command.type != TransactionType.TRANSFER && category.income != (command.type == TransactionType.INCOME)) {
             val expected = if (category.income) "receita" else "despesa"
             throw ValidationException("categoryId", "A categoria é de $expected")
         }
-        command.status?.let { status ->
-            TransactionStatusPolicy.violation(status, command.paymentDate)?.let { throw ValidationException("paymentDate", it) }
-        }
-        val reference = Competence.referenceDate(command.dueDate, command.paymentDate)
-            ?: throw ValidationException("dueDate", "Informe o vencimento ou a data de pagamento")
-        // ADR-0008: a sugestão nunca sobrescreve uma competência informada
-        val competence = command.competenceMonth ?: Competence.suggest(reference, account.competenceOffset)
-        val status = TransactionStatusPolicy.resolve(command.status, command.paymentDate, command.dueDate, userClock.today(userId))
-        return Valid(status, competence)
+        return Entry.of(
+            type = command.type,
+            amount = command.amount,
+            informedCompetence = command.competenceMonth,
+            dueDate = command.dueDate,
+            paymentDate = command.paymentDate,
+            requestedStatus = command.status,
+            competenceOffset = account.competenceOffset,
+            today = userClock.today(userId),
+        )
     }
+
+    private fun save(userId: UUID, transaction: TransactionEntity, entry: Entry): TransactionView {
+        transaction.type = entry.type
+        transaction.amount = entry.amount
+        transaction.status = entry.status
+        transaction.competenceDate = entry.competence.atDay(1)
+        transaction.dueDate = entry.dueDate
+        transaction.paymentDate = entry.paymentDate
+        transaction.updatedBy = userId
+        transaction.updatedAt = clock.instant()
+        transactions.flush()
+        return get(transaction.id)
+    }
+
+    private fun TransactionEntity.toEntry() =
+        Entry(type, amount, YearMonth.from(competenceDate), dueDate, paymentDate, status)
 
     private fun validAccount(accountId: UUID, current: TransactionEntity?): AccountInfo {
         val account = accounts.find(accountId) ?: throw ValidationException("accountId", "Conta não encontrada")
@@ -205,10 +196,5 @@ class TransactionService(
         }
         reason?.let { throw BusinessRuleException("TRANSACTION_NOT_EDITABLE_HERE", it) }
         return transaction
-    }
-
-    private fun TransactionEntity.touch(userId: UUID) {
-        updatedBy = userId
-        updatedAt = clock.instant()
     }
 }
