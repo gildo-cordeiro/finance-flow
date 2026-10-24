@@ -1,5 +1,6 @@
 package com.financeflow.auth.infra
 
+import com.financeflow.auth.domain.Timezone
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -27,4 +28,11 @@ class UserEntity(
 
     @Column(name = "privacy_accepted_at")
     var privacyAcceptedAt: Instant?,
+
+    @Column(nullable = false)
+    var timezone: String = Timezone.DEFAULT,
+
+    // ADR-0015: moeda única; a coluna existe, mas não é alterável
+    @Column(nullable = false, insertable = false, updatable = false)
+    val currency: String = "BRL",
 )
