@@ -10,7 +10,7 @@ import com.financeflow.shared.error.ValidationException
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.shared.time.UserClock
 import com.financeflow.transaction.domain.CategoryTotal
-import com.financeflow.transaction.domain.Competence
+import com.financeflow.shared.time.Competence
 import com.financeflow.transaction.domain.Entry
 import com.financeflow.transaction.domain.MonthTotals
 import com.financeflow.transaction.domain.Payable
@@ -107,6 +107,7 @@ class TransactionService(
             type = entry.type,
             status = entry.status,
             competenceDate = entry.competence.atDay(1),
+            competenceInformed = entry.competenceInformed,
             dueDate = entry.dueDate,
             paymentDate = entry.paymentDate,
             visibility = command.visibility,
@@ -165,7 +166,7 @@ class TransactionService(
         return Entry.of(
             type = command.type,
             amount = command.amount,
-            informedCompetence = command.competenceMonth,
+            informedCompetence = command.competenceMonth ?: current?.informedCompetence(),
             dueDate = command.dueDate,
             paymentDate = command.paymentDate,
             requestedStatus = command.status,
@@ -179,6 +180,7 @@ class TransactionService(
         transaction.amount = entry.amount
         transaction.status = entry.status
         transaction.competenceDate = entry.competence.atDay(1)
+        transaction.competenceInformed = entry.competenceInformed
         transaction.dueDate = entry.dueDate
         transaction.paymentDate = entry.paymentDate
         transaction.updatedBy = userId
@@ -188,7 +190,9 @@ class TransactionService(
     }
 
     private fun TransactionEntity.toEntry() =
-        Entry(type, amount, YearMonth.from(competenceDate), dueDate, paymentDate, status)
+        Entry(type, amount, YearMonth.from(competenceDate), dueDate, paymentDate, status, competenceInformed)
+
+    private fun TransactionEntity.informedCompetence() = YearMonth.from(competenceDate).takeIf { competenceInformed }
 
     private fun validAccount(accountId: UUID, current: TransactionEntity?): AccountInfo {
         val account = accounts.find(accountId) ?: throw ValidationException("accountId", "Conta não encontrada")

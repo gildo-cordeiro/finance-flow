@@ -47,7 +47,8 @@ export function formDefaults(today: string, transaction?: Transaction): Transact
     paid: transaction.status === 'PAID',
     paymentDate: transaction.paymentDate ?? today,
     planned: transaction.status === 'PLANNED',
-    competenceMonth: transaction.competenceMonth,
+    // Competência sugerida volta a ser sugerida se o vencimento mudar (ADR-0038)
+    competenceMonth: transaction.competenceInformed ? transaction.competenceMonth : '',
   };
 }
 

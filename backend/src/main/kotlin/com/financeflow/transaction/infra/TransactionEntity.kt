@@ -46,6 +46,10 @@ class TransactionEntity(
     @Column(name = "competence_date", nullable = false)
     var competenceDate: LocalDate,
 
+    // ADR-0038: informada pelo usuário não é recalculada quando a data de referência muda
+    @Column(name = "competence_informed", nullable = false)
+    var competenceInformed: Boolean,
+
     @Column(name = "due_date")
     var dueDate: LocalDate?,
 
@@ -65,12 +69,21 @@ class TransactionEntity(
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant,
 
-    @Column(name = "installment_group_id", insertable = false, updatable = false)
+    @Column(name = "installment_group_id", updatable = false)
     val installmentGroupId: UUID? = null,
+
+    @Column(name = "installment_number", updatable = false)
+    val installmentNumber: Short? = null,
+
+    @Column(name = "total_installments", updatable = false)
+    val totalInstallments: Short? = null,
 
     @Column(name = "transfer_group_id", insertable = false, updatable = false)
     val transferGroupId: UUID? = null,
 
-    @Column(name = "invoice_id", insertable = false, updatable = false)
+    @Column(name = "invoice_id", updatable = false)
     val invoiceId: UUID? = null,
+
+    @Column(name = "purchase_date", updatable = false)
+    val purchaseDate: LocalDate? = null,
 )

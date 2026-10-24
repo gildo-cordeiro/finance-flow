@@ -12,6 +12,7 @@ import com.financeflow.transaction.domain.TransactionType
 import com.financeflow.transaction.domain.TransactionView
 import com.financeflow.transaction.domain.Visibility
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
@@ -83,8 +84,13 @@ data class TransactionResponse(
     val categoryName: String?,
     val parentCategoryName: String?,
     val competenceMonth: YearMonth,
+    @field:Schema(description = "Verdadeiro quando o usuário informou a competência; falso quando foi sugerida (ADR-0038)")
+    val competenceInformed: Boolean,
     val dueDate: LocalDate?,
     val paymentDate: LocalDate?,
+    @field:Schema(description = "Só em compras no cartão: a data da compra, que escolhe a fatura (RN-04)")
+    val purchaseDate: LocalDate?,
+    val invoiceId: UUID?,
     val status: TransactionStatus,
     val visibility: Visibility,
     val installmentNumber: Int?,
@@ -213,8 +219,11 @@ class TransactionController(private val transactionService: TransactionService) 
         categoryName = categoryName,
         parentCategoryName = parentCategoryName,
         competenceMonth = YearMonth.from(competenceDate),
+        competenceInformed = competenceInformed,
         dueDate = dueDate,
         paymentDate = paymentDate,
+        purchaseDate = purchaseDate,
+        invoiceId = invoiceId,
         status = status,
         visibility = visibility,
         installmentNumber = installmentNumber,
