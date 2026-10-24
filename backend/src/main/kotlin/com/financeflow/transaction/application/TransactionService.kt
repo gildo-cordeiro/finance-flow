@@ -9,6 +9,7 @@ import com.financeflow.shared.error.NotFoundException
 import com.financeflow.shared.error.ValidationException
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.shared.time.UserClock
+import com.financeflow.transaction.domain.CategoryTotal
 import com.financeflow.transaction.domain.Competence
 import com.financeflow.transaction.domain.Entry
 import com.financeflow.transaction.domain.TransactionFilter
@@ -64,6 +65,11 @@ class TransactionService(
         val items = transactions.search(userId, filter, size, page.toLong() * size)
         return TransactionPage(items, page, size, transactions.totals(userId, filter))
     }
+
+    /** Realizado da competência por categoria: todos os status, sem transferências (RN-02, RN-07). */
+    @Transactional(readOnly = true)
+    fun totalsByCategory(month: YearMonth): List<CategoryTotal> =
+        transactions.totalsByCategory(currentUser.id(), month.atDay(1))
 
     @Transactional(readOnly = true)
     fun get(id: UUID): TransactionView = transactions.findView(currentUser.id(), id) ?: throw NotFoundException()
