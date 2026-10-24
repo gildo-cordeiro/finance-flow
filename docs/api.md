@@ -362,6 +362,72 @@ Exige `Authorization: Bearer`.
 | 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
 | 409 | [ProblemDetail](#problemdetail): `ACCOUNT_IS_CREDIT_CARD` |
 
+## Orçamento
+
+Planejado por categoria e mês, comparado ao realizado pela competência (RN-02).
+
+### `GET /api/v1/budgets/{month}`
+
+Orçamento do mês por categoria.
+
+O realizado soma as transações da competência em qualquer status, sem transferências. Na categoria mãe, planejado e realizado incluem as subcategorias. Categorias arquivadas só aparecem com planejado ou realizado no mês.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `month` | path | string (yyyy-MM) | sim |
+
+| Status | Resposta |
+|---|---|
+| 200 | [BudgetResponse](#budgetresponse) |
+| 400 | [ProblemDetail](#problemdetail): `BAD_REQUEST` |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+
+### `PUT /api/v1/budgets/{month}/categories/{categoryId}`
+
+Define o planejado de uma categoria no mês.
+
+Zero remove o planejado.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `month` | path | string (yyyy-MM) | sim |
+| `categoryId` | path | string (uuid) | sim |
+
+Corpo: [SetPlannedRequest](#setplannedrequest)
+
+| Status | Resposta |
+|---|---|
+| 200 | [BudgetResponse](#budgetresponse) |
+| 400 | [ProblemDetail](#problemdetail): `BAD_REQUEST` |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 404 | [ProblemDetail](#problemdetail): `NOT_FOUND` |
+| 409 | [ProblemDetail](#problemdetail): `CATEGORY_ARCHIVED` |
+| 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
+
+### `POST /api/v1/budgets/{month}/copy-from-previous`
+
+Copia o planejado do mês anterior.
+
+Sem `overwrite`, mantém os valores já planejados no mês. Categorias arquivadas não são copiadas.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `month` | path | string (yyyy-MM) | sim |
+| `overwrite` | query | boolean (padrão `false`) | não |
+
+| Status | Resposta |
+|---|---|
+| 200 | [BudgetResponse](#budgetresponse) |
+| 400 | [ProblemDetail](#problemdetail): `BAD_REQUEST` |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+| 409 | [ProblemDetail](#problemdetail): `NO_PREVIOUS_BUDGET` |
+
 ## Perfil
 
 Dados do usuário autenticado.
@@ -572,6 +638,41 @@ Exige `Authorization: Bearer`.
 | `expiresIn` | integer (int64) |  |
 | `user` | [UserResponse](#userresponse) |  |
 
+### BudgetLineResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `categoryId` | string (uuid) |  |
+| `name` | string |  |
+| `type` | `INCOME` \| `EXPENSE` |  |
+| `archived` | boolean |  |
+| `directPlanned` | number \| null |  |
+| `planned` | number \| null |  |
+| `realized` | number |  |
+| `realizedPaid` | number |  |
+| `remaining` | number \| null |  |
+| `percentUsed` | integer (int32) \| null |  |
+| `children` | [BudgetLineResponse](#budgetlineresponse)[] |  |
+
+### BudgetResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `month` | string (yyyy-MM) | ex.: `2026-10` |
+| `categories` | [BudgetLineResponse](#budgetlineresponse)[] |  |
+| `totals` | [TotalsByTypeResponse](#totalsbytyperesponse) |  |
+| `previousMonthPlanned` | number |  |
+
+### BudgetTotalsResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `planned` | number |  |
+| `realized` | number |  |
+| `realizedPaid` | number |  |
+| `remaining` | number |  |
+| `percentUsed` | integer (int32) \| null |  |
+
 ### CategoryResponse
 
 | Campo | Tipo | Observação |
@@ -699,6 +800,19 @@ Problem Details (RFC 9457) com o `code` estável do erro
 | `paymentDate` | string (date) \| null | não |  |
 | `status` | `PLANNED` \| `PENDING` \| `PAID` \| `OVERDUE` \| null | não |  |
 | `visibility` | `PRIVATE` \| `VISIBLE` \| `SHARED` | não |  |
+
+### SetPlannedRequest
+
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `plannedAmount` | number | sim | mínimo 0 |
+
+### TotalsByTypeResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `income` | [BudgetTotalsResponse](#budgettotalsresponse) |  |
+| `expense` | [BudgetTotalsResponse](#budgettotalsresponse) |  |
 
 ### TotalsResponse
 

@@ -1,5 +1,6 @@
 package com.financeflow.transaction.infra
 
+import com.financeflow.transaction.domain.CategoryTotal
 import com.financeflow.transaction.domain.DateField
 import com.financeflow.transaction.domain.TransactionFilter
 import com.financeflow.transaction.domain.TransactionStatus
@@ -21,6 +22,8 @@ interface TransactionSearch {
     fun totals(userId: UUID, filter: TransactionFilter): TransactionTotals
 
     fun findView(userId: UUID, id: UUID): TransactionView?
+
+    fun totalsByCategory(userId: UUID, competence: LocalDate): List<CategoryTotal>
 }
 
 /** SQL montado conforme os filtros presentes; nomes da conta e da categoria vêm no mesmo SELECT. */
@@ -62,6 +65,21 @@ class TransactionSearchImpl(private val jdbc: NamedParameterJdbcTemplate) : Tran
         MapSqlParameterSource().addValue("userId", userId).addValue("id", id),
         VIEW_MAPPER,
     ).firstOrNull()
+
+    override fun totalsByCategory(userId: UUID, competence: LocalDate): List<CategoryTotal> = jdbc.query(
+        """
+        SELECT t.category_id,
+               SUM(t.amount) AS total,
+               COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'PAID'), 0) AS paid
+        FROM transactions t
+        WHERE t.user_id = :userId AND t.competence_date = :competence
+          AND t.type <> 'TRANSFER' AND t.category_id IS NOT NULL
+        GROUP BY t.category_id
+        """,
+        MapSqlParameterSource().addValue("userId", userId).addValue("competence", competence),
+    ) { rs, _ ->
+        CategoryTotal(rs.getObject("category_id", UUID::class.java), rs.getBigDecimal("total"), rs.getBigDecimal("paid"))
+    }
 
     private fun where(userId: UUID, filter: TransactionFilter): Pair<String, MapSqlParameterSource> {
         val column = dateColumn(filter.dateField)

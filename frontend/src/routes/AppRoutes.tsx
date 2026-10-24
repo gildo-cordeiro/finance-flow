@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { NAV_ITEMS } from '@/components/layout/navItems';
 import { UnderConstruction } from '@/components/layout/UnderConstruction';
 import { AccountsPage } from '@/features/accounts/components/AccountsPage';
+import { BudgetPage } from '@/features/budget/components/BudgetPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -15,6 +16,7 @@ import { PublicOnlyRoute } from './PublicOnlyRoute';
 const PAGES: Record<string, ReactNode> = {
   '/transacoes': <TransactionsPage />,
   '/contas': <AccountsPage />,
+  '/orcamento': <BudgetPage />,
   '/configuracoes': <SettingsPage />,
 };
 

@@ -42,3 +42,6 @@ data class TransactionView(
 data class TransactionTotals(val count: Long, val income: BigDecimal, val expense: BigDecimal) {
     val balance: BigDecimal get() = income - expense
 }
+
+/** Soma da competência numa categoria, de todos os status, e quanto dela já foi pago. */
+data class CategoryTotal(val categoryId: UUID, val total: BigDecimal, val paid: BigDecimal)
