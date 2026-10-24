@@ -82,6 +82,7 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 | `APP_FRONTEND_URL`    | Base do link de redefinição de senha                  | `http://localhost:5173` |
 | `APP_EMAIL_PROVIDER`  | Implementação do `EmailSender`. `log` só registra no log; não use em produção | `log` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
+| `APP_API_DOCS_ENABLED` | Liga `/v3/api-docs` e o Swagger UI (`/swagger-ui.html`). Use `false` em produção | `true` |
 
 ## Testes
 
@@ -110,3 +111,11 @@ class AccountApiTest : ApiTest() {
 - Todo endpoint que recebe um id tem um `assertNotVisibleTo`, e toda listagem tem um `assertNotListedFor` (RNF-05).
 
 Cobertura mínima de 70%, verificada no CI com `./gradlew test koverVerify` (RNF-09).
+
+## Documentação da API
+
+O contrato da API fica em [`docs/api.md`](../docs/api.md), gerado do OpenAPI (springdoc, [ADR-0033](../docs/adr/0033-documentacao-da-api-pelo-openapi.md), [ADR-0038](../docs/adr/0038-geracao-e-exposicao-da-documentacao-da-api.md)). Com a aplicação rodando, o Swagger UI está em `http://localhost:8080/swagger-ui.html`.
+
+- Cada endpoint tem `@Operation(summary = ...)`, e o controller tem `@Tag`. Campos que precisam de explicação levam `@field:Schema(description = ...)`.
+- Erros de regra de negócio são declarados com `@DocumentedError(409, "CODE", "quando acontece")`. 401, 404 (rota com id), 400 e 422 (corpo com `@Valid`) entram sozinhos; rotas públicas levam `@SecurityRequirements` vazio.
+- O `ApiDocsTest` falha se o `docs/api.md` estiver desatualizado. Para regerar: `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'`.

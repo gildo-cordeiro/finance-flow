@@ -52,6 +52,7 @@ Este conjunto recomeça a numeração. Os 40 ADRs do projeto anterior foram escr
 | [0035](0035-skills-em-claude-skills.md) | Skills de agentes em `.claude/skills/` (substitui parte do 0030) | Proposto | 2026-10-24 |
 | [0036](0036-lado-da-transferencia-em-coluna-propria.md) | Lado da transferência em coluna própria (`transfer_direction`) | Proposto | 2026-10-24 |
 | [0037](0037-regras-de-cadastro-de-contas-e-categorias.md) | Regras de cadastro de contas e categorias (responde o 0013) | Proposto | 2026-10-24 |
+| [0038](0038-geracao-e-exposicao-da-documentacao-da-api.md) | Geração e exposição da documentação da API (responde o 0033) | Proposto | 2026-10-24 |
 
 ## Como criar um ADR
 

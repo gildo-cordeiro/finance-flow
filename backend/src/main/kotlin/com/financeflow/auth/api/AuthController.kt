@@ -6,14 +6,21 @@ import com.financeflow.auth.application.AuthService
 import com.financeflow.auth.application.PasswordResetService
 import com.financeflow.auth.application.RegisterCommand
 import com.financeflow.auth.domain.EmailAddress
+import com.financeflow.shared.error.DocumentedError
 import com.financeflow.shared.error.UnauthorizedException
 import com.financeflow.shared.ratelimit.ClientIp
 import com.financeflow.shared.ratelimit.RateLimit
 import com.financeflow.shared.ratelimit.RateLimiter
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import java.time.Duration
+import java.util.UUID
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
@@ -24,8 +31,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.time.Duration
-import java.util.UUID
 
 data class RegisterRequest(
     @field:NotBlank @field:Size(max = 120)
@@ -63,6 +68,8 @@ data class AuthResponse(val accessToken: String, val expiresIn: Long, val user: 
 
 data class PrivacyPolicyResponse(val version: String)
 
+@Tag(name = "Autenticação", description = "Rotas públicas. O refresh token vai no cookie HttpOnly `refresh_token` (ADR-0026).")
+@SecurityRequirements
 @RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
@@ -73,6 +80,9 @@ class AuthController(
     private val clientIp: ClientIp,
 ) {
 
+    @Operation(summary = "Cadastra o usuário e abre a sessão", description = "Cria também as categorias padrão.")
+    @ApiResponse(responseCode = "201", description = "Usuário criado; refresh token no cookie")
+    @DocumentedError(409, "EMAIL_ALREADY_USED", "Já existe cadastro com o e-mail")
     @PostMapping("/register")
     fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
         val result = authService.register(
@@ -81,6 +91,10 @@ class AuthController(
         return respond(HttpStatus.CREATED, result)
     }
 
+    @Operation(summary = "Entra com e-mail e senha")
+    @ApiResponse(responseCode = "200", description = "Sessão aberta; refresh token no cookie")
+    @DocumentedError(401, "INVALID_CREDENTIALS", "E-mail ou senha inválidos")
+    @DocumentedError(429, "TOO_MANY_REQUESTS", "Limite de tentativas; veja `Retry-After`")
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
@@ -91,6 +105,10 @@ class AuthController(
         return respond(HttpStatus.OK, authService.login(request.email, request.password))
     }
 
+    @Operation(summary = "Renova a sessão pelo cookie, rotacionando o refresh token")
+    @ApiResponse(responseCode = "200", description = "Novo access token; novo refresh token no cookie")
+    @DocumentedError(401, "INVALID_REFRESH_TOKEN", "Cookie ausente, vencido ou já rotacionado")
+    @DocumentedError(429, "TOO_MANY_REQUESTS", "Limite de tentativas; veja `Retry-After`")
     @PostMapping("/refresh")
     fun refresh(
         @CookieValue(REFRESH_COOKIE, required = false) refreshToken: String?,
@@ -103,6 +121,8 @@ class AuthController(
         return respond(HttpStatus.OK, authService.refresh(refreshToken))
     }
 
+    @Operation(summary = "Encerra a sessão e apaga o cookie")
+    @ApiResponse(responseCode = "204", description = "Sessão encerrada")
     @PostMapping("/logout")
     fun logout(@CookieValue(REFRESH_COOKIE, required = false) refreshToken: String?): ResponseEntity<Unit> {
         if (!refreshToken.isNullOrBlank()) authService.logout(refreshToken)
@@ -112,6 +132,9 @@ class AuthController(
     }
 
     /** Sempre 204, exista ou não o e-mail, para não revelar o cadastro (RF-004). */
+    @Operation(summary = "Pede o link de redefinição de senha")
+    @ApiResponse(responseCode = "204", description = "Sempre, exista ou não o e-mail")
+    @DocumentedError(429, "TOO_MANY_REQUESTS", "Limite de pedidos; veja `Retry-After`")
     @PostMapping("/password/forgot")
     fun forgotPassword(
         @Valid @RequestBody request: ForgotPasswordRequest,
@@ -123,6 +146,9 @@ class AuthController(
         return ResponseEntity.noContent().build()
     }
 
+    @Operation(summary = "Troca a senha com o token do link", description = "Revoga todas as sessões do usuário.")
+    @ApiResponse(responseCode = "204", description = "Senha trocada")
+    @DocumentedError(422, "INVALID_RESET_TOKEN", "Token inválido, vencido ou já usado")
     @PostMapping("/password/reset")
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Unit> {
         passwordResetService.reset(request.token, request.newPassword)
@@ -130,6 +156,7 @@ class AuthController(
     }
 
     /** Versão vigente da política de privacidade, que o cadastro precisa aceitar (RF-102). */
+    @Operation(summary = "Versão vigente da política de privacidade")
     @GetMapping("/privacy-policy")
     fun privacyPolicy() = PrivacyPolicyResponse(properties.privacyVersion)
 

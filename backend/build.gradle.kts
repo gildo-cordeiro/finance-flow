@@ -58,6 +58,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     // Fronteiras entre módulos verificadas nos testes (ADR-0034)
     implementation("org.springframework.modulith:spring-modulith-api")
+    // OpenAPI e Swagger UI (ADR-0033); a linha 3.0 acompanha o Spring Boot 4.0
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
