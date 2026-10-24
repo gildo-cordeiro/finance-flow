@@ -275,6 +275,19 @@ Corpo: [SaveAccountRequest](#saveaccountrequest)
 | 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
 | 422 | [ProblemDetail](#problemdetail): `VALIDATION_FAILED` |
 
+### `GET /api/v1/accounts/summary`
+
+Resume as contas ativas.
+
+`balance` soma o saldo de hoje das contas correntes e poupanças não arquivadas.
+
+Exige `Authorization: Bearer`.
+
+| Status | Resposta |
+|---|---|
+| 200 | [AccountsSummaryResponse](#accountssummaryresponse) |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+
 ### `GET /api/v1/accounts/{id}`
 
 Detalha uma conta.
@@ -660,6 +673,13 @@ Exige `Authorization: Bearer`.
 | `competenceOffset` | integer (int32) |  |
 | `archived` | boolean |  |
 | `balance` | number |  |
+
+### AccountsSummaryResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `balance` | number |  |
+| `accountCount` | integer (int32) |  |
 
 ### AuthResponse
 

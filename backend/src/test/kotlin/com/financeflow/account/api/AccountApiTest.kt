@@ -104,6 +104,38 @@ class AccountApiTest : ApiTest() {
     }
 
     @Test
+    fun `resumo soma o saldo das contas ativas, sem arquivadas nem cartões`() {
+        val user = createUser()
+        val corrente = createAccount(user, initialBalance = "1000.00")
+        createAccount(user, type = "SAVINGS", initialBalance = "250.50")
+        val antiga = createAccount(user, initialBalance = "999.00")
+        mockMvc.post("/api/v1/accounts/$antiga/archive") { with(user.auth()) }.andExpect { status { isOk() } }
+        jdbc.update(
+            "INSERT INTO accounts (id, user_id, name, type, closing_day, due_day) VALUES (?, ?, 'Cartão', 'CREDIT_CARD', 5, 12)",
+            UUID.randomUUID(), user.id,
+        )
+        insertTransaction(user, corrente, "EXPENSE", "100.25", "PAID")
+        insertTransaction(user, corrente, "EXPENSE", "999.00", "PENDING")
+
+        mockMvc.get("/api/v1/accounts/summary") { with(user.auth()) }.andExpect {
+            status { isOk() }
+            jsonPath("$.balance") { value(1150.25) }
+            jsonPath("$.accountCount") { value(2) }
+        }
+    }
+
+    @Test
+    fun `resumo não soma contas de outro usuário`() {
+        createAccount(createUser(), initialBalance = "5000.00")
+        val joao = createUser()
+
+        mockMvc.get("/api/v1/accounts/summary") { with(joao.auth()) }.andExpect {
+            jsonPath("$.balance") { value(0) }
+            jsonPath("$.accountCount") { value(0) }
+        }
+    }
+
+    @Test
     fun `edita os dados da conta`() {
         val user = createUser()
         val id = createAccount(user)

@@ -37,6 +37,9 @@ data class SaveAccountCommand(
     val competenceOffset: Int,
 )
 
+/** Saldo somado das contas correntes e poupanças ativas (ADR-0011). */
+data class AccountsSummary(val balance: BigDecimal, val accountCount: Int)
+
 /** Contas corrente e poupança (RF-010, RF-011). Cartões têm cadastro próprio (F1-14). */
 @Service
 class AccountService(
@@ -54,6 +57,12 @@ class AccountService(
             .filter { includeArchived || !it.archived }
             .sortedWith(compareBy(byName) { it.name })
         return withBalances(userId, found)
+    }
+
+    @Transactional(readOnly = true)
+    fun summary(): AccountsSummary {
+        val active = list(includeArchived = false).filter { it.type.isBankAccount }
+        return AccountsSummary(active.fold(BigDecimal.ZERO) { acc, it -> acc + it.balance }, active.size)
     }
 
     @Transactional(readOnly = true)

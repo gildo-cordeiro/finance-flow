@@ -2,6 +2,7 @@ package com.financeflow.account.api
 
 import com.financeflow.account.application.Account
 import com.financeflow.account.application.AccountService
+import com.financeflow.account.application.AccountsSummary
 import com.financeflow.account.application.SaveAccountCommand
 import com.financeflow.account.domain.AccountType
 import com.financeflow.shared.error.ProblemResponse
@@ -56,6 +57,8 @@ data class AccountResponse(
     val balance: BigDecimal,
 )
 
+data class AccountsSummaryResponse(val balance: BigDecimal, val accountCount: Int)
+
 @Tag(name = "Contas", description = "Contas correntes e poupanças. O saldo é calculado, não guardado (ADR-0011).")
 @RestController
 @RequestMapping("/api/v1/accounts")
@@ -65,6 +68,13 @@ class AccountController(private val accountService: AccountService) {
     @GetMapping
     fun list(@RequestParam(defaultValue = "false") includeArchived: Boolean) =
         accountService.list(includeArchived).map { it.toResponse() }
+
+    @Operation(
+        summary = "Resume as contas ativas",
+        description = "`balance` soma o saldo de hoje das contas correntes e poupanças não arquivadas.",
+    )
+    @GetMapping("/summary")
+    fun summary() = accountService.summary().toResponse()
 
     @Operation(summary = "Detalha uma conta")
     @ProblemResponse(404, "NOT_FOUND")
@@ -104,6 +114,8 @@ class AccountController(private val accountService: AccountService) {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) = accountService.delete(id)
+
+    private fun AccountsSummary.toResponse() = AccountsSummaryResponse(balance, accountCount)
 
     private fun Account.toResponse() =
         AccountResponse(id, name, type, bank, initialBalance, competenceOffset, archived, balance)
