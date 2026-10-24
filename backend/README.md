@@ -44,6 +44,7 @@ Toda resposta de erro é Problem Details (RFC 9457) com um `code` estável, que 
 | `BusinessRuleException("CATEGORY_IN_USE", "...")` | 409 | o informado     |
 | `ValidationException("campo", "mensagem")` | 422  | `VALIDATION_FAILED` |
 | `UnauthorizedException()`                | 401    | `UNAUTHORIZED`      |
+| `TooManyRequestsException(segundos)`     | 429 + `Retry-After` | `TOO_MANY_REQUESTS` |
 | `ForbiddenException()`                   | 403    | `FORBIDDEN`         |
 
 O handler também cobre Bean Validation (`@Valid` no corpo e restrições em parâmetros → 422), JSON malformado (400, `MALFORMED_REQUEST`), falta de autenticação (401, `UNAUTHORIZED`), os demais erros do Spring MVC (`code` = nome do status, ex.: `METHOD_NOT_ALLOWED`) e erros inesperados (500, `INTERNAL_ERROR`, sem a mensagem interna).
@@ -62,7 +63,11 @@ val account = repository.findByIdAndUserId(id, currentUser.id()) ?: throw NotFou
 
 JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-rotativo.md), [ADR-0026](../docs/adr/0026-armazenamento-de-tokens-no-frontend.md)):
 
-- `POST /api/v1/auth/register` e `POST /api/v1/auth/login` são públicos e devolvem `{accessToken, expiresIn, user}` no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`).
+- `POST /api/v1/auth/register`, `/login` e `/refresh` são públicos e devolvem `{accessToken, expiresIn, user}` no corpo e o refresh token no cookie `refresh_token` (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`). Nessas rotas o cabeçalho `Authorization` é ignorado.
+- O refresh rotaciona o token a cada uso. Reapresentar um token já rotacionado revoga todas as sessões do usuário (`SessionService.revokeAll`, usado também na troca de senha). Erro → 401 `INVALID_REFRESH_TOKEN`.
+- `POST /api/v1/auth/logout` revoga o token do cookie, apaga o cookie e responde 204.
+- Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
+- Um job diário apaga os refresh tokens expirados há mais de 30 dias.
 - As demais rotas exigem `Authorization: Bearer <accessToken>`. O `sub` do token é o id do usuário, lido com `CurrentUser.id()`.
 - O cadastro publica `UserRegistered(userId)` (Spring `ApplicationEvent`) para outros módulos reagirem.
 
@@ -70,6 +75,7 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 |-----------------------|-------------------------------------------------------|-----------|
 | `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes)   | nenhum    |
 | `APP_PRIVACY_VERSION` | Versão vigente da política de privacidade (RF-102)    | `2026-10` |
+| `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
 
 ## Testes
 

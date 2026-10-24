@@ -22,6 +22,8 @@ app:
     privacy-version: ${APP_PRIVACY_VERSION:2026-10}
     access-token-ttl: 15m
     refresh-token-ttl: 30d
+  rate-limit:
+    trusted-proxies: ${APP_TRUSTED_PROXIES:} # IPs separados por vírgula
 
 management:
   endpoints:

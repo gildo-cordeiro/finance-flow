@@ -1,6 +1,6 @@
 package com.financeflow.auth.api
 
-import com.financeflow.auth.application.RefreshTokens
+import com.financeflow.auth.application.SessionService
 import com.financeflow.auth.domain.UserRegistered
 import com.financeflow.shared.security.CurrentUser
 import com.financeflow.support.ApiTest
@@ -88,7 +88,7 @@ class AuthApiTest : ApiTest() {
         val userId = UUID.fromString(read(result.response.contentAsString, "/user/id"))
 
         val hashes = jdbc.queryForList("SELECT token_hash FROM refresh_tokens WHERE user_id = ?", String::class.java, userId)
-        assertEquals(listOf(RefreshTokens.hash(token)), hashes)
+        assertEquals(listOf(SessionService.hash(token)), hashes)
         assertNotEquals(token, hashes.single())
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM refresh_tokens WHERE token_hash = ?", Int::class.java, token))
     }
@@ -223,7 +223,9 @@ class AuthApiTest : ApiTest() {
         }
     }
 
+    // IP aleatório para os testes não esbarrarem no rate limiting do login
     private fun login(email: String, password: String) = mockMvc.post("/api/v1/auth/login") {
+        with { it.remoteAddr = randomIp(); it }
         contentType = MediaType.APPLICATION_JSON
         content = objectMapper.writeValueAsString(mapOf("email" to email, "password" to password))
     }
@@ -233,6 +235,8 @@ class AuthApiTest : ApiTest() {
     private fun refreshCookieValue(setCookie: String) = setCookie.substringAfter("refresh_token=").substringBefore(";")
 
     private fun uniqueEmail() = "${UUID.randomUUID()}@example.com"
+
+    private fun randomIp() = "10.${(0..255).random()}.${(0..255).random()}.${(0..255).random()}"
 
     private fun encode(
         encoder: JwtEncoder,

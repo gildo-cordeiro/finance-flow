@@ -30,7 +30,7 @@ data class AuthResult(val accessToken: AccessToken, val refreshToken: String, va
 @Service
 class AuthService(
     private val users: UserRepository,
-    private val refreshTokens: RefreshTokens,
+    private val sessions: SessionService,
     private val accessTokens: AccessTokenIssuer,
     private val passwordEncoder: PasswordEncoder,
     private val events: ApplicationEventPublisher,
@@ -80,8 +80,18 @@ class AuthService(
         return issueTokens(user)
     }
 
+    /** Renova a sessão com rotação do refresh token (RF-003). */
+    @Transactional(noRollbackFor = [UnauthorizedException::class])
+    fun refresh(refreshToken: String): AuthResult {
+        val session = sessions.rotate(refreshToken)
+        val user = users.findById(session.userId).orElseThrow()
+        return AuthResult(accessTokens.issue(user.id), session.refreshToken, user)
+    }
+
+    fun logout(refreshToken: String) = sessions.revoke(refreshToken)
+
     private fun issueTokens(user: UserEntity) =
-        AuthResult(accessTokens.issue(user.id), refreshTokens.create(user.id), user)
+        AuthResult(accessTokens.issue(user.id), sessions.create(user.id), user)
 
     private fun normalizeEmail(email: String) = email.trim().lowercase()
 

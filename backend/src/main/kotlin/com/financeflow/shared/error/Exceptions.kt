@@ -22,6 +22,12 @@ class UnauthorizedException(
     code: String = "UNAUTHORIZED",
 ) : ApiException(code, message)
 
+class TooManyRequestsException(
+    val retryAfterSeconds: Long,
+    message: String = "Muitas tentativas. Tente novamente mais tarde",
+    code: String = "TOO_MANY_REQUESTS",
+) : ApiException(code, message)
+
 class ForbiddenException(
     message: String = "Acesso negado",
     code: String = "FORBIDDEN",

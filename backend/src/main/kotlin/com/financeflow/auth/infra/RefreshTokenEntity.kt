@@ -25,4 +25,7 @@ class RefreshTokenEntity(
 
     @Column(name = "revoked_at")
     var revokedAt: Instant? = null,
+
+    @Column(name = "replaced_by")
+    var replacedBy: UUID? = null,
 )

@@ -7,13 +7,16 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.servlet.HandlerExceptionResolver
 
 /**
  * Segurança sem estado com filtro JWT (ADR-0005): o `sub` do access token vira o id do usuário
- * no `SecurityContext`. Só o health check, o cadastro e o login são públicos.
+ * no `SecurityContext`. Só o health check e as rotas de `/api/v1/auth` que não dependem do
+ * access token (cadastro, login, refresh e logout) são públicos.
  */
 @Configuration
 class SecurityConfig(
@@ -35,14 +38,33 @@ class SecurityConfig(
                 }
             }
             .oauth2ResourceServer {
+                it.bearerTokenResolver(bearerTokenResolver())
                 it.jwt(Customizer.withDefaults())
                 it.authenticationEntryPoint(entryPoint)
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health").permitAll()
-                it.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                it.requestMatchers(HttpMethod.POST, *PUBLIC_AUTH_ROUTES.toTypedArray()).permitAll()
                 it.anyRequest().authenticated()
             }
             .build()
+    }
+
+    // Nas rotas públicas de autenticação o access token é ignorado: um token vencido enviado junto
+    // com o refresh não pode impedir justamente a renovação da sessão.
+    private fun bearerTokenResolver(): BearerTokenResolver {
+        val default = DefaultBearerTokenResolver()
+        return BearerTokenResolver { request ->
+            if (request.requestURI in PUBLIC_AUTH_ROUTES) null else default.resolve(request)
+        }
+    }
+
+    companion object {
+        private val PUBLIC_AUTH_ROUTES = setOf(
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
+        )
     }
 }
