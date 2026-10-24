@@ -58,6 +58,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     // Fronteiras entre módulos verificadas nos testes (ADR-0034)
     implementation("org.springframework.modulith:spring-modulith-api")
+    // Contrato da API gerado do código; a linha 3.0 acompanha o Spring Boot 4.0 (ADR-0033)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

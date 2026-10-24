@@ -83,6 +83,14 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 | `APP_EMAIL_PROVIDER`  | Implementação do `EmailSender`. `log` só registra no log; não use em produção | `log` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
 
+## Documentação da API
+
+O contrato sai do código pelo springdoc ([ADR-0033](../docs/adr/0033-documentacao-da-api-pelo-openapi.md)) e fica versionado em [`docs/api.md`](../docs/api.md). Com a aplicação rodando, o Swagger UI fica em `/swagger-ui.html` e a especificação em `/v3/api-docs`.
+
+- Descreva cada endpoint com `@Operation` e os erros com `@ProblemResponse(status, "CODE", ...)`, que vira uma resposta Problem Details com os `code` possíveis. O 401 das rotas autenticadas e a segurança por rota entram sozinhos (`OpenApiConfig`).
+- O `ApiDocsTest` gera o Markdown e falha se o `docs/api.md` estiver desatualizado. Depois de mudar um controller ou DTO, rode `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'` e versione o arquivo.
+- Em produção, desligue o Swagger UI e a especificação com `APP_API_DOCS=false`.
+
 ## Testes
 
 - **Domínio** (`domain`): JUnit 5 puro, sem Spring e sem banco.

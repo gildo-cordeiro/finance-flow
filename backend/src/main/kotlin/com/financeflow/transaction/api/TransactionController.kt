@@ -1,5 +1,6 @@
 package com.financeflow.transaction.api
 
+import com.financeflow.shared.error.ProblemResponse
 import com.financeflow.shared.error.ValidationException
 import com.financeflow.transaction.application.SaveTransactionCommand
 import com.financeflow.transaction.application.TransactionPage
@@ -10,6 +11,8 @@ import com.financeflow.transaction.domain.TransactionStatus
 import com.financeflow.transaction.domain.TransactionType
 import com.financeflow.transaction.domain.TransactionView
 import com.financeflow.transaction.domain.Visibility
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Digits
@@ -102,10 +105,22 @@ data class TransactionPageResponse(
 
 data class CompetenceSuggestionResponse(val competenceMonth: YearMonth)
 
+@Tag(
+    name = "Transações",
+    description = "Receitas e despesas em conta. Transferências, parcelas e compras no cartão têm cadastro " +
+        "próprio. Cada transação tem competência, vencimento e pagamento (ADR-0007).",
+)
 @RestController
 @RequestMapping("/api/v1/transactions")
 class TransactionController(private val transactionService: TransactionService) {
 
+    @Operation(
+        summary = "Lista as transações do período com os totais",
+        description = "`dateField` escolhe a data do filtro (competência, vencimento ou pagamento). `categoryId` " +
+            "inclui as subcategorias. Os totais cobrem o filtro todo, não só a página, e ignoram " +
+            "transferências.",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED")
     @GetMapping
     fun list(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate,
@@ -124,32 +139,59 @@ class TransactionController(private val transactionService: TransactionService) 
         return transactionService.list(filter, page, size).toResponse()
     }
 
+    @Operation(
+        summary = "Sugere a competência para uma conta e data",
+        description = "Mês da data menos o deslocamento de competência da conta (ADR-0008).",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED")
+    @ProblemResponse(404, "NOT_FOUND")
     @GetMapping("/competence-suggestion")
     fun competenceSuggestion(
         @RequestParam accountId: UUID,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
     ) = CompetenceSuggestionResponse(transactionService.suggestCompetence(accountId, date))
 
+    @Operation(summary = "Detalha uma transação")
+    @ProblemResponse(404, "NOT_FOUND")
     @GetMapping("/{id}")
     fun get(@PathVariable id: UUID) = transactionService.get(id).toResponse()
 
+    @Operation(
+        summary = "Cria uma receita ou despesa",
+        description = "Sem `competenceMonth`, usa a competência sugerida. Sem `status`, fica pendente, ou paga se " +
+            "houver `paymentDate`; o atraso é calculado (RN-06).",
+    )
+    @ProblemResponse(422, "VALIDATION_FAILED", "USE_CARD_ENDPOINT")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: SaveTransactionRequest) =
         transactionService.create(request.toCommand()).toResponse()
 
+    @Operation(summary = "Altera uma transação")
+    @ProblemResponse(422, "VALIDATION_FAILED", "USE_CARD_ENDPOINT")
+    @ProblemResponse(404, "NOT_FOUND")
+    @ProblemResponse(409, "TRANSACTION_NOT_EDITABLE_HERE")
     @PutMapping("/{id}")
     fun update(@PathVariable id: UUID, @Valid @RequestBody request: SaveTransactionRequest) =
         transactionService.update(id, request.toCommand()).toResponse()
 
+    @Operation(summary = "Exclui uma transação")
+    @ProblemResponse(404, "NOT_FOUND")
+    @ProblemResponse(409, "TRANSACTION_NOT_EDITABLE_HERE")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) = transactionService.delete(id)
 
+    @Operation(summary = "Marca a transação como paga", description = "Sem `paymentDate`, usa a data de hoje.")
+    @ProblemResponse(404, "NOT_FOUND")
+    @ProblemResponse(409, "TRANSACTION_NOT_EDITABLE_HERE")
     @PostMapping("/{id}/pay")
     fun pay(@PathVariable id: UUID, @RequestBody(required = false) request: PayTransactionRequest?) =
         transactionService.pay(id, request?.paymentDate).toResponse()
 
+    @Operation(summary = "Desfaz o pagamento")
+    @ProblemResponse(404, "NOT_FOUND")
+    @ProblemResponse(409, "TRANSACTION_NOT_EDITABLE_HERE")
     @PostMapping("/{id}/unpay")
     fun unpay(@PathVariable id: UUID) = transactionService.unpay(id).toResponse()
 
