@@ -22,6 +22,10 @@ const summary = (overrides: Partial<DashboardSummary> = {}): DashboardSummary =>
     ],
     overdueCount: 1,
   },
+  upcomingInvoices: [
+    { id: 'inv-1', cardId: 'card-1', cardName: 'Nubank', dueDate: '2026-10-20', total: 900, openAmount: 400, partiallyPaid: true, overdue: true },
+    { id: 'inv-2', cardId: 'card-2', cardName: 'Inter', dueDate: '2026-11-05', total: 1250.5, openAmount: 1250.5, partiallyPaid: false, overdue: false },
+  ],
   budget: {
     planned: 7200,
     realized: 6432.18,
@@ -49,6 +53,25 @@ function stubApi(body: DashboardSummary, writes: Call[] = []) {
 }
 
 describe('painel', () => {
+  it('lista as faturas a vencer com o saldo em aberto e o link para a fatura', async () => {
+    stubApi(summary());
+    renderApp('/?mes=2026-10');
+
+    const list = await screen.findByRole('list', { name: 'Faturas a vencer' });
+    const links = within(list).getAllByRole('link');
+    expect(links[0]).toHaveAttribute('href', '/cartoes/card-1/faturas/inv-1');
+    expect(links[0]).toHaveTextContent('Venceu 20/10/2026 · paga em parte');
+    expect(within(list).getByLabelText('Em aberto na fatura de Nubank')).toHaveTextContent('R$ 400,00');
+    expect(links[1]).toHaveTextContent('Vence 05/11/2026');
+  });
+
+  it('sem faturas em aberto, avisa no bloco de faturas', async () => {
+    stubApi(summary({ upcomingInvoices: [] }));
+    renderApp('/?mes=2026-10');
+
+    expect(await screen.findByText('Nenhuma fatura em aberto')).toBeInTheDocument();
+  });
+
   it('mostra o resumo da competência, as contas e o orçamento em destaque', async () => {
     const fetchMock = stubApi(summary());
     renderApp('/?mes=2026-10');

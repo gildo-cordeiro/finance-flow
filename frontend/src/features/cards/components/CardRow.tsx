@@ -4,6 +4,7 @@ import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MoneyValue } from '@/components/ui/MoneyValue';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { errorMessage } from '@/services/errors';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -53,9 +54,12 @@ export function CardRow({ card, onEdit, onPurchase }: CardRowProps) {
           {card.archived && <span className="ml-2 text-xs font-normal text-text-muted">(arquivado)</span>}
         </p>
         <p className="text-xs text-text-muted">
-          {card.brand ? `${card.brand} · ` : ''}fecha dia {card.closingDay} · vence dia {card.dueDay} · limite{' '}
-          {formatCurrency(card.creditLimit)}
+          {card.brand ? `${card.brand} · ` : ''}fecha dia {card.closingDay} · vence dia {card.dueDay}
         </p>
+        <div role="group" className="mt-2 max-w-sm" aria-label={`Limite de ${card.name}`}>
+          <ProgressBar value={card.used} max={card.creditLimit} />
+          <p className="mt-1 text-xs text-text-muted">Disponível {formatCurrency(card.available)}</p>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-4">
         {invoice.isPending && <Skeleton className="h-8 w-40" />}

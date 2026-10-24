@@ -59,6 +59,7 @@ Regras:
   - `competence_date` é `LocalDate` sempre no dia 1; `due_date` e `payment_date` são `LocalDate`; `payment_date` existe se, e somente se, `status = PAID`.
   - Competência sugerida = mês da data de referência − `competence_offset`, sempre por `shared/time/Competence` (ADR-0038). A sugestão nunca sobrescreve um valor informado: `competence_informed` diz se o usuário informou, e só a sugerida é recalculada quando a data de referência muda.
   - Compra no cartão guarda `purchase_date` e herda a competência da fatura; a fatura sai de `InvoiceCycle` (RN-04, ADR-0009).
+  - Pagamento de fatura é uma transferência da conta pagadora para o cartão, ligada à fatura por `invoice_payments` (o id do pagamento é o `transfer_group_id`), e nunca entra no orçamento (ADR-0039).
   - Instantes (criação, expiração de token) são `Instant`.
   - Pegue a hora do `Clock` injetado (`clock.instant()`, `LocalDate.now(clock)`), nunca `now()` sem argumento.
 - **Valores derivados** (saldo, realizado do orçamento, total da fatura) são calculados em consulta, nunca guardados em coluna (ADR-0009, ADR-0011).

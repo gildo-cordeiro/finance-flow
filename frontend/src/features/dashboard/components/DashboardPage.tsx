@@ -15,6 +15,7 @@ import { AccountsCard } from './AccountsCard';
 import { BudgetCard } from './BudgetCard';
 import { PayablesCard } from './PayablesCard';
 import { SummaryCards } from './SummaryCards';
+import { UpcomingInvoicesCard } from './UpcomingInvoicesCard';
 
 export function DashboardPage() {
   const [params, setParams] = useSearchParams();
@@ -74,7 +75,8 @@ export function DashboardPage() {
               <PayablesCard payables={summary.payables} />
               <BudgetCard budget={summary.budget} month={summary.month} />
             </div>
-            <div>
+            <div className="space-y-6">
+              <UpcomingInvoicesCard invoices={summary.upcomingInvoices} />
               <AccountsCard accounts={summary.accounts} />
             </div>
           </div>

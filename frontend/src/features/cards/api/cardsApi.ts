@@ -4,7 +4,9 @@ import type {
   CategoryOption,
   Invoice,
   InvoiceDetail,
+  InvoicePayment,
   InvoicePreview,
+  PayInvoiceRequest,
   PaymentAccountOption,
   PurchaseRequest,
   SaveCardRequest,
@@ -36,6 +38,12 @@ export const cardsApi = {
     request<unknown>(`/cards/${cardId}/purchases`, { method: 'POST', body: data }),
 
   deletePurchase: (itemId: string) => request<void>(`/card-purchases/${itemId}`, { method: 'DELETE' }),
+
+  pay: (invoiceId: string, data: PayInvoiceRequest) =>
+    request<InvoicePayment>(`/invoices/${invoiceId}/payments`, { method: 'POST', body: data }),
+
+  reversePayment: (invoiceId: string, paymentId: string) =>
+    request<void>(`/invoices/${invoiceId}/payments/${paymentId}`, { method: 'DELETE' }),
 
   paymentAccounts: () => request<PaymentAccountOption[]>('/accounts?includeArchived=false'),
 

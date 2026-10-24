@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { Card, PurchaseRequest, SaveCardRequest } from '../types';
+import { formatCurrency } from '@/utils/formatters';
+import type { Card, PayInvoiceRequest, PurchaseRequest, SaveCardRequest } from '../types';
 
 const day = z.string().regex(/^([1-9]|[12]\d|3[01])$/, 'Use um dia de 1 a 31');
 
@@ -63,4 +64,22 @@ export function toPurchaseRequest(values: PurchaseForm): PurchaseRequest {
     purchaseDate: values.purchaseDate,
     installments: Number(values.installments),
   };
+}
+
+/** O valor não passa do saldo em aberto da fatura (ADR-0039). */
+export function paymentSchema(openAmount: number) {
+  return z.object({
+    fromAccountId: z.string().min(1, 'Escolha a conta pagadora'),
+    amount: z
+      .number()
+      .positive('Informe um valor maior que zero')
+      .max(openAmount, `O valor passa do saldo em aberto (${formatCurrency(openAmount)})`),
+    paymentDate: z.string().min(1, 'Informe a data do pagamento'),
+  });
+}
+
+export type PaymentForm = z.infer<ReturnType<typeof paymentSchema>>;
+
+export function toPayInvoiceRequest(values: PaymentForm): PayInvoiceRequest {
+  return { fromAccountId: values.fromAccountId, amount: values.amount, paymentDate: values.paymentDate };
 }

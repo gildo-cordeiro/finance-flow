@@ -8,6 +8,9 @@ export interface Card {
   competenceOffset: number;
   defaultPaymentAccountId: string | null;
   archived: boolean;
+  /** Faturas não quitadas, atuais e futuras, menos o que já foi pago delas (RF-034). */
+  used: number;
+  available: number;
 }
 
 export interface SaveCardRequest {
@@ -39,6 +42,7 @@ export interface Invoice {
   status: InvoiceStatus;
   total: number;
   paidAmount: number;
+  openAmount: number;
   itemCount: number;
 }
 
@@ -56,10 +60,19 @@ export interface InvoiceItem {
   recurring: boolean;
 }
 
+export interface InvoicePayment {
+  id: string;
+  fromAccountId: string;
+  fromAccountName: string | null;
+  amount: number;
+  paymentDate: string;
+}
+
 export interface InvoiceDetail {
   invoice: Invoice;
   cardName: string;
   items: InvoiceItem[];
+  payments: InvoicePayment[];
   previousInvoiceId: string | null;
   nextInvoiceId: string | null;
 }
@@ -76,6 +89,12 @@ export interface PurchaseRequest {
   categoryId: string;
   purchaseDate: string;
   installments: number;
+}
+
+export interface PayInvoiceRequest {
+  fromAccountId: string;
+  amount: number;
+  paymentDate: string;
 }
 
 export interface PaymentAccountOption {

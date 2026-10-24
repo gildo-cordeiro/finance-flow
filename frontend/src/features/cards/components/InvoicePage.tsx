@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CircleAlert, Plus, Receipt } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, CircleAlert, Plus, Receipt } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,11 +11,13 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { errorMessage } from '@/services/errors';
-import { formatDate, formatMonth } from '@/utils/formatters';
+import { formatCurrency, formatDate, formatMonth } from '@/utils/formatters';
 import { useCard, useCurrentInvoice, useInvoice, useInvoices } from '../hooks/useCards';
 import type { Invoice } from '../types';
 import { InvoiceItems } from './InvoiceItems';
+import { InvoicePayments } from './InvoicePayments';
 import { InvoiceStatusBadge } from './InvoiceStatusBadge';
+import { PaymentForm } from './PaymentForm';
 import { PurchaseForm } from './PurchaseForm';
 
 const monthOf = (yearMonth: string) => formatMonth(`${yearMonth}-01`);
@@ -29,6 +31,7 @@ export function InvoicePage() {
   const selectedId = invoiceId ?? current.data?.id ?? null;
   const detail = useInvoice(selectedId);
   const [purchasing, setPurchasing] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   // A fatura atual sem compras ainda não existe no banco, mas entra na navegação
   const sequence = useMemo(() => {
@@ -77,6 +80,12 @@ export function InvoicePage() {
               <NavButton to={index >= 0 && index < sequence.length - 1 ? pathOf(sequence[index + 1]) : null} label="Próxima fatura">
                 <ChevronRight />
               </NavButton>
+              {invoice.id !== null && invoice.openAmount > 0 && (
+                <Button variant="outline" onClick={() => setPaying(true)}>
+                  <Banknote />
+                  Pagar fatura
+                </Button>
+              )}
               {!card.data.archived && (
                 <Button onClick={() => setPurchasing(true)}>
                   <Plus />
@@ -90,6 +99,7 @@ export function InvoicePage() {
               <MoneyValue amount={-invoice.total} aria-label="Total da fatura" />
               <p className="text-xs text-text-muted">
                 {invoice.itemCount} {invoice.itemCount === 1 ? 'item' : 'itens'}
+                {invoice.paidAmount > 0 && ` · pago ${formatCurrency(invoice.paidAmount)} · em aberto ${formatCurrency(invoice.openAmount)}`}
               </p>
             </Summary>
             <Summary title="Vencimento">
@@ -118,8 +128,36 @@ export function InvoicePage() {
               )}
             </CardContent>
           </Card>
+          {invoice.id !== null && detail.data && detail.data.payments.length > 0 && (
+            <section aria-labelledby="pagamentos" className="mt-6 space-y-3">
+              <h2 id="pagamentos" className="text-lg font-semibold text-text-primary">
+                Pagamentos
+              </h2>
+              <Card className="border-border-subtle">
+                <CardContent className="p-0">
+                  <InvoicePayments invoiceId={invoice.id} payments={detail.data.payments} />
+                </CardContent>
+              </Card>
+            </section>
+          )}
         </>
       )}
+      <Sheet open={paying} onOpenChange={setPaying}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader className="mb-6">
+            <SheetTitle>Pagar fatura{card.data ? ` de ${card.data.name}` : ''}</SheetTitle>
+            <SheetDescription>O pagamento é uma transferência da conta para o cartão e não entra no orçamento.</SheetDescription>
+          </SheetHeader>
+          {paying && invoice?.id && (
+            <PaymentForm
+              invoiceId={invoice.id}
+              openAmount={invoice.openAmount}
+              defaultAccountId={card.data?.defaultPaymentAccountId ?? null}
+              onDone={() => setPaying(false)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
       <Sheet open={purchasing} onOpenChange={setPurchasing}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader className="mb-6">
