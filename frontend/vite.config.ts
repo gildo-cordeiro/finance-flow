@@ -9,6 +9,10 @@ export default defineConfig({
     // Mantenha em sincronia com `paths` em tsconfig.app.json.
     alias: { '@': '/src' },
   },
+  server: {
+    // Mesmo site em desenvolvimento, para o cookie de refresh funcionar (ADR-0026)
+    proxy: { '/api': 'http://localhost:8080' },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

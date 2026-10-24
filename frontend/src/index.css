@@ -65,6 +65,11 @@
     --info-foreground: 0 0% 100%;
   }
 
+  /* Base do shadcn/ui: `border` sem cor usa o token de borda (ADR-0032) */
+  * {
+    @apply border-border;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));

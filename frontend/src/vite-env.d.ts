@@ -11,3 +11,7 @@ declare module 'node:path' {
 declare const process: {
   cwd(): string;
 };
+
+interface ImportMetaEnv {
+  readonly VITE_PRIVACY_VERSION?: string;
+}
