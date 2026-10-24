@@ -84,6 +84,18 @@ object BudgetTree {
         )
     }
 
+    /**
+     * Categorias de despesa em destaque: primeiro as planejadas, da mais usada para a menos usada; depois as que
+     * tiveram gasto sem planejado, do maior gasto para o menor.
+     */
+    fun highlights(lines: List<BudgetLine>, limit: Int): List<BudgetLine> {
+        val expenses = lines.filter { !it.category.income && it.hasActivity }
+        val planned = expenses.filter { it.planned != null }
+            .sortedWith(compareByDescending<BudgetLine> { it.percentUsed ?: -1 }.thenByDescending { it.realized.total })
+        val unplanned = expenses.filter { it.planned == null }.sortedByDescending { it.realized.total }
+        return (planned + unplanned).take(limit)
+    }
+
     private fun leaf(category: BudgetCategory, planned: Map<UUID, BigDecimal>, realized: Map<UUID, Realized>) =
         BudgetLine(
             category = category,

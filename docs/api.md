@@ -428,6 +428,28 @@ Exige `Authorization: Bearer`.
 | 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
 | 409 | [ProblemDetail](#problemdetail): `NO_PREVIOUS_BUDGET` |
 
+## Painel
+
+Resumo da competência: receitas, despesas, contas, vencimentos e orçamento.
+
+### `GET /api/v1/dashboard/summary`
+
+Resumo do mês.
+
+Sem `month`, usa o mês de hoje no fuso do usuário. Receitas, despesas e resultado são da competência, sem transferências. `accountsBalance` soma as contas correntes e poupanças ativas. `payables` traz as despesas não pagas atrasadas ou com vencimento nos próximos 7 dias, fora do cartão.
+
+Exige `Authorization: Bearer`.
+
+| Parâmetro | Em | Tipo | Obrigatório |
+|---|---|---|---|
+| `month` | query | string (yyyy-MM) | não |
+
+| Status | Resposta |
+|---|---|
+| 200 | [DashboardResponse](#dashboardresponse) |
+| 400 | [ProblemDetail](#problemdetail): `BAD_REQUEST` |
+| 401 | [ProblemDetail](#problemdetail): `UNAUTHORIZED` |
+
 ## Perfil
 
 Dados do usuário autenticado.
@@ -617,6 +639,15 @@ Exige `Authorization: Bearer`.
 
 ## Esquemas
 
+### AccountBalanceResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `name` | string |  |
+| `savings` | boolean |  |
+| `balance` | number |  |
+
 ### AccountResponse
 
 | Campo | Tipo | Observação |
@@ -637,6 +668,16 @@ Exige `Authorization: Bearer`.
 | `accessToken` | string |  |
 | `expiresIn` | integer (int64) |  |
 | `user` | [UserResponse](#userresponse) |  |
+
+### BudgetCategoryResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `categoryId` | string (uuid) |  |
+| `name` | string |  |
+| `planned` | number \| null |  |
+| `realized` | number |  |
+| `percentUsed` | integer (int32) \| null |  |
 
 ### BudgetLineResponse
 
@@ -698,6 +739,36 @@ Exige `Authorization: Bearer`.
 | `type` | `INCOME` \| `EXPENSE` | sim |  |
 | `parentId` | string (uuid) \| null | não |  |
 
+### DashboardBudgetResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `planned` | number |  |
+| `realized` | number |  |
+| `percentUsed` | integer (int32) \| null |  |
+| `topCategories` | [BudgetCategoryResponse](#budgetcategoryresponse)[] |  |
+
+### DashboardResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `month` | string (yyyy-MM) | ex.: `2026-10` |
+| `income` | [FlowResponse](#flowresponse) |  |
+| `expense` | [FlowResponse](#flowresponse) |  |
+| `balance` | number |  |
+| `accountsBalance` | number |  |
+| `accounts` | [AccountBalanceResponse](#accountbalanceresponse)[] |  |
+| `payables` | [PayablesResponse](#payablesresponse) |  |
+| `budget` | [DashboardBudgetResponse](#dashboardbudgetresponse) |  |
+
+### FlowResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `realized` | number |  |
+| `paid` | number |  |
+| `pending` | number |  |
+
 ### ForgotPasswordRequest
 
 | Campo | Tipo | Obrigatório | Observação |
@@ -722,6 +793,25 @@ Exige `Authorization: Bearer`.
 | Campo | Tipo | Observação |
 |---|---|---|
 | `paymentDate` | string (date) \| null |  |
+
+### PayableResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | string (uuid) |  |
+| `description` | string |  |
+| `amount` | number |  |
+| `accountName` | string |  |
+| `categoryName` | string \| null |  |
+| `dueDate` | string (date) |  |
+| `overdue` | boolean |  |
+
+### PayablesResponse
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `items` | [PayableResponse](#payableresponse)[] |  |
+| `overdueCount` | integer (int64) |  |
 
 ### PrivacyPolicyResponse
 

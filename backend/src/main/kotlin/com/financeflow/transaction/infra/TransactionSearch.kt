@@ -2,6 +2,8 @@ package com.financeflow.transaction.infra
 
 import com.financeflow.transaction.domain.CategoryTotal
 import com.financeflow.transaction.domain.DateField
+import com.financeflow.transaction.domain.MonthTotals
+import com.financeflow.transaction.domain.Payable
 import com.financeflow.transaction.domain.TransactionFilter
 import com.financeflow.transaction.domain.TransactionStatus
 import com.financeflow.transaction.domain.TransactionTotals
@@ -24,6 +26,12 @@ interface TransactionSearch {
     fun findView(userId: UUID, id: UUID): TransactionView?
 
     fun totalsByCategory(userId: UUID, competence: LocalDate): List<CategoryTotal>
+
+    fun monthTotals(userId: UUID, competence: LocalDate): MonthTotals
+
+    fun payables(userId: UUID, today: LocalDate, until: LocalDate, limit: Int): List<Payable>
+
+    fun countOverdue(userId: UUID, today: LocalDate): Long
 }
 
 /** SQL montado conforme os filtros presentes; nomes da conta e da categoria vêm no mesmo SELECT. */
@@ -80,6 +88,62 @@ class TransactionSearchImpl(private val jdbc: NamedParameterJdbcTemplate) : Tran
     ) { rs, _ ->
         CategoryTotal(rs.getObject("category_id", UUID::class.java), rs.getBigDecimal("total"), rs.getBigDecimal("paid"))
     }
+
+    override fun monthTotals(userId: UUID, competence: LocalDate): MonthTotals = jdbc.queryForObject(
+        """
+        SELECT COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME'), 0) AS income,
+               COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME' AND status = 'PAID'), 0) AS income_paid,
+               COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE'), 0) AS expense,
+               COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE' AND status = 'PAID'), 0) AS expense_paid
+        FROM transactions
+        WHERE user_id = :userId AND competence_date = :competence
+        """,
+        MapSqlParameterSource().addValue("userId", userId).addValue("competence", competence),
+    ) { rs, _ ->
+        MonthTotals(
+            rs.getBigDecimal("income"),
+            rs.getBigDecimal("income_paid"),
+            rs.getBigDecimal("expense"),
+            rs.getBigDecimal("expense_paid"),
+        )
+    } ?: MonthTotals(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)
+
+    override fun payables(userId: UUID, today: LocalDate, until: LocalDate, limit: Int): List<Payable> = jdbc.query(
+        """
+        SELECT t.id, t.description, t.amount, a.name AS account_name, c.name AS category_name, t.due_date
+        $FROM_VIEW
+        WHERE t.user_id = :userId AND t.type = 'EXPENSE' AND t.status <> 'PAID' AND t.due_date <= :until
+          AND a.type <> 'CREDIT_CARD'
+        ORDER BY t.due_date, t.created_at, t.id
+        LIMIT :limit
+        """,
+        MapSqlParameterSource()
+            .addValue("userId", userId)
+            .addValue("until", until)
+            .addValue("limit", limit),
+    ) { rs, _ ->
+        val dueDate = rs.getObject("due_date", LocalDate::class.java)
+        Payable(
+            id = rs.getObject("id", UUID::class.java),
+            description = rs.getString("description"),
+            amount = rs.getBigDecimal("amount"),
+            accountName = rs.getString("account_name"),
+            categoryName = rs.getString("category_name"),
+            dueDate = dueDate,
+            overdue = dueDate.isBefore(today),
+        )
+    }
+
+    override fun countOverdue(userId: UUID, today: LocalDate): Long = jdbc.queryForObject(
+        """
+        SELECT COUNT(*) FROM transactions t
+        JOIN accounts a ON a.id = t.account_id
+        WHERE t.user_id = :userId AND t.type = 'EXPENSE' AND t.status <> 'PAID' AND t.due_date < :today
+          AND a.type <> 'CREDIT_CARD'
+        """,
+        MapSqlParameterSource().addValue("userId", userId).addValue("today", today),
+        Long::class.java,
+    ) ?: 0
 
     private fun where(userId: UUID, filter: TransactionFilter): Pair<String, MapSqlParameterSource> {
         val column = dateColumn(filter.dateField)
