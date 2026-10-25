@@ -1,5 +1,9 @@
 package com.financeflow.category.api
 
+import com.financeflow.category.api.dto.CategoryResponse
+import com.financeflow.category.api.dto.CreateCategoryRequest
+import com.financeflow.category.api.dto.MergeCategoryRequest
+import com.financeflow.category.api.dto.RenameCategoryRequest
 import com.financeflow.category.application.CategoryService
 import com.financeflow.category.application.CreateCategoryCommand
 import com.financeflow.category.domain.CategoryBranch
@@ -9,9 +13,6 @@ import com.financeflow.shared.error.ProblemResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,33 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
-
-data class CreateCategoryRequest(
-    @field:NotBlank @field:Size(max = 100)
-    val name: String = "",
-    @field:NotNull
-    val type: CategoryType? = null,
-    val parentId: UUID? = null,
-)
-
-data class RenameCategoryRequest(
-    @field:NotBlank @field:Size(max = 100)
-    val name: String = "",
-)
-
-data class MergeCategoryRequest(
-    @field:NotNull
-    val targetId: UUID? = null,
-)
-
-data class CategoryResponse(
-    val id: UUID,
-    val name: String,
-    val type: CategoryType,
-    val parentId: UUID?,
-    val archived: Boolean,
-    val subcategories: List<CategoryResponse> = emptyList(),
-)
 
 @Tag(name = "Categorias", description = "Categorias de receita e despesa, em dois níveis.")
 @RestController
