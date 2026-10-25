@@ -10,6 +10,7 @@ import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { cn } from '@/lib/cn';
 import { errorMessage } from '@/services/errors';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useTransactions } from '../hooks/useTransactions';
@@ -48,24 +49,27 @@ export function TransactionsPage() {
         onClear={() => setFilters({ type: null, accountId: null, categoryId: null, status: null, q: '' })}
       />
       {totals && (
-        <section aria-label="Totais da seleção" className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 px-1 text-sm text-text-label">
-          <span className="text-xs text-text-muted">
+        <section aria-label="Totais da seleção" className="mb-4 grid grid-cols-2 items-baseline gap-x-4 gap-y-1 px-1 text-sm text-text-label sm:flex sm:flex-wrap sm:gap-x-6">
+          <span className="col-span-2 text-xs text-text-muted">
             {totals.count} {totals.count === 1 ? 'transação' : 'transações'}
           </span>
-          <span>
+          <span className="flex flex-col sm:block">
             Receitas <MoneyValue amount={totals.income} aria-label="Total de receitas" />
           </span>
-          <span>
+          <span className="flex flex-col sm:block">
             Despesas <MoneyValue amount={-totals.expense} aria-label="Total de despesas" />
           </span>
-          <span>
+          <span className="flex flex-col sm:block">
             Resultado <MoneyValue amount={totals.balance} aria-label="Resultado da seleção" />
           </span>
-          <span className="text-xs text-text-muted">Transferências não entram nos totais</span>
+          <span className="col-span-2 text-xs text-text-muted">Transferências não entram nos totais</span>
         </section>
       )}
       <Card className="border-border-subtle">
-        <CardContent className="p-0">
+        <CardContent
+          className={cn('p-0 transition-opacity duration-200', transactions.isPlaceholderData && 'opacity-60')}
+          aria-busy={transactions.isFetching}
+        >
           {transactions.isPending && (
             <div role="status" aria-label="Carregando transações" className="space-y-3 p-6">
               <Skeleton className="h-12 w-full" />

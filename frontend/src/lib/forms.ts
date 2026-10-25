@@ -22,6 +22,6 @@ export function applyFieldErrors<T extends FieldValues>(
   return applied;
 }
 
-/** Classes do `<select>` nativo com a mesma aparência do `Input`. */
+/** Classes do `<select>` nativo com a mesma aparência do `Input`; a seta vem de `.select-chevron`. */
 export const nativeSelectClass =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive md:text-sm';
+  'select-chevron flex h-10 w-full appearance-none rounded-md border border-input bg-background py-2 pl-3 pr-9 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive md:text-sm';
