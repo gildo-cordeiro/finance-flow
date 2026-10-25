@@ -18,7 +18,7 @@ Um pacote por domínio em `com.financeflow` (`auth`, `account`, `category`, `tra
 | `domain`      | Regras puras (competência, fatura, parcelas), testadas sem banco | Não                |
 | `application` | Casos de uso, transação de banco e filtro pelo usuário        | Sim                   |
 | `infra`       | Entidades JPA, repositórios Spring Data, adaptadores externos  | Sim                   |
-| `api`         | Controllers e DTOs                                            | Sim                   |
+| `api`         | Controllers; DTOs em `api/dto`, um arquivo por controller      | Sim                   |
 
 Módulos sem regra de domínio relevante podem usar a entidade direto em `application`, mas ela não passa para `api` nem sai do módulo. Adaptadores externos (JWT, e-mail) ficam atrás de uma interface em `application` ou `shared`.
 

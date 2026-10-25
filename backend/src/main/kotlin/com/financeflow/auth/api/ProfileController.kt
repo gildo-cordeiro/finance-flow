@@ -1,5 +1,7 @@
 package com.financeflow.auth.api
 
+import com.financeflow.auth.api.dto.ProfileResponse
+import com.financeflow.auth.api.dto.UpdateProfileRequest
 import com.financeflow.auth.application.Profile
 import com.financeflow.auth.application.ProfileService
 import com.financeflow.auth.application.UpdateProfileCommand
@@ -7,30 +9,11 @@ import com.financeflow.shared.error.ProblemResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
-
-data class UpdateProfileRequest(
-    @field:NotBlank @field:Size(max = 120)
-    val name: String = "",
-    @field:NotBlank
-    val timezone: String = "",
-)
-
-data class ProfileResponse(
-    val id: UUID,
-    val name: String,
-    val email: String,
-    val timezone: String,
-    val currency: String,
-    val privacyVersion: String?,
-)
 
 @Tag(name = "Perfil", description = "Dados do usuário autenticado.")
 @RestController

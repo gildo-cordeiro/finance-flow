@@ -1,20 +1,15 @@
 package com.financeflow.account.api
 
+import com.financeflow.account.api.dto.AccountResponse
+import com.financeflow.account.api.dto.AccountsSummaryResponse
+import com.financeflow.account.api.dto.SaveAccountRequest
 import com.financeflow.account.application.Account
 import com.financeflow.account.application.AccountService
 import com.financeflow.account.application.AccountsSummary
-import com.financeflow.account.application.SaveAccountCommand
-import com.financeflow.account.domain.AccountType
 import com.financeflow.shared.error.ProblemResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.Digits
-import jakarta.validation.constraints.Max
-import jakarta.validation.constraints.Min
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,38 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import java.math.BigDecimal
 import java.util.UUID
-
-data class SaveAccountRequest(
-    @field:NotBlank @field:Size(max = 100)
-    val name: String = "",
-    @field:NotNull
-    val type: AccountType? = null,
-    @field:Size(max = 100)
-    val bank: String? = null,
-    @field:NotNull @field:Digits(integer = 15, fraction = 2)
-    val initialBalance: BigDecimal? = null,
-    // ADR-0008: corrente e poupança usam 0 por padrão; limite de 12 meses pelo ADR-0037
-    @field:Min(0) @field:Max(12)
-    val competenceOffset: Int = 0,
-) {
-    // Anuláveis só para o @NotNull responder 422; chegam aqui já validados
-    fun toCommand() = SaveAccountCommand(name, checkNotNull(type), bank, checkNotNull(initialBalance), competenceOffset)
-}
-
-data class AccountResponse(
-    val id: UUID,
-    val name: String,
-    val type: AccountType,
-    val bank: String?,
-    val initialBalance: BigDecimal,
-    val competenceOffset: Int,
-    val archived: Boolean,
-    val balance: BigDecimal,
-)
-
-data class AccountsSummaryResponse(val balance: BigDecimal, val accountCount: Int)
 
 @Tag(name = "Contas", description = "Contas correntes e poupanças. O saldo é calculado, não guardado (ADR-0011).")
 @RestController
