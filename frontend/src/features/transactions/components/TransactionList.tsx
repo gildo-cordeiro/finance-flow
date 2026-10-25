@@ -68,7 +68,7 @@ export function TransactionList({ transactions, dateField, onEdit }: Transaction
     <>
       <ul className="divide-y divide-border-subtle md:hidden">
         {transactions.map((transaction) => (
-          <li key={transaction.id} className="flex flex-col gap-2 px-4 py-3">
+          <li key={transaction.id} className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-bg-elevated/40">
             <div className="flex items-start justify-between gap-3">
               <Description transaction={transaction} />
               <div className="flex shrink-0 flex-col items-end gap-1">
@@ -105,7 +105,7 @@ export function TransactionList({ transactions, dateField, onEdit }: Transaction
           </thead>
           <tbody className="divide-y divide-border-subtle">
             {transactions.map((transaction) => (
-              <tr key={transaction.id}>
+              <tr key={transaction.id} className="transition-colors hover:bg-bg-elevated/40">
                 <td className="max-w-72 px-4 py-3"><Description transaction={transaction} /></td>
                 <td className="px-4 py-3 text-text-label">{transaction.accountName}</td>
                 <td className={cn('px-4 py-3', highlight('COMPETENCE'))}>{competenceLabel(transaction.competenceMonth)}</td>

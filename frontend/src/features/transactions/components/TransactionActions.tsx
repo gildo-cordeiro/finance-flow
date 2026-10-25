@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Pencil, Trash2, Undo2 } from 'lucide-react';
+import { Check, MoreHorizontal, Pencil, ReceiptText, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { errorMessage } from '@/services/errors';
 import { useDeleteTransaction, useSetTransactionPaid } from '../hooks/useTransactionMutations';
 import type { Transaction } from '../types';
@@ -24,12 +31,28 @@ export function TransactionActions({ transaction, onEdit }: TransactionActionsPr
   const busy = setPaid.isPending || remove.isPending;
   const paid = transaction.status === 'PAID';
 
+  const trigger = (
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" size="icon" aria-label={`Ações de ${transaction.description}`} disabled={busy}>
+        <MoreHorizontal />
+      </Button>
+    </DropdownMenuTrigger>
+  );
+
   if (transaction.invoiceId) {
     return (
       <div className="flex justify-end">
-        <Button asChild variant="ghost" size="sm">
-          <Link to={`/cartoes/${transaction.accountId}/faturas/${transaction.invoiceId}`}>Ver fatura</Link>
-        </Button>
+        <DropdownMenu modal={false}>
+          {trigger}
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to={`/cartoes/${transaction.accountId}/faturas/${transaction.invoiceId}`}>
+                <ReceiptText />
+                Ver fatura
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   }
@@ -38,7 +61,7 @@ export function TransactionActions({ transaction, onEdit }: TransactionActionsPr
   const togglePaid = async () => {
     try {
       await setPaid.mutateAsync({ id: transaction.id, paid: !paid });
-      toast.success(paid ? 'Pagamento desfeito.' : 'Marcada como paga.');
+      toast.success(paid ? 'Pagamento desfeito.' : transaction.type === 'INCOME' ? 'Marcada como recebida.' : 'Marcada como paga.');
     } catch (err) {
       toast.error(errorMessage(err));
     }
@@ -55,36 +78,39 @@ export function TransactionActions({ transaction, onEdit }: TransactionActionsPr
     }
   };
 
-  return (
-    <div className="flex items-center justify-end gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={`${paid ? 'Desfazer pagamento de' : 'Marcar como paga'} ${transaction.description}`}
-        title={paid ? 'Desfazer pagamento' : 'Marcar como paga'}
-        onClick={togglePaid}
-        disabled={busy}
-      >
-        {paid ? <Undo2 /> : <Check />}
-      </Button>
-      <Button variant="ghost" size="icon" aria-label={`Editar ${transaction.description}`} onClick={onEdit} disabled={busy}>
-        <Pencil />
-      </Button>
-      {confirmingDelete ? (
+  if (confirmingDelete) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
+          Cancelar
+        </Button>
         <Button variant="destructive" size="sm" onClick={deleteTransaction} disabled={busy}>
           Confirmar exclusão
         </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Excluir ${transaction.description}`}
-          onClick={() => setConfirmingDelete(true)}
-          disabled={busy}
-        >
-          <Trash2 />
-        </Button>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-end">
+      <DropdownMenu modal={false}>
+        {trigger}
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={togglePaid}>
+            {paid ? <Undo2 /> : <Check />}
+            {paid ? 'Desfazer pagamento' : transaction.type === 'INCOME' ? 'Marcar como recebida' : 'Marcar como paga'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onEdit}>
+            <Pencil />
+            Editar
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-danger focus:text-danger" onSelect={() => setConfirmingDelete(true)}>
+            <Trash2 />
+            Excluir
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

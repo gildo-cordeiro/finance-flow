@@ -46,7 +46,7 @@ export function PeriodSelector({ value, onChange, className }: PeriodSelectorPro
         <ChevronLeft className="w-5 h-5" />
       </button>
       <span 
-        className="text-sm font-semibold min-w-[140px] text-center text-text-primary px-2"
+        className="flex-1 text-sm font-semibold min-w-[140px] text-center text-text-primary px-2"
         aria-live="polite"
       >
         {capitalizedLabel}
