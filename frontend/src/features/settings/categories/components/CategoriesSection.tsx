@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { CircleAlert, Plus, Tags } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArchivedToggle } from '@/components/ui/ArchivedToggle';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
@@ -50,18 +49,18 @@ export function CategoriesSection() {
             </button>
           ))}
         </div>
-        <Button variant="outline" onClick={() => setPanel({ action: 'create' })}>
-          <Plus />
-          Nova categoria
-        </Button>
-      </div>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="show-archived-categories"
-          checked={includeArchived}
-          onCheckedChange={(checked) => setIncludeArchived(checked === true)}
-        />
-        <Label htmlFor="show-archived-categories">Mostrar arquivadas</Label>
+        <div className="flex flex-wrap items-center gap-4">
+          <ArchivedToggle
+            id="show-archived-categories"
+            label="Mostrar arquivadas"
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+          />
+          <Button variant="outline" onClick={() => setPanel({ action: 'create' })}>
+            <Plus />
+            Nova categoria
+          </Button>
+        </div>
       </div>
 
       {categories.isPending && (
