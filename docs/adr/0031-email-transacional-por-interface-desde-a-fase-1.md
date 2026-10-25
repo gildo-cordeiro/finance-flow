@@ -36,4 +36,4 @@ A recuperação de senha por e-mail é da Fase 1 (RF-004, prioridade S), mas D-1
 
 - Qual provedor de e-mail? (o mesmo da Fase 2, em aberto no ADR-0016) Continua em aberto, mas precisa estar decidido antes do primeiro deploy em produção. Bastam um provedor com API HTTP e plano gratuito ou SMTP pelo `spring-boot-starter-mail`.
 - O envio assíncrono usa `@Async` ou um evento após o commit? Respondida em 2026-10-24: os dois. O caso de uso publica um evento, tratado por `@TransactionalEventListener(phase = AFTER_COMMIT)` com `@Async`. Após o commit, o token já está gravado quando o link sai; assíncrono, `/password/forgot` responde no mesmo tempo com ou sem e-mail cadastrado (RNF-02).
-- Bloquear a inicialização com o perfil de produção e `APP_EMAIL_PROVIDER=log`, para links com token não irem ao log? Sugerido em 2026-10-24, a implementar junto com o provedor real.
+- Bloquear a inicialização com o perfil de produção e `APP_EMAIL_PROVIDER=log`, para links com token não irem ao log? Respondida em 2026-10-25: sim. O perfil `prod` não tem padrão para `APP_EMAIL_PROVIDER` e o `ProductionGuard` recusa `log`; até o provedor real existir, a produção não sobe.

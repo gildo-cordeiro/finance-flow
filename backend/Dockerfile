@@ -15,5 +15,7 @@ WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 
 # A porta vem da variável PORT, lida pelo application.yml
+# Perfil de produção: sem os padrões de desenvolvimento (application-prod.yml)
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]

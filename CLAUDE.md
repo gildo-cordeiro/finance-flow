@@ -29,7 +29,7 @@ npx vitest run src/utils/formatters.test.ts     # um arquivo
 
 O hook `pre-push` (husky) roda lint e testes do frontend.
 
-`APP_JWT_SECRET` tem um valor de desenvolvimento no `application.yml`; em produção precisa ser definido. Se a aplicação falhar com "Migration checksum mismatch", o banco local é de uma versão antiga do projeto: recrie o volume (`docker compose down -v && docker compose up -d db`) em vez de usar `flyway repair` ou editar a migration.
+`APP_JWT_SECRET` e `APP_EMAIL_PROVIDER` têm valores de desenvolvimento no `application.yml`. Produção roda com `SPRING_PROFILES_ACTIVE=prod`, que tira esses padrões e não sobe sem eles (`application-prod.yml`, `ProductionGuard`). Se a aplicação falhar com "Migration checksum mismatch", o banco local é de uma versão antiga do projeto: recrie o volume (`docker compose down -v && docker compose up -d db`) em vez de usar `flyway repair` ou editar a migration.
 
 ## Backend
 

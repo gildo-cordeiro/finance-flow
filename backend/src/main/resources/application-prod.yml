@@ -1,0 +1,21 @@
+# Perfil de produção (SPRING_PROFILES_ACTIVE=prod): sem os padrões de desenvolvimento do application.yml.
+# Uma variável que falta impede a inicialização; o ProductionGuard recusa os valores que só servem em desenvolvimento.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+app:
+  auth:
+    jwt-secret: ${APP_JWT_SECRET}
+    frontend-url: ${APP_FRONTEND_URL}
+  email:
+    provider: ${APP_EMAIL_PROVIDER}
+
+# ADR-0033: contrato e Swagger UI desligados, salvo APP_API_DOCS=true
+springdoc:
+  api-docs:
+    enabled: ${APP_API_DOCS:false}
+  swagger-ui:
+    enabled: ${APP_API_DOCS:false}
