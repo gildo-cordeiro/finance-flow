@@ -33,7 +33,7 @@ export function CategoriesSection() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div role="group" aria-label="Tipo de categoria" className="inline-flex rounded-md border border-border-subtle p-1">
+        <div role="group" aria-label="Tipo de categoria" className="inline-grid grid-cols-2 rounded-lg border border-border-subtle bg-bg-base p-0.5">
           {(['EXPENSE', 'INCOME'] as const).map((option) => (
             <button
               key={option}
@@ -41,15 +41,15 @@ export function CategoriesSection() {
               aria-pressed={type === option}
               onClick={() => setType(option)}
               className={cn(
-                'rounded px-3 py-1.5 text-sm transition-colors',
-                type === option ? 'bg-brand text-white' : 'text-text-label hover:text-text-primary'
+                'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+                type === option ? 'bg-bg-elevated font-semibold text-text-primary' : 'text-text-label hover:text-text-primary'
               )}
             >
               {CATEGORY_TYPE_LABELS[option]}
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <ArchivedToggle
             id="show-archived-categories"
             label="Mostrar arquivadas"
