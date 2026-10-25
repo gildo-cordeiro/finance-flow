@@ -77,7 +77,7 @@ function Row({ line, month, sub = false }: { line: BudgetLine; month: string; su
           </span>
         )}
       </span>
-      <ProgressBar value={line.realized} max={line.planned} className="col-span-2 md:col-span-1" />
+      <ProgressBar value={line.realized} max={line.planned} label={`Progresso de ${line.name}`} className="col-span-2 md:col-span-1" />
     </div>
   );
 }

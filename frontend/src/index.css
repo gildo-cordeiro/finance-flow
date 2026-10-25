@@ -132,6 +132,15 @@
   animation: toastProgressShrink linear forwards;
 }
 
+/* Sem `to`: a animação termina na largura inline da barra */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+.animate-progress-fill {
+  animation: progressFill 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Hide spin-buttons for Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

@@ -28,7 +28,7 @@ export function BudgetCard({ budget, month }: { budget: DashboardSummary['budget
             {budget.topCategories.map((category) => (
               <li key={category.categoryId} className="space-y-1.5">
                 <p className="text-sm font-medium text-text-primary">{category.name}</p>
-                <ProgressBar value={category.realized} max={category.planned} />
+                <ProgressBar value={category.realized} max={category.planned} label={`Progresso de ${category.name}`} />
               </li>
             ))}
           </ul>

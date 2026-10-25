@@ -1,87 +1,65 @@
-import { cn } from '../../lib/cn';
-import { formatCurrency } from '../../utils/formatters';
+import { cn } from '@/lib/cn';
+import { formatCurrency } from '@/utils/formatters';
 
 interface ProgressBarProps {
   value: number;
   max?: number | null;
+  /** Nome acessível da barra, ex.: "Progresso de Mercado". */
+  label?: string;
   className?: string;
 }
 
-export function ProgressBar({ value, max, className }: ProgressBarProps) {
-  const hasLimit = typeof max === 'number' && max > 0;
-  
-  let percentage = 0;
-  if (hasLimit && max) {
-    percentage = Math.round((value / max) * 100);
-  }
+function tone(percentage: number) {
+  if (percentage > 100) return { bar: 'bg-danger', text: 'text-danger' };
+  if (percentage >= 80) return { bar: 'bg-warning', text: 'text-warning' };
+  return { bar: 'bg-success', text: 'text-success' };
+}
 
-  if (!hasLimit) {
+export function ProgressBar({ value, max, label, className }: ProgressBarProps) {
+  if (typeof max !== 'number' || max <= 0) {
     return (
       <div className={cn('flex flex-col gap-1 w-full', className)}>
         <div className="flex justify-between items-center text-xs text-text-muted font-medium">
           <span>Sem limite</span>
         </div>
-        <div className="w-full border border-dashed border-zinc-800 bg-zinc-900/10 h-1.5 rounded-[9999px]" />
+        <div className="w-full border border-dashed border-border-subtle h-1.5 rounded-full" />
       </div>
     );
   }
 
-  const isOverLimit = percentage > 100;
-
-  // Determine color of progress bar based on 3 states:
-  // - Normal (< 80%): #22C55E (bg-success)
-  // - Warning (80–100%): #F59E0B (bg-warning)
-  // - Over-budget (> 100%): #EF4444 (bg-danger)
-  let barColorClass = 'bg-success';
-  let textColorClass = 'text-success';
-  if (percentage >= 80 && percentage <= 100) {
-    barColorClass = 'bg-warning';
-    textColorClass = 'text-warning';
-  } else if (percentage > 100) {
-    barColorClass = 'bg-danger';
-    textColorClass = 'text-danger';
-  }
-
-  const formattedValue = formatCurrency(value);
-  const formattedMax = formatCurrency(max || 0);
-  const percentageVal = Math.min(percentage, 100);
-  const animationName = `fillProgress-${value}-${max || 0}`;
-  const fillClassName = `progress-bar-fill-${value}-${max || 0}`;
+  const percentage = Math.round((value / max) * 100);
+  const colors = tone(percentage);
+  const text = `${formatCurrency(value)} / ${formatCurrency(max)}`;
 
   return (
     <div className={cn('flex flex-col gap-1.5 w-full', className)}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes ${animationName} {
-          from { width: 0%; }
-          to { width: ${percentageVal}%; }
-        }
-        .${fillClassName} {
-          width: ${percentageVal}%;
-          animation: ${animationName} 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      ` }} />
-
       <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide whitespace-nowrap">
-        <span className={textColorClass}>{percentage}%</span>
+        <span className={colors.text}>{percentage}%</span>
         <span className="text-text-secondary font-normal opacity-40">—</span>
-        <span className="text-text-secondary font-normal">
-          {formattedValue} / {formattedMax}
-        </span>
-        {isOverLimit && (
+        <span className="text-text-secondary font-normal">{text}</span>
+        {percentage > 100 && (
           <span className="text-xs bg-danger/10 text-danger border border-danger/20 rounded px-1 font-bold animate-pulse select-none">
             Estourado
           </span>
         )}
       </div>
-      <div className="relative w-full bg-bg-elevated h-[8px] rounded-[9999px] overflow-hidden">
-        <div className={cn('h-full rounded-[9999px]', barColorClass, fillClassName)} />
-        {/* Overflow indicator when percentage > 100% */}
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        aria-valuetext={`${percentage}% (${text})`}
+        className="relative w-full bg-bg-elevated h-2 rounded-full overflow-hidden"
+      >
+        <div
+          className={cn('h-full rounded-full animate-progress-fill', colors.bar)}
+          style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+        />
         {percentage > 100 && (
-          <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/40 animate-pulse" title="Excedido!" />
+          <div className="absolute right-0 top-0 bottom-0 w-1 bg-foreground/40 animate-pulse" title="Excedido!" />
         )}
       </div>
     </div>
   );
 }
-
-
