@@ -21,9 +21,11 @@ type Editing = { account?: Account } | null;
 interface AccountsPageProps {
   /** Seção dos cartões, que vem da feature própria (F1-14). */
   cards?: ReactNode;
+  /** Resumo das faturas e do limite, ao lado do saldo. */
+  cardsSummary?: ReactNode;
 }
 
-export function AccountsPage({ cards }: AccountsPageProps) {
+export function AccountsPage({ cards, cardsSummary }: AccountsPageProps) {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const accounts = useAccounts(includeArchived);
@@ -40,7 +42,10 @@ export function AccountsPage({ cards }: AccountsPageProps) {
           </Button>
         }
       />
-      <AccountsSummaryCard />
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        <AccountsSummaryCard />
+        {cardsSummary}
+      </div>
       <Card className="border-border-subtle">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-5 py-4">
           <h2 className="text-[13px] font-semibold text-text-label">Contas</h2>

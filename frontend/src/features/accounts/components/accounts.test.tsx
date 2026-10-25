@@ -128,7 +128,8 @@ describe('contas', () => {
     renderApp('/contas');
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Editar Conta do dia a dia' }));
+    await user.click(await screen.findByRole('button', { name: 'Ações de Conta do dia a dia' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
     const sheet = await screen.findByRole('dialog');
     expect(within(sheet).getByLabelText('Saldo inicial (R$)')).toHaveValue('1000,00');
     await user.clear(within(sheet).getByLabelText('Banco (opcional)'));
@@ -145,7 +146,8 @@ describe('contas', () => {
     renderApp('/contas');
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Arquivar Conta do dia a dia' }));
+    await user.click(await screen.findByRole('button', { name: 'Ações de Conta do dia a dia' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Arquivar' }));
 
     expect(await screen.findByText('Conta arquivada.')).toBeInTheDocument();
     expect(writes(fetchMock)).toMatchObject([{ method: 'POST', path: '/accounts/a-1/archive' }]);
@@ -156,7 +158,8 @@ describe('contas', () => {
     renderApp('/contas');
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Excluir Conta do dia a dia' }));
+    await user.click(await screen.findByRole('button', { name: 'Ações de Conta do dia a dia' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     expect(writes(fetchMock)).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
@@ -171,7 +174,8 @@ describe('contas', () => {
     renderApp('/contas');
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Excluir Conta do dia a dia' }));
+    await user.click(await screen.findByRole('button', { name: 'Ações de Conta do dia a dia' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     await user.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     await waitFor(() => expect(screen.getByText('Conta excluída.')).toBeInTheDocument());

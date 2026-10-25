@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MoneyValue } from '@/components/ui/MoneyValue';
+import { RowMenu } from '@/components/ui/RowMenu';
 import { errorMessage } from '@/services/errors';
 import { useDeleteAccount, useSetAccountArchived } from '../hooks/useAccountMutations';
 import { ACCOUNT_TYPE_LABELS, type Account } from '../types';
@@ -41,51 +43,45 @@ export function AccountRow({ account, onEdit }: AccountRowProps) {
   };
 
   return (
-    <li className="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 transition-colors hover:bg-bg-elevated/40">
+      <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-text-primary">
           {account.name}
           {account.archived && <span className="ml-2 text-xs font-normal text-text-muted">(arquivada)</span>}
         </p>
-        <p className="text-xs text-text-muted">
+        <p className="truncate text-xs text-text-muted">
           {ACCOUNT_TYPE_LABELS[account.type]}
           {account.bank && ` · ${account.bank}`}
         </p>
       </div>
-      <div className="flex items-center gap-4">
-        <MoneyValue amount={account.balance} showSign={false} aria-label={`Saldo de ${account.name}`} />
-        {editable && (
+      <MoneyValue amount={account.balance} showSign={false} aria-label={`Saldo de ${account.name}`} />
+      {editable &&
+        (confirmingDelete ? (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" aria-label={`Editar ${account.name}`} onClick={onEdit} disabled={busy}>
-              <Pencil />
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
+              Cancelar
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`${account.archived ? 'Desarquivar' : 'Arquivar'} ${account.name}`}
-              onClick={toggleArchived}
-              disabled={busy}
-            >
-              {account.archived ? <ArchiveRestore /> : <Archive />}
+            <Button variant="destructive" size="sm" onClick={deleteAccount} disabled={busy}>
+              Confirmar exclusão
             </Button>
-            {confirmingDelete ? (
-              <Button variant="destructive" size="sm" onClick={deleteAccount} disabled={busy}>
-                Confirmar exclusão
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Excluir ${account.name}`}
-                onClick={() => setConfirmingDelete(true)}
-                disabled={busy}
-              >
-                <Trash2 />
-              </Button>
-            )}
           </div>
-        )}
-      </div>
+        ) : (
+          <RowMenu label={`Ações de ${account.name}`} disabled={busy}>
+            <DropdownMenuItem onSelect={onEdit}>
+              <Pencil />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={toggleArchived}>
+              {account.archived ? <ArchiveRestore /> : <Archive />}
+              {account.archived ? 'Desarquivar' : 'Arquivar'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-danger focus:text-danger" onSelect={() => setConfirmingDelete(true)}>
+              <Trash2 />
+              Excluir
+            </DropdownMenuItem>
+          </RowMenu>
+        ))}
     </li>
   );
 }

@@ -10,8 +10,8 @@ export function AccountsSummaryCard() {
   if (summary.isError || (summary.data && count === 0)) return null;
 
   return (
-    <Card className="mb-6 border-border-subtle sm:max-w-xs">
-      <CardContent className="space-y-1 p-5">
+    <Card className="col-span-2 border-border-subtle lg:col-span-1">
+      <CardContent className="space-y-1 p-4 sm:p-5">
         <SectionLabel>Saldo em contas</SectionLabel>
         {summary.data ? (
           <>
