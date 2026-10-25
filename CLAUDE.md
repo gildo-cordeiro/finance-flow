@@ -37,7 +37,7 @@ Monólito modular (ADR-0001): um pacote por domínio em `com.financeflow` (`auth
 
 Rotas e contratos da API ficam em `docs/api.md`, gerado do OpenAPI pelo `ApiDocsTest` (ADR-0033), não nos READMEs nem neste arquivo. Ao mudar um controller ou DTO, regere com `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'`.
 
-Camadas por módulo (ADR-0028): `domain` (regras puras, sem Spring/JPA, testadas sem banco), `application` (casos de uso, transação, filtro por usuário), `infra` (entidades JPA, Spring Data, adaptadores), `api` (controllers e DTOs). `api` não vê `infra`; `application` usa de `infra` só entidades e repositórios, e entidades não saem do caso de uso. O que é comum fica em `shared/` (`error`, `security`, `config`, `ratelimit`). O `backend/README.md` detalha erros, autenticação e testes.
+Camadas por módulo (ADR-0028): `domain` (regras puras, sem Spring/JPA, testadas sem banco), `application` (casos de uso, transação, filtro por usuário), `infra` (entidades JPA, Spring Data, adaptadores), `api` (controllers; DTOs em `api/dto/<Recurso>Dtos.kt`, nunca no arquivo do controller). `api` não vê `infra`; `application` usa de `infra` só entidades e repositórios, e entidades não saem do caso de uso. O que é comum fica em `shared/` (`error`, `security`, `config`, `ratelimit`). O `backend/README.md` detalha erros, autenticação e testes.
 
 Regras que atravessam o código:
 

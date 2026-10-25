@@ -23,7 +23,7 @@ Monólito modular (ADR-0001): um pacote por domínio em `com.financeflow`. As fr
 | `domain` | Regras puras: competência, fatura, parcelamento, políticas. `object` sem estado ou classes imutáveis | Só Kotlin, JDK, `shared.error` e `shared.time.Competence` |
 | `application` | Casos de uso (`@Service`), `@Transactional`, filtro pelo usuário, interfaces de adaptadores (`TokenIssuer`), `@ConfigurationProperties` | `domain`; de `infra`, só entidades e repositórios |
 | `infra` | Entidades JPA, repositórios Spring Data, adaptadores (JWT, e-mail, agregador), `@Configuration` | `application`, `domain` |
-| `api` | Controllers e DTOs de requisição/resposta | `application`, `domain` |
+| `api` | Controllers; DTOs de requisição/resposta em `api/dto`, um arquivo por controller (`AuthDtos.kt`) | `application`, `domain` |
 | `shared/` | `error`, `security`, `config`, `ratelimit`, `email`, `time` (`UserClock`, `Competence`) | Qualquer módulo pode usar |
 
 Regras:
@@ -76,6 +76,7 @@ Regras:
 ## API
 
 - Rotas em `/api/v1/<recurso>`, substantivos no plural, `@RestController` fino: valida, chama o caso de uso, converte a resposta.
+- DTOs nunca ficam no arquivo do controller: vão em `<módulo>/api/dto/<Recurso>Dtos.kt` (verificado pelo `LayersTest`). A conversão para o DTO de resposta continua como extensão privada no controller.
 - DTOs de requisição são `data class` com valor padrão e Bean Validation (`@field:NotBlank`, `@field:Size`), validados com `@Valid`. Regra de negócio fica no caso de uso ou no domínio, não em anotação.
 - DTOs de resposta nunca expõem entidade, hash ou campos internos.
 - 201 ao criar, 204 sem corpo, 200 no resto.

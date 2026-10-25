@@ -6,10 +6,12 @@ import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage
 import com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
+import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import jakarta.persistence.Entity
 import org.junit.jupiter.api.Test
 import org.springframework.data.repository.Repository
+import org.springframework.web.bind.annotation.RestController
 
 /** Direção das dependências entre as camadas de cada módulo (ADR-0028, ADR-0034). */
 class LayersTest {
@@ -56,6 +58,13 @@ class LayersTest {
             "com.financeflow.*.infra..",
         )
             .should().dependOnClassesThat().resideInAPackage("com.financeflow.*.api..")
+            .check(classes)
+    }
+
+    @Test
+    fun `DTOs da api ficam em api dto, fora dos controllers`() {
+        classes().that().resideInAPackage("com.financeflow.*.api").and().areTopLevelClasses()
+            .should().beAnnotatedWith(RestController::class.java)
             .check(classes)
     }
 }
