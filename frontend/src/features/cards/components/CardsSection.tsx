@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { CircleAlert, CreditCard, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArchivedToggle } from '@/components/ui/ArchivedToggle';
 import { Button } from '@/components/ui/button';
 import { Card as Panel, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { errorMessage } from '@/services/errors';
@@ -30,14 +29,12 @@ export function CardsSection() {
           Cartões de crédito
         </h2>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="show-archived-cards"
-              checked={includeArchived}
-              onCheckedChange={(checked) => setIncludeArchived(checked === true)}
-            />
-            <Label htmlFor="show-archived-cards">Mostrar arquivados</Label>
-          </div>
+          <ArchivedToggle
+            id="show-archived-cards"
+            label="Mostrar arquivados"
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+          />
           <Button variant="outline" onClick={() => setEditing({ kind: 'card' })}>
             <Plus />
             Novo cartão

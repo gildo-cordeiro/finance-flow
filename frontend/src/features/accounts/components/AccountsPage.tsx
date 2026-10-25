@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { CircleAlert, Plus, Wallet } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArchivedToggle } from '@/components/ui/ArchivedToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Label } from '@/components/ui/label';
 import { PageContainer } from '@/components/ui/PageContainer';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -42,15 +41,16 @@ export function AccountsPage({ cards }: AccountsPageProps) {
         }
       />
       <AccountsSummaryCard />
-      <div className="mb-4 flex items-center gap-2">
-        <Checkbox
-          id="show-archived-accounts"
-          checked={includeArchived}
-          onCheckedChange={(checked) => setIncludeArchived(checked === true)}
-        />
-        <Label htmlFor="show-archived-accounts">Mostrar arquivadas</Label>
-      </div>
       <Card className="border-border-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-5 py-4">
+          <h2 className="text-[13px] font-semibold text-text-label">Contas</h2>
+          <ArchivedToggle
+            id="show-archived-accounts"
+            label="Mostrar arquivadas"
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+          />
+        </div>
         <CardContent className="p-0">
           {accounts.isPending && (
             <div role="status" aria-label="Carregando contas" className="space-y-3 p-6">
