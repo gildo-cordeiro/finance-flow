@@ -1,5 +1,11 @@
 package com.financeflow.budget.api
 
+import com.financeflow.budget.api.dto.BudgetCategoryType
+import com.financeflow.budget.api.dto.BudgetLineResponse
+import com.financeflow.budget.api.dto.BudgetResponse
+import com.financeflow.budget.api.dto.BudgetTotalsResponse
+import com.financeflow.budget.api.dto.SetPlannedRequest
+import com.financeflow.budget.api.dto.TotalsByTypeResponse
 import com.financeflow.budget.application.BudgetService
 import com.financeflow.budget.application.BudgetView
 import com.financeflow.budget.domain.BudgetLine
@@ -8,9 +14,6 @@ import com.financeflow.shared.error.ProblemResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.DecimalMin
-import jakarta.validation.constraints.Digits
-import jakarta.validation.constraints.NotNull
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -20,47 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.math.BigDecimal
 import java.time.YearMonth
 import java.util.UUID
-
-data class SetPlannedRequest(
-    @field:NotNull @field:DecimalMin("0") @field:Digits(integer = 15, fraction = 2)
-    val plannedAmount: BigDecimal? = null,
-)
-
-enum class BudgetCategoryType { INCOME, EXPENSE }
-
-data class BudgetLineResponse(
-    val categoryId: UUID,
-    val name: String,
-    val type: BudgetCategoryType,
-    val archived: Boolean,
-    val directPlanned: BigDecimal?,
-    val planned: BigDecimal?,
-    val realized: BigDecimal,
-    val realizedPaid: BigDecimal,
-    val remaining: BigDecimal?,
-    val percentUsed: Int?,
-    val children: List<BudgetLineResponse>,
-)
-
-data class BudgetTotalsResponse(
-    val planned: BigDecimal,
-    val realized: BigDecimal,
-    val realizedPaid: BigDecimal,
-    val remaining: BigDecimal,
-    val percentUsed: Int?,
-)
-
-data class TotalsByTypeResponse(val income: BudgetTotalsResponse, val expense: BudgetTotalsResponse)
-
-data class BudgetResponse(
-    val month: YearMonth,
-    val categories: List<BudgetLineResponse>,
-    val totals: TotalsByTypeResponse,
-    val previousMonthPlanned: BigDecimal,
-)
 
 @Tag(name = "Orçamento", description = "Planejado por categoria e mês, comparado ao realizado pela competência (RN-02).")
 @RestController
