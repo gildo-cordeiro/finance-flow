@@ -127,6 +127,9 @@ describe('cartões', () => {
     const limit = within(section).getByRole('group', { name: 'Limite de Nubank' });
     expect(limit).toHaveTextContent('23%');
     expect(limit).toHaveTextContent('Disponível R$ 6.126,78');
+
+    expect(await screen.findByLabelText('Faturas atuais em aberto')).toHaveTextContent('-R$ 1.873,22');
+    expect(screen.getByLabelText('Limite disponível')).toHaveTextContent('R$ 6.126,78');
   });
 
   it('cadastra um cartão com deslocamento 1 por padrão', async () => {

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { cardsApi } from '../api/cardsApi';
 
 export const CARDS_KEY = ['cards'];
@@ -22,6 +22,15 @@ export function useInvoices(cardId: string) {
 
 export function useCurrentInvoice(cardId: string) {
   return useQuery({ queryKey: [...INVOICES_KEY, cardId, 'current'], queryFn: () => cardsApi.currentInvoice(cardId) });
+}
+
+export function useCurrentInvoices(cardIds: string[]) {
+  return useQueries({
+    queries: cardIds.map((cardId) => ({
+      queryKey: [...INVOICES_KEY, cardId, 'current'],
+      queryFn: () => cardsApi.currentInvoice(cardId),
+    })),
+  });
 }
 
 export function useInvoice(id: string | null) {

@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MoneyValue } from '@/components/ui/MoneyValue';
+import { RowMenu } from '@/components/ui/RowMenu';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { errorMessage } from '@/services/errors';
@@ -47,7 +49,7 @@ export function CardRow({ card, onEdit, onPurchase }: CardRowProps) {
   };
 
   return (
-    <li className="flex flex-col gap-3 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-5 py-4 transition-colors hover:bg-bg-elevated/40 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
       <div className="min-w-0">
         <p className="truncate font-semibold text-text-primary">
           {card.name}
@@ -61,56 +63,61 @@ export function CardRow({ card, onEdit, onPurchase }: CardRowProps) {
           <p className="mt-1 text-xs text-text-muted">Disponível {formatCurrency(card.available)}</p>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-4">
-        {invoice.isPending && <Skeleton className="h-8 w-40" />}
+      <div className="lg:order-last">{actions()}</div>
+      <div className="col-span-2 lg:col-span-1">
+        {invoice.isPending && <Skeleton className="h-12 w-full lg:w-48" />}
         {invoice.data && (
           <Link
             to={`/cartoes/${card.id}/fatura`}
-            className="flex items-center gap-3 rounded-lg border border-border-subtle px-3 py-2 hover:border-brand/40"
+            className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-2 transition-colors hover:border-brand/40 hover:bg-bg-elevated/40"
             aria-label={`Fatura atual de ${card.name}`}
           >
-            <div className="text-right">
+            <div className="lg:text-right">
               <MoneyValue amount={-invoice.data.total} className="text-sm font-semibold" />
               <p className="text-xs text-text-muted">Vence {formatDate(invoice.data.dueDate)}</p>
             </div>
             <InvoiceStatusBadge status={invoice.data.status} />
           </Link>
         )}
-        <div className="flex items-center gap-1">
-          {!card.archived && (
-            <Button variant="ghost" size="icon" aria-label={`Nova compra em ${card.name}`} onClick={onPurchase} disabled={busy}>
-              <Plus />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" aria-label={`Editar ${card.name}`} onClick={onEdit} disabled={busy}>
-            <Pencil />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`${card.archived ? 'Desarquivar' : 'Arquivar'} ${card.name}`}
-            onClick={toggleArchived}
-            disabled={busy}
-          >
-            {card.archived ? <ArchiveRestore /> : <Archive />}
-          </Button>
-          {confirmingDelete ? (
-            <Button variant="destructive" size="sm" onClick={deleteCard} disabled={busy}>
-              Confirmar exclusão
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Excluir ${card.name}`}
-              onClick={() => setConfirmingDelete(true)}
-              disabled={busy}
-            >
-              <Trash2 />
-            </Button>
-          )}
-        </div>
       </div>
     </li>
   );
+
+  function actions() {
+    if (confirmingDelete) {
+      return (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={deleteCard} disabled={busy}>
+            Confirmar exclusão
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <RowMenu label={`Ações de ${card.name}`} disabled={busy}>
+        {!card.archived && (
+          <DropdownMenuItem onSelect={onPurchase}>
+            <Plus />
+            Nova compra
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onSelect={onEdit}>
+          <Pencil />
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={toggleArchived}>
+          {card.archived ? <ArchiveRestore /> : <Archive />}
+          {card.archived ? 'Desarquivar' : 'Arquivar'}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-danger focus:text-danger" onSelect={() => setConfirmingDelete(true)}>
+          <Trash2 />
+          Excluir
+        </DropdownMenuItem>
+      </RowMenu>
+    );
+  }
 }

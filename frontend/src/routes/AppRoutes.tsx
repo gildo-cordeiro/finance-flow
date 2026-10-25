@@ -5,6 +5,7 @@ import { NAV_ITEMS } from '@/components/layout/navItems';
 import { UnderConstruction } from '@/components/layout/UnderConstruction';
 import { AccountsPage } from '@/features/accounts/components/AccountsPage';
 import { CardsSection } from '@/features/cards/components/CardsSection';
+import { CardsSummary } from '@/features/cards/components/CardsSummary';
 import { InvoicePage } from '@/features/cards/components/InvoicePage';
 import { BudgetPage } from '@/features/budget/components/BudgetPage';
 import { DashboardPage } from '@/features/dashboard/components/DashboardPage';
@@ -21,7 +22,7 @@ import { PublicOnlyRoute } from './PublicOnlyRoute';
 const PAGES: Record<string, ReactNode> = {
   '/': <DashboardPage />,
   '/transacoes': <TransactionsPage />,
-  '/contas': <AccountsPage cards={<CardsSection />} />,
+  '/contas': <AccountsPage cards={<CardsSection />} cardsSummary={<CardsSummary />} />,
   '/orcamento': <BudgetPage />,
   '/configuracoes': <SettingsPage />,
 };
