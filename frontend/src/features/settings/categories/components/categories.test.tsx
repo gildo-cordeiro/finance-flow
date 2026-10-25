@@ -72,7 +72,9 @@ describe('configurações: categorias', () => {
     await user.click(screen.getByLabelText('Mostrar arquivadas'));
 
     expect(await screen.findByText('Antiga')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Desarquivar Antiga' })).toBeInTheDocument();
+    expect(screen.getByText('Arquivada')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Antiga' }));
+    expect(await screen.findByRole('menuitem', { name: 'Desarquivar' })).toBeInTheDocument();
   });
 
   it('cria uma subcategoria do mesmo tipo da categoria pai', async () => {
@@ -113,7 +115,8 @@ describe('configurações: categorias', () => {
     await openSettings();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Mesclar Lazer' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Lazer' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Mesclar em outra…' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mesclar categoria' });
     const target = within(sheet).getByLabelText('Mesclar em');
     const options = within(target).getAllByRole('option').map((option) => option.textContent);
@@ -132,7 +135,8 @@ describe('configurações: categorias', () => {
     await openSettings();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Mesclar Lazer' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Lazer' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Mesclar em outra…' }));
     const sheet = await screen.findByRole('dialog', { name: 'Mesclar categoria' });
     await user.click(within(sheet).getByRole('button', { name: 'Mesclar' }));
 
@@ -145,7 +149,8 @@ describe('configurações: categorias', () => {
     await openSettings();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Arquivar Lazer' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Lazer' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Arquivar' }));
 
     expect(await screen.findByText('Categoria arquivada.')).toBeInTheDocument();
     expect(writes(fetchMock)).toMatchObject([{ method: 'POST', path: '/categories/c-3/archive' }]);
@@ -156,7 +161,8 @@ describe('configurações: categorias', () => {
     await openSettings();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Excluir Lazer' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Lazer' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     await user.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     expect(
@@ -169,7 +175,8 @@ describe('configurações: categorias', () => {
     await openSettings();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: 'Excluir Supermercado' }));
+    await user.click(screen.getByRole('button', { name: 'Mais ações de Supermercado' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     await user.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     expect(await screen.findByText('Categoria excluída.')).toBeInTheDocument();

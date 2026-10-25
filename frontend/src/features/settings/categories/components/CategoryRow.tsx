@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Archive, ArchiveRestore, Merge, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { RowMenu } from '@/components/ui/RowMenu';
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/services/errors';
 import { useDeleteCategory, useSetCategoryArchived } from '../hooks/useCategoryMutations';
@@ -43,52 +45,60 @@ export function CategoryRow({ category, onAction }: CategoryRowProps) {
   };
 
   return (
-    <div className={cn('flex items-center justify-between gap-2 py-2', !isRoot && 'pl-6')}>
-      <span className={cn('truncate', isRoot ? 'font-semibold text-text-primary' : 'text-text-label')}>
-        {name}
-        {category.archived && <span className="ml-2 text-xs font-normal text-text-muted">(arquivada)</span>}
+    <div
+      className={cn(
+        '-mx-2 flex min-h-12 items-center justify-between gap-2 rounded-md px-2 py-1 transition-colors hover:bg-bg-elevated/40',
+        !isRoot && 'pl-8'
+      )}
+    >
+      <span className={cn('flex min-w-0 items-center gap-2', category.archived && 'opacity-70')}>
+        <span className={cn('truncate', isRoot ? 'font-semibold text-text-primary' : 'text-text-label')}>{name}</span>
+        {category.archived && (
+          <span className="shrink-0 rounded-full border border-border-subtle px-2 text-xs text-text-label">Arquivada</span>
+        )}
       </span>
       <div className="flex shrink-0 items-center">
-        {isRoot && !category.archived && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Adicionar subcategoria em ${name}`}
-            onClick={() => onAction('addSubcategory', category)}
-            disabled={busy}
-          >
-            <Plus />
-          </Button>
-        )}
-        <Button variant="ghost" size="icon" aria-label={`Renomear ${name}`} onClick={() => onAction('rename', category)} disabled={busy}>
-          <Pencil />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label={`Mesclar ${name}`} onClick={() => onAction('merge', category)} disabled={busy}>
-          <Merge />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`${category.archived ? 'Desarquivar' : 'Arquivar'} ${name}`}
-          onClick={toggleArchived}
-          disabled={busy}
-        >
-          {category.archived ? <ArchiveRestore /> : <Archive />}
-        </Button>
         {confirmingDelete ? (
-          <Button variant="destructive" size="sm" onClick={deleteCategory} disabled={busy}>
-            Confirmar exclusão
-          </Button>
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" size="sm" onClick={deleteCategory} disabled={busy}>
+              Confirmar exclusão
+            </Button>
+          </>
         ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Excluir ${name}`}
-            onClick={() => setConfirmingDelete(true)}
-            disabled={busy}
-          >
-            <Trash2 />
-          </Button>
+          <>
+            {isRoot && !category.archived && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Adicionar subcategoria em ${name}`}
+                onClick={() => onAction('addSubcategory', category)}
+                disabled={busy}
+              >
+                <Plus />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" aria-label={`Renomear ${name}`} onClick={() => onAction('rename', category)} disabled={busy}>
+              <Pencil />
+            </Button>
+            <RowMenu label={`Mais ações de ${name}`} disabled={busy}>
+              <DropdownMenuItem onSelect={() => onAction('merge', category)}>
+                <Merge />
+                Mesclar em outra…
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={toggleArchived}>
+                {category.archived ? <ArchiveRestore /> : <Archive />}
+                {category.archived ? 'Desarquivar' : 'Arquivar'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-danger focus:text-danger" onSelect={() => setConfirmingDelete(true)}>
+                <Trash2 />
+                Excluir
+              </DropdownMenuItem>
+            </RowMenu>
+          </>
         )}
       </div>
     </div>
