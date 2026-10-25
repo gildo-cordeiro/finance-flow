@@ -57,7 +57,7 @@ export function CardRow({ card, onEdit, onPurchase }: CardRowProps) {
           {card.brand ? `${card.brand} · ` : ''}fecha dia {card.closingDay} · vence dia {card.dueDay}
         </p>
         <div role="group" className="mt-2 max-w-sm" aria-label={`Limite de ${card.name}`}>
-          <ProgressBar value={card.used} max={card.creditLimit} />
+          <ProgressBar value={card.used} max={card.creditLimit} label={`Limite usado de ${card.name}`} />
           <p className="mt-1 text-xs text-text-muted">Disponível {formatCurrency(card.available)}</p>
         </div>
       </div>

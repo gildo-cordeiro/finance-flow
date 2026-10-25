@@ -86,7 +86,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 <ProgressBar value={100} max={null} />
 
 // 2. Dentro do limite (Verde sólido)
-<ProgressBar value={80} max={100} />
+<ProgressBar value={80} max={100} label="Progresso de Mercado" />
 
 // 3. Acima do limite (Vermelho sólido)
 <ProgressBar value={120} max={100} />
