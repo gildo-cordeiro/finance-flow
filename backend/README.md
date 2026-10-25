@@ -4,7 +4,7 @@ Kotlin + Spring Boot 4 (JVM 21), PostgreSQL 16 e Flyway. As decisões estão em 
 
 ```bash
 docker compose up -d db   # na raiz do repositório
-# APP_JWT_SECRET tem um valor de desenvolvimento; em produção defina o seu (openssl rand -base64 48)
+# Sem perfil, valem os padrões de desenvolvimento; em produção use SPRING_PROFILES_ACTIVE=prod
 ./gradlew bootRun
 ./gradlew test            # exige Docker (Testcontainers)
 ```
@@ -69,7 +69,7 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 - O refresh rotaciona o token a cada uso. Reapresentar um token já rotacionado revoga todas as sessões do usuário (`SessionService.revokeAll`, usado também na troca de senha).
 - A versão vigente da política de privacidade (`APP_PRIVACY_VERSION`) é exposta por um endpoint público, e o frontend a envia no cadastro (RF-102).
 - Recuperação de senha (RF-004): o pedido do link responde igual exista ou não o e-mail; o link é de uso único, vale 1 hora e invalida os anteriores ainda não usados; a troca de senha revoga todas as sessões.
-- E-mail sai pela interface `EmailSender` (`shared/email`, [ADR-0031](../docs/adr/0031-email-transacional-por-interface-desde-a-fase-1.md)). Com `APP_EMAIL_PROVIDER=log` (padrão), o `LoggingEmailSender` só escreve a mensagem no log, com o link; nos testes de API, o `FakeEmailSender` captura as mensagens.
+- E-mail sai pela interface `EmailSender` (`shared/email`, [ADR-0031](../docs/adr/0031-email-transacional-por-interface-desde-a-fase-1.md)). Com `APP_EMAIL_PROVIDER=log` (padrão fora de produção), o `LoggingEmailSender` só escreve a mensagem no log, com o link; nos testes de API, o `FakeEmailSender` captura as mensagens. O perfil `prod` recusa `log`.
 - Rate limiting em memória (ADR-0006), valores provisórios: login 5/min por IP e 10/hora por e-mail; refresh 30/min por IP; pedido de link 10/hora por IP e 3/hora por e-mail. Use `RateLimiter.consume(limite, chave)` em outros pontos que precisarem.
 - Um job diário apaga os refresh tokens e os links de redefinição expirados há mais de 30 dias.
 - As demais rotas exigem `Authorization: Bearer <accessToken>`. O `sub` do token é o id do usuário, lido com `CurrentUser.id()`.
@@ -77,11 +77,14 @@ JWT sem sessão ([ADR-0005](../docs/adr/0005-autenticacao-jwt-com-refresh-token-
 
 | Variável              | Para quê                                              | Padrão    |
 |-----------------------|-------------------------------------------------------|-----------|
-| `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes). Defina sempre em produção | valor de dev |
+| `APP_JWT_SECRET`      | Chave HMAC-SHA256 do access token (mínimo 32 bytes; `openssl rand -base64 48`) | valor de dev |
 | `APP_PRIVACY_VERSION` | Versão vigente da política de privacidade (RF-102)    | `2026-10` |
 | `APP_FRONTEND_URL`    | Base do link de redefinição de senha                  | `http://localhost:5173` |
-| `APP_EMAIL_PROVIDER`  | Implementação do `EmailSender`. `log` só registra no log; não use em produção | `log` |
+| `APP_EMAIL_PROVIDER`  | Implementação do `EmailSender`. `log` só registra no log | `log` |
+| `APP_API_DOCS`        | Liga o contrato em `/v3/api-docs` e o Swagger UI | `true` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies cujo `X-Forwarded-For` é confiável, separados por vírgula | nenhum |
+
+Produção roda com `SPRING_PROFILES_ACTIVE=prod` (o padrão da imagem Docker). O `application-prod.yml` tira os padrões de desenvolvimento: sem `APP_JWT_SECRET`, `APP_FRONTEND_URL`, `APP_EMAIL_PROVIDER` e as variáveis `SPRING_DATASOURCE_*`, a aplicação não sobe. O `ProductionGuard` também recusa o segredo JWT de desenvolvimento e `APP_EMAIL_PROVIDER=log`, e `APP_API_DOCS` passa a ser `false` por padrão.
 
 ## Documentação da API
 
@@ -89,7 +92,7 @@ O contrato sai do código pelo springdoc ([ADR-0033](../docs/adr/0033-documentac
 
 - Descreva cada endpoint com `@Operation` e os erros com `@ProblemResponse(status, "CODE", ...)`, que vira uma resposta Problem Details com os `code` possíveis. O 401 das rotas autenticadas e a segurança por rota entram sozinhos (`OpenApiConfig`).
 - O `ApiDocsTest` gera o Markdown e falha se o `docs/api.md` estiver desatualizado. Depois de mudar um controller ou DTO, rode `UPDATE_API_DOCS=true ./gradlew test --tests 'com.financeflow.docs.ApiDocsTest'` e versione o arquivo.
-- Em produção, desligue o Swagger UI e a especificação com `APP_API_DOCS=false`.
+- No perfil `prod`, o Swagger UI e a especificação ficam desligados, salvo `APP_API_DOCS=true`.
 
 ## Testes
 
