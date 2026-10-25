@@ -169,7 +169,8 @@ describe('transações', () => {
     const user = userEvent.setup();
 
     const table = await screen.findByRole('table');
-    await user.click(within(table).getByRole('button', { name: 'Editar Aluguel' }));
+    await user.click(within(table).getByRole('button', { name: 'Ações de Aluguel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
     const dialog = await screen.findByRole('dialog');
     await within(dialog).findByRole('option', { name: 'Moradia › Aluguel' });
     await user.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }));
@@ -182,9 +183,12 @@ describe('transações', () => {
     stubApi([compra], () => problem(500, 'INTERNAL_ERROR'));
     renderApp('/transacoes?mes=2026-10');
 
+    const user = userEvent.setup();
+
     const table = await screen.findByRole('table');
-    expect(within(table).getByRole('link', { name: 'Ver fatura' })).toHaveAttribute('href', '/cartoes/card-1/faturas/inv-1');
-    expect(within(table).queryByRole('button', { name: 'Editar Mercado' })).not.toBeInTheDocument();
+    await user.click(within(table).getByRole('button', { name: 'Ações de Mercado' }));
+    expect(await screen.findByRole('menuitem', { name: 'Ver fatura' })).toHaveAttribute('href', '/cartoes/card-1/faturas/inv-1');
+    expect(screen.queryByRole('menuitem', { name: 'Editar' })).not.toBeInTheDocument();
   });
 
   it('marca como paga e exclui pela linha', async () => {
@@ -197,10 +201,12 @@ describe('transações', () => {
     const user = userEvent.setup();
 
     const table = await screen.findByRole('table');
-    await user.click(within(table).getByRole('button', { name: 'Marcar como paga Aluguel' }));
+    await user.click(within(table).getByRole('button', { name: 'Ações de Aluguel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Marcar como paga' }));
     expect(await screen.findByText('Marcada como paga.')).toBeInTheDocument();
 
-    await user.click(within(table).getByRole('button', { name: 'Excluir Aluguel' }));
+    await user.click(within(table).getByRole('button', { name: 'Ações de Aluguel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Excluir' }));
     await user.click(within(table).getByRole('button', { name: 'Confirmar exclusão' }));
     expect(await screen.findByText('Transação excluída.')).toBeInTheDocument();
 
